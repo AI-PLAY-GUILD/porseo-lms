@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Discord-First Premium Video LMS
 
-## Getting Started
+Discordコミュニティを中心とした、高品質な動画学習体験を提供するLMS（Learning Management System）です。
 
-First, run the development server:
+## 特徴
+
+- **プレミアムな動画視聴体験**: Muxを使用した高品質な動画ストリーミング。
+- **Discordファースト**: コミュニティへのオンボーディングをスムーズに行う設計。
+- **モダンなUI/UX**: shadcn/ui と Tailwind CSS を採用した、美しく使いやすいインターフェース。
+- **AI機能**: Google Generative AI を活用した機能（予定）。
+- **管理画面**: 動画コンテンツやタグを管理するための管理者用ダッシュボード。
+
+## 技術スタック
+
+- **フレームワーク**: [Next.js](https://nextjs.org/) (App Router)
+- **バックエンド/データベース**: [Convex](https://www.convex.dev/)
+- **認証**: [Clerk](https://clerk.com/)
+- **動画配信**: [Mux](https://www.mux.com/)
+- **スタイリング**: [Tailwind CSS](https://tailwindcss.com/)
+- **UIコンポーネント**: [shadcn/ui](https://ui.shadcn.com/)
+- **AI**: [Google Generative AI SDK](https://ai.google.dev/)
+
+## セットアップ
+
+### 前提条件
+
+- Node.js
+- npm
+
+### インストール
+
+```bash
+npm install
+```
+
+### 環境変数の設定
+
+`.env.local` ファイルを作成し、必要な環境変数を設定してください。
+(Convex, Clerk, Mux, Google AI などのAPIキーが必要です)
+
+### 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+これとは別に、Convexの開発サーバーも起動する必要があります。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npx convex dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## デプロイ
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Vercel などのプラットフォームへのデプロイを推奨します。
+Convex のデプロイ設定も合わせて行ってください。
