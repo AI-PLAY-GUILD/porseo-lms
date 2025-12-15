@@ -12,6 +12,7 @@ export default function VideoUploadPage() {
     const router = useRouter();
 
     const [isUploading, setIsUploading] = useState(false);
+    const [isManualMode, setIsManualMode] = useState(false);
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [videoTitle, setVideoTitle] = useState("");
     const [muxAssetId, setMuxAssetId] = useState("");
@@ -94,7 +95,36 @@ export default function VideoUploadPage() {
                     </div>
                 )}
 
-                {!uploadSuccess ? (
+                <div className="flex justify-center mb-6">
+                    <div className="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg inline-flex">
+                        <button
+                            onClick={() => {
+                                setIsManualMode(false);
+                                setUploadSuccess(false);
+                            }}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${!isManualMode
+                                ? "bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white"
+                                : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                                }`}
+                        >
+                            ファイルアップロード
+                        </button>
+                        <button
+                            onClick={() => {
+                                setIsManualMode(true);
+                                setUploadSuccess(true); // 手動モードは即座にフォーム表示
+                            }}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${isManualMode
+                                ? "bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white"
+                                : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                                }`}
+                        >
+                            Mux ID 手動入力
+                        </button>
+                    </div>
+                </div>
+
+                {!uploadSuccess && !isManualMode ? (
                     <>
                         {!uploadUrl ? (
                             <div className="text-center py-8">
@@ -123,14 +153,22 @@ export default function VideoUploadPage() {
                     </>
                 ) : (
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                        <div className="p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-md mb-4">
-                            アップロードが完了しました！動画情報を入力してください。
-                            <br />
-                            <span className="text-sm text-red-500">
-                                ※注意: 現在の実装ではMuxのアセットIDを自動取得できないため、
-                                MuxダッシュボードからIDをコピーして貼り付ける必要があります。
-                            </span>
-                        </div>
+                        {!isManualMode && (
+                            <div className="p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-md mb-4">
+                                アップロードが完了しました！動画情報を入力してください。
+                                <br />
+                                <span className="text-sm text-red-500">
+                                    ※注意: 現在の実装ではMuxのアセットIDを自動取得できないため、
+                                    MuxダッシュボードからIDをコピーして貼り付ける必要があります。
+                                </span>
+                            </div>
+                        )}
+
+                        {isManualMode && (
+                            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-md mb-4">
+                                Muxにアップロード済みの動画情報を入力してください。
+                            </div>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium mb-1">タイトル</label>
