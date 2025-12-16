@@ -9,10 +9,15 @@ export default defineSchema({
         imageUrl: v.optional(v.string()),
         discordId: v.optional(v.string()),
         discordRoles: v.array(v.string()),
+        stripeCustomerId: v.optional(v.string()),
+        subscriptionStatus: v.optional(v.string()),
         isAdmin: v.boolean(),
         createdAt: v.number(),
         updatedAt: v.number(),
-    }).index("by_clerk_id", ["clerkId"]),
+    })
+        .index("by_clerk_id", ["clerkId"])
+        .index("by_discord_id", ["discordId"])
+        .index("by_stripe_customer_id", ["stripeCustomerId"]),
 
     videos: defineTable({
         title: v.string(),

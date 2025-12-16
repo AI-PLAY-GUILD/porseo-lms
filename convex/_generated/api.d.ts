@@ -12,6 +12,7 @@ import type * as admin from "../admin.js";
 import type * as ai from "../ai.js";
 import type * as dashboard from "../dashboard.js";
 import type * as discord from "../discord.js";
+import type * as internal_ from "../internal.js";
 import type * as rag from "../rag.js";
 import type * as ragDb from "../ragDb.js";
 import type * as tags from "../tags.js";
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   dashboard: typeof dashboard;
   discord: typeof discord;
+  internal: typeof internal_;
   rag: typeof rag;
   ragDb: typeof ragDb;
   tags: typeof tags;
