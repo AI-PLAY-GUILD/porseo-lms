@@ -118,7 +118,7 @@ export default function EditVideoPage() {
             });
 
             alert("更新しました！");
-            router.push("/admin");
+            router.push("/admin/videos");
         } catch (error) {
             console.error("Failed to update video:", error);
             alert("更新に失敗しました。");
@@ -270,11 +270,30 @@ export default function EditVideoPage() {
                 </div>
 
                 <Card
-                    className={`transition-colors ${isDragging ? "border-primary bg-primary/5" : ""}`}
+                    className={`p-6 transition-colors ${isDragging ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "bg-white dark:bg-gray-800"}`}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                 >
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-sm flex items-center gap-2">
+                            <span className="text-xl">📝</span> 文字起こし (AI分析・検索用)
+                        </h3>
+                        <span className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                            .vtt / .txt ファイルをドロップ
+                        </span>
+                    </div>
+
+                    <textarea
+                        value={transcription}
+                        onChange={(e) => setTranscription(e.target.value)}
+                        className="w-full p-3 border rounded-lg h-64 font-mono text-sm bg-gray-50 dark:bg-gray-900 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                        placeholder="ここに文字起こしテキストを入力するか、ファイルをドロップしてください..."
+                    />
+
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-right">
+                        {transcription.length} 文字
+                    </p>
                 </Card>
 
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 mb-8">
@@ -398,6 +417,7 @@ export default function EditVideoPage() {
 
                             if (!confirm("AI分析を開始しますか？（数秒〜数十秒かかります）")) return;
 
+                            setIsAnalyzing(true);
                             try {
                                 // まず動画情報を更新（保存）
                                 await updateVideo({
@@ -429,11 +449,24 @@ export default function EditVideoPage() {
                             } catch (error: any) {
                                 console.error(error);
                                 alert(`エラーが発生しました: ${error.message} `);
+                            } finally {
+                                setIsAnalyzing(false);
                             }
                         }}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-bold flex items-center gap-2"
+                        disabled={isAnalyzing}
+                        className={`px-4 py-2 rounded-md transition-colors font-bold flex items-center gap-2 ${isAnalyzing
+                            ? "bg-gray-400 cursor-not-allowed text-gray-200"
+                            : "bg-purple-600 text-white hover:bg-purple-700"
+                            }`}
                     >
-                        AI分析を実行する
+                        {isAnalyzing ? (
+                            <>
+                                <span className="animate-spin text-xl">↻</span>
+                                AI分析中...
+                            </>
+                        ) : (
+                            "AI分析を実行する"
+                        )}
                     </button>
                 </div>
 

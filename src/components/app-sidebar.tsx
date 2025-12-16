@@ -51,12 +51,12 @@ const data = {
             ],
         },
         {
-            title: "コンテンツ",
+            title: "ナレッジ",
             url: "#",
             icon: Video,
             items: [
                 {
-                    title: "全ての動画",
+                    title: "ハンズオン動画",
                     url: "/videos",
                     icon: Video,
                 },
@@ -89,8 +89,8 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
                         <BookOpen className="size-4" />
                     </div>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold">LMS Platform</span>
-                        <span className="truncate text-xs">Learning System</span>
+                        <span className="truncate font-semibold">AIガチ部</span>
+                        <span className="truncate text-xs">Knowledge Port</span>
                     </div>
                 </div>
             </SidebarHeader>

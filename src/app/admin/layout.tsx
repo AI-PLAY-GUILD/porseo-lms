@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -12,6 +15,25 @@ export default function AdminLayout({
     children: React.ReactNode;
 }>) {
     const userData = useQuery(api.users.getUser);
+    const router = useRouter();
+
+    useEffect(() => {
+        if (userData !== undefined && !userData?.isAdmin) {
+            router.push("/");
+        }
+    }, [userData, router]);
+
+    if (userData === undefined) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+        );
+    }
+
+    if (!userData?.isAdmin) {
+        return null;
+    }
 
     return (
         <SidebarProvider>
