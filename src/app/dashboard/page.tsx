@@ -56,7 +56,7 @@ export default function DashboardPage() {
         <SidebarProvider>
             <AppSidebar user={{ name: stats.userName, email: stats.userEmail, avatar: stats.userAvatar }} />
             <SidebarInset>
-                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b px-4">
+                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b w-full">
                     <div className="flex items-center gap-2">
                         <Breadcrumb>
                             <BreadcrumbList>

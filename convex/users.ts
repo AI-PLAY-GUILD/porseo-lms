@@ -108,3 +108,112 @@ export const getUserByClerkId = async (ctx: any, clerkId: string) => {
         .withIndex("by_clerk_id", (q: any) => q.eq("clerkId", clerkId))
         .first();
 };
+// ▼▼▼ 以下をファイルの末尾に追加してください ▼▼▼
+
+// 1. Stripe Customer IDからユーザーを取得
+export const getUserByStripeCustomerId = query({
+    args: { stripeCustomerId: v.string() },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("users")
+            .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
+            .first();
+    },
+});
+
+// 2. Discord IDを使ってサブスクリプション状態を更新（決済成功時）
+export const updateSubscriptionStatus = mutation({
+    args: {
+        discordId: v.string(),
+        stripeCustomerId: v.string(),
+        subscriptionStatus: v.string(),
+        roleId: v.optional(v.string()), // ★これを受け取れるように追加
+    },
+    handler: async (ctx, args) => {
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_discord_id", (q) => q.eq("discordId", args.discordId))
+            .first();
+
+        if (!user) {
+            throw new Error(`User with Discord ID ${args.discordId} not found`);
+        }
+
+        // ロールIDがあれば、既存のリストに追加する（重複チェック付き）
+        let newRoles = user.discordRoles || [];
+        if (args.roleId && !newRoles.includes(args.roleId)) {
+            newRoles = [...newRoles, args.roleId];
+        }
+
+        await ctx.db.patch(user._id, {
+            stripeCustomerId: args.stripeCustomerId,
+            subscriptionStatus: args.subscriptionStatus,
+            discordRoles: newRoles, // ★更新！
+        });
+    },
+});
+
+// 3. Stripe Customer IDを使ってサブスクリプション状態を更新（キャンセル/失敗時）
+export const updateSubscriptionStatusByCustomerId = mutation({
+    args: {
+        stripeCustomerId: v.string(),
+        subscriptionStatus: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
+            .first();
+
+        if (!user) {
+            console.warn(`User with Stripe Customer ID ${args.stripeCustomerId} not found`);
+            return;
+        }
+
+        await ctx.db.patch(user._id, {
+            subscriptionStatus: args.subscriptionStatus,
+        });
+    },
+});
+
+// 4. ユーザー情報を保存・更新（Entryアプリ用：Discord IDを含む）
+// ※既存のsyncUserとは別に、Entryアプリ専用の関数として追加します
+export const storeUser = mutation({
+    args: {
+        clerkId: v.string(),
+        email: v.string(),
+        name: v.string(),
+        imageUrl: v.optional(v.string()),
+        discordId: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+            .first();
+
+        if (user) {
+            await ctx.db.patch(user._id, {
+                email: args.email,
+                name: args.name,
+                imageUrl: args.imageUrl,
+                discordId: args.discordId, // ここでDiscord IDを更新
+                updatedAt: Date.now(),
+            });
+            return user._id;
+        }
+
+        const userId = await ctx.db.insert("users", {
+            clerkId: args.clerkId,
+            email: args.email,
+            name: args.name,
+            imageUrl: args.imageUrl,
+            discordId: args.discordId,
+            discordRoles: [],
+            isAdmin: false,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+        });
+        return userId;
+    },
+});
