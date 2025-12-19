@@ -6,6 +6,7 @@ import { v } from "convex/values";
 export const getDiscordRoles = action({
     args: {},
     handler: async (ctx) => {
+        console.log("[Discord API] Starting getDiscordRoles...");
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
             throw new Error("Unauthenticated");
@@ -53,6 +54,12 @@ export const getDiscordRoles = action({
                 },
             }
         );
+
+        // Rate Limit Logging
+        const limit = discordResponse.headers.get("x-ratelimit-limit");
+        const remaining = discordResponse.headers.get("x-ratelimit-remaining");
+        const reset = discordResponse.headers.get("x-ratelimit-reset");
+        console.log(`[Discord API] Rate Limit: ${remaining}/${limit} (Reset: ${reset})`);
 
         if (!discordResponse.ok) {
             if (discordResponse.status === 404) {
