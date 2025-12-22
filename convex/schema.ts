@@ -17,7 +17,8 @@ export default defineSchema({
     })
         .index("by_clerk_id", ["clerkId"])
         .index("by_discord_id", ["discordId"])
-        .index("by_stripe_customer_id", ["stripeCustomerId"]),
+        .index("by_stripe_customer_id", ["stripeCustomerId"])
+        .index("by_email", ["email"]),
 
     videos: defineTable({
         title: v.string(),

@@ -12,6 +12,8 @@ import {
     Video,
     Moon,
     Sun,
+    Users,
+    MessageCircle,
 } from "lucide-react"
 
 import {
@@ -37,6 +39,19 @@ const data = {
         avatar: "/avatars/shadcn.jpg",
     },
     navMain: [
+        {
+            title: "繋がる",
+            url: "#",
+            icon: Users,
+            items: [
+                {
+                    title: "Discordサーバー",
+                    url: process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.com/app",
+                    icon: MessageCircle,
+                    external: true,
+                },
+            ],
+        },
         {
             title: "学習",
             url: "#",
@@ -69,7 +84,7 @@ const data = {
             items: [
                 {
                     title: "プロフィール",
-                    url: "#",
+                    url: "/profile",
                     icon: User,
                 },
             ],
@@ -103,7 +118,11 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
                                 {group.items.map((item) => (
                                     <SidebarMenuItem key={item.title}>
                                         <SidebarMenuButton asChild tooltip={item.title}>
-                                            <a href={item.url}>
+                                            <a
+                                                href={item.url}
+                                                target={(item as any).external ? "_blank" : undefined}
+                                                rel={(item as any).external ? "noopener noreferrer" : undefined}
+                                            >
                                                 <item.icon />
                                                 <span>{item.title}</span>
                                             </a>

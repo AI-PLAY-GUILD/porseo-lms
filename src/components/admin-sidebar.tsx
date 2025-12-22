@@ -57,6 +57,34 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar> 
 
                     <SidebarMenuItem>
                         <SidebarMenuButton className="text-sidebar-foreground/70">
+                            <span>ユーザー管理</span>
+                        </SidebarMenuButton>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={pathname === "/admin/users"}>
+                                    <Link href="/admin/users">
+                                        <div className="flex w-6 items-center justify-center">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-current" />
+                                        </div>
+                                        <span>ユーザー一覧</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={pathname === "/admin/users/analytics"}>
+                                    <Link href="/admin/users/analytics">
+                                        <div className="flex w-6 items-center justify-center">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-current" />
+                                        </div>
+                                        <span>行動分析</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarMenuItem>
+
+                    <SidebarMenuItem>
+                        <SidebarMenuButton className="text-sidebar-foreground/70">
                             <span>動画管理</span>
                         </SidebarMenuButton>
                         <SidebarMenu>
@@ -92,6 +120,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar> 
                             </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarMenuItem>
+
                 </SidebarMenu>
             </SidebarContent>
             <SidebarFooter>
@@ -115,6 +144,6 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar> 
                 </SidebarMenu>
             </SidebarFooter>
             <SidebarRail />
-        </Sidebar>
+        </Sidebar >
     );
 }

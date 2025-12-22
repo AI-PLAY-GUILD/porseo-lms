@@ -83,8 +83,49 @@ export const getUserProgress = query({
         return await ctx.db
             .query("videoProgress")
             .withIndex("by_user_id", (q) => q.eq("userId", user._id))
-            .collect();
     },
 });
+
+export const logLearningTime = mutation({
+    args: {
+        minutesWatched: v.number(),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+            .first();
+
+        if (!user) throw new Error("User not found");
+
+        // Use JST for date
+        const JST_OFFSET = 9 * 60 * 60 * 1000;
+        const now = new Date(Date.now() + JST_OFFSET);
+        const dateStr = now.toISOString().split("T")[0];
+
+        const existingLog = await ctx.db
+            .query("dailyLearningLogs")
+            .withIndex("by_user_date", (q) =>
+                q.eq("userId", user._id).eq("date", dateStr)
+            )
+            .first();
+
+        if (existingLog) {
+            await ctx.db.patch(existingLog._id, {
+                minutesWatched: existingLog.minutesWatched + args.minutesWatched,
+            });
+        } else {
+            await ctx.db.insert("dailyLearningLogs", {
+                userId: user._id,
+                date: dateStr,
+                minutesWatched: args.minutesWatched,
+            });
+        }
+    },
+});
+
 
 

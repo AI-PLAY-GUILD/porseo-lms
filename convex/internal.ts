@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 // 1. Stripe Customer IDからユーザーを取得
@@ -99,3 +99,64 @@ export const storeUser = mutation({
         return userId;
     },
 });
+
+export const batchMigrateUsers = internalMutation({
+    args: {
+        users: v.array(
+            v.object({
+                email: v.string(),
+                clerkId: v.string(),
+                stripeCustomerId: v.string(),
+                name: v.string(),
+                subscriptionStatus: v.optional(v.string()),
+            })
+        ),
+    },
+    handler: async (ctx, args) => {
+        const results = {
+            success: 0,
+            failed: 0,
+            errors: [] as string[],
+        };
+
+        for (const user of args.users) {
+            try {
+                // Check if user already exists by Clerk ID
+                const existingUser = await ctx.db
+                    .query("users")
+                    .withIndex("by_clerk_id", (q) => q.eq("clerkId", user.clerkId))
+                    .first();
+
+                if (existingUser) {
+                    // Update existing user
+                    await ctx.db.patch(existingUser._id, {
+                        stripeCustomerId: user.stripeCustomerId,
+                        subscriptionStatus: user.subscriptionStatus || "active", // Default to active if migrating
+                        updatedAt: Date.now(),
+                    });
+                } else {
+                    // Create new user
+                    await ctx.db.insert("users", {
+                        // Use provided Clerk ID if available, otherwise use a placeholder that won't collide with real Clerk IDs
+                        clerkId: user.clerkId || `migrated:${user.email}`,
+                        email: user.email,
+                        name: user.name,
+                        stripeCustomerId: user.stripeCustomerId,
+                        subscriptionStatus: user.subscriptionStatus || "active",
+                        discordRoles: [],
+                        isAdmin: false,
+                        createdAt: Date.now(),
+                        updatedAt: Date.now(),
+                    });
+                }
+                results.success++;
+            } catch (error: any) {
+                results.failed++;
+                results.errors.push(`Failed to migrate ${user.email}: ${error.message}`);
+            }
+        }
+
+        return results;
+    },
+});
+

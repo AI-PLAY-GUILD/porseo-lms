@@ -9,10 +9,25 @@ export const syncUser = mutation({
         imageUrl: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const existing = await ctx.db
+        let existing = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
             .first();
+
+        // If not found by Clerk ID, check if there's a migrated user with the same email
+        if (!existing) {
+            const existingByEmail = await ctx.db
+                .query("users")
+                .withIndex("by_email", (q) => q.eq("email", args.email))
+                .first();
+
+            // Only link if the existing user looks like a migrated user (e.g. has a placeholder Clerk ID or we just trust the email)
+            // For safety, let's assume if the email matches and we are creating a new Clerk link, we merge.
+            if (existingByEmail) {
+                console.log(`Found existing user by email ${args.email}. Linking to Clerk ID ${args.clerkId}`);
+                existing = existingByEmail;
+            }
+        }
 
         const isAdmin = args.clerkId === process.env.ADMIN_CLERK_ID;
 
@@ -22,14 +37,15 @@ export const syncUser = mutation({
         if (existing) {
             await ctx.db.patch(existing._id, {
                 ...args,
-                isAdmin: existing.isAdmin || isAdmin, // 既存の管理者は維持、新規一致なら付与
+                clerkId: args.clerkId, // Ensure Clerk ID is updated (crucial for migration linking)
+                isAdmin: existing.isAdmin || isAdmin,
                 updatedAt: Date.now(),
             });
             return existing._id;
         } else {
             const newUserId = await ctx.db.insert("users", {
                 ...args,
-                discordRoles: [], // 初期値は空、あとでDiscord連携で更新
+                discordRoles: [],
                 isAdmin,
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
@@ -125,9 +141,9 @@ export const getUserByStripeCustomerId = query({
 export const updateSubscriptionStatus = mutation({
     args: {
         discordId: v.string(),
-        stripeCustomerId: v.string(),
+        stripeCustomerId: v.optional(v.string()), // Optional for manual/role-based sync
         subscriptionStatus: v.string(),
-        roleId: v.optional(v.string()), // ★これを受け取れるように追加
+        roleId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const user = await ctx.db
@@ -145,11 +161,17 @@ export const updateSubscriptionStatus = mutation({
             newRoles = [...newRoles, args.roleId];
         }
 
-        await ctx.db.patch(user._id, {
-            stripeCustomerId: args.stripeCustomerId,
+        const patchData: any = {
             subscriptionStatus: args.subscriptionStatus,
-            discordRoles: newRoles, // ★更新！
-        });
+            discordRoles: newRoles,
+            updatedAt: Date.now(),
+        };
+
+        if (args.stripeCustomerId) {
+            patchData.stripeCustomerId = args.stripeCustomerId;
+        }
+
+        await ctx.db.patch(user._id, patchData);
     },
 });
 
@@ -215,5 +237,30 @@ export const storeUser = mutation({
             updatedAt: Date.now(),
         });
         return userId;
+    },
+});
+
+export const getUserByClerkIdQuery = query({
+    args: { clerkId: v.string() },
+    handler: async (ctx, args) => {
+        return await getUserByClerkId(ctx, args.clerkId);
+    },
+});
+
+export const getAllUsers = query({
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return [];
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+            .first();
+
+        if (!user || !user.isAdmin) {
+            throw new Error("Unauthorized");
+        }
+
+        return await ctx.db.query("users").order("desc").collect();
     },
 });

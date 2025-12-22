@@ -174,3 +174,69 @@ export const getContentPerformance = query({
         return stats.sort((a, b) => b.views - a.views);
     },
 });
+
+export const getUserBehaviorAnalytics = query({
+    args: {
+        startDate: v.optional(v.number()),
+        endDate: v.optional(v.number()),
+    },
+    handler: async (ctx, args) => {
+        await checkAdmin(ctx);
+
+        const logs = await ctx.db.query("dailyLearningLogs").collect();
+        const users = await ctx.db.query("users").collect();
+
+        const JST_OFFSET = 9 * 60 * 60 * 1000;
+        let filteredLogs = logs;
+
+        if (args.startDate && args.endDate) {
+            const startStr = new Date(args.startDate + JST_OFFSET).toISOString().split("T")[0];
+            const endStr = new Date(args.endDate + JST_OFFSET).toISOString().split("T")[0];
+            filteredLogs = logs.filter(l => l.date >= startStr && l.date <= endStr);
+        } else {
+            // Default to last 30 days
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+            filteredLogs = logs.filter(l => l.date >= thirtyDaysAgoStr);
+        }
+
+        // 1. Daily Activity (Total minutes watched per day)
+        const dailyActivityMap = new Map<string, number>();
+        filteredLogs.forEach(log => {
+            const current = dailyActivityMap.get(log.date) || 0;
+            dailyActivityMap.set(log.date, current + log.minutesWatched);
+        });
+
+        const dailyActivity = Array.from(dailyActivityMap.entries())
+            .map(([date, minutes]) => ({ date, minutes }))
+            .sort((a, b) => a.date.localeCompare(b.date));
+
+        // 2. Top Learners (Users with most watch time in range)
+        const userWatchTimeMap = new Map<string, number>();
+        filteredLogs.forEach(log => {
+            const current = userWatchTimeMap.get(log.userId) || 0;
+            userWatchTimeMap.set(log.userId, current + log.minutesWatched);
+        });
+
+        const topLearners = Array.from(userWatchTimeMap.entries())
+            .map(([userId, minutes]) => {
+                const user = users.find(u => u._id === userId);
+                return {
+                    userId,
+                    name: user?.name || "Unknown",
+                    email: user?.email || "",
+                    imageUrl: user?.imageUrl,
+                    minutesWatched: minutes,
+                };
+            })
+            .sort((a, b) => b.minutesWatched - a.minutesWatched)
+            .slice(0, 10); // Top 10
+
+        return {
+            dailyActivity,
+            topLearners,
+        };
+    },
+});
+

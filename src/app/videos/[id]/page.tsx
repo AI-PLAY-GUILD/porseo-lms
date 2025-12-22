@@ -121,9 +121,33 @@ export default function VideoPage() {
                                     completed: isCompleted,
                                 });
                             }
+
+                            // Log learning time
+                            const now = Date.now();
+                            if (lastLoggedTimeRef.current > 0) {
+                                const diff = (now - lastLoggedTimeRef.current) / 1000 / 60; // minutes
+                                if (diff > 0 && diff < 1) { // Ignore large jumps (e.g. pause/resume after long time)
+                                    accumulatedTimeRef.current += diff;
+                                }
+                            }
+                            lastLoggedTimeRef.current = now;
+
+                            // Sync to server every 30 seconds or if accumulated > 1 minute
+                            if (accumulatedTimeRef.current >= 0.5) { // 30 seconds
+                                logLearningTime({ minutesWatched: accumulatedTimeRef.current });
+                                accumulatedTimeRef.current = 0;
+                            }
                         }}
                         onPlay={() => {
-                            // Start tracking time
+                            lastLoggedTimeRef.current = Date.now();
+                        }}
+                        onPause={() => {
+                            // Flush remaining time
+                            if (accumulatedTimeRef.current > 0) {
+                                logLearningTime({ minutesWatched: accumulatedTimeRef.current });
+                                accumulatedTimeRef.current = 0;
+                            }
+                            lastLoggedTimeRef.current = 0;
                         }}
                         onEnded={() => {
                             updateProgress({
@@ -131,7 +155,14 @@ export default function VideoPage() {
                                 currentTime: video.duration || 0,
                                 completed: true,
                             });
+                            // Flush remaining time
+                            if (accumulatedTimeRef.current > 0) {
+                                logLearningTime({ minutesWatched: accumulatedTimeRef.current });
+                                accumulatedTimeRef.current = 0;
+                            }
+                            lastLoggedTimeRef.current = 0;
                         }}
+
                     />
                 </div>
             </Card>
