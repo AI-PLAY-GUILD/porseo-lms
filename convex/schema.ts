@@ -11,7 +11,9 @@ export default defineSchema({
         discordRoles: v.array(v.string()),
         stripeCustomerId: v.optional(v.string()),
         subscriptionStatus: v.optional(v.string()),
+        subscriptionName: v.optional(v.string()),
         isAdmin: v.boolean(),
+
         createdAt: v.number(),
         updatedAt: v.number(),
     })

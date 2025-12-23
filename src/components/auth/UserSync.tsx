@@ -10,6 +10,7 @@ export default function UserSync() {
     const syncUser = useMutation(api.users.syncUser);
     const getDiscordRoles = useAction(api.discord.getDiscordRoles);
     const updateDiscordRoles = useMutation(api.users.updateDiscordRoles);
+    const createCustomer = useAction(api.stripe.createCustomer);
 
     useEffect(() => {
         const sync = async () => {
@@ -24,16 +25,19 @@ export default function UserSync() {
             });
 
             try {
-                // 2. Discordロールを同期 (サーバーサイドでトークン取得)
+                // 2. Stripe Customer作成 (存在しない場合)
+                await createCustomer({});
+
+                // 3. Discordロールを同期 (サーバーサイドでトークン取得)
                 const roles = await getDiscordRoles({});
 
-                // 3. DBにロールを保存
+                // 4. DBにロールを保存
                 await updateDiscordRoles({
                     clerkId: user.id,
                     discordRoles: roles,
                 });
             } catch (error) {
-                console.error("Failed to sync Discord roles:", error);
+                console.error("Failed to sync external services:", error);
             }
         };
 

@@ -164,6 +164,7 @@ export const getStats = query({
             userEmail: user.email,
             userAvatar: user.imageUrl,
             inProgressVideos: validInProgressVideos,
+            subscriptionStatus: user.subscriptionStatus,
         };
     },
 });

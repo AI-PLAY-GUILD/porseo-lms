@@ -59,47 +59,6 @@ export const updateSubscriptionStatusByCustomerId = mutation({
     },
 });
 
-// 4. ユーザー情報を保存・更新（Clerk連携用）
-export const storeUser = mutation({
-    args: {
-        clerkId: v.string(),
-        email: v.string(),
-        name: v.string(),
-        imageUrl: v.optional(v.string()),
-        discordId: v.optional(v.string()),
-    },
-    handler: async (ctx, args) => {
-        const user = await ctx.db
-            .query("users")
-            .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-            .first();
-
-        if (user) {
-            await ctx.db.patch(user._id, {
-                email: args.email,
-                name: args.name,
-                imageUrl: args.imageUrl,
-                discordId: args.discordId,
-                updatedAt: Date.now(),
-            });
-            return user._id;
-        }
-
-        const userId = await ctx.db.insert("users", {
-            clerkId: args.clerkId,
-            email: args.email,
-            name: args.name,
-            imageUrl: args.imageUrl,
-            discordId: args.discordId,
-            discordRoles: [],
-            isAdmin: false,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-        });
-        return userId;
-    },
-});
-
 export const batchMigrateUsers = internalMutation({
     args: {
         users: v.array(
@@ -160,3 +119,16 @@ export const batchMigrateUsers = internalMutation({
     },
 });
 
+
+export const setStripeCustomerId = internalMutation({
+    args: {
+        userId: v.id("users"),
+        stripeCustomerId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.userId, {
+            stripeCustomerId: args.stripeCustomerId,
+            updatedAt: Date.now(),
+        });
+    },
+});

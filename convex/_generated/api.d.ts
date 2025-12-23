@@ -15,6 +15,7 @@ import type * as discord from "../discord.js";
 import type * as internal_ from "../internal.js";
 import type * as rag from "../rag.js";
 import type * as ragDb from "../ragDb.js";
+import type * as stripe from "../stripe.js";
 import type * as tags from "../tags.js";
 import type * as users from "../users.js";
 import type * as videoProgress from "../videoProgress.js";
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   internal: typeof internal_;
   rag: typeof rag;
   ragDb: typeof ragDb;
+  stripe: typeof stripe;
   tags: typeof tags;
   users: typeof users;
   videoProgress: typeof videoProgress;

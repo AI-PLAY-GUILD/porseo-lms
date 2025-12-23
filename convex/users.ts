@@ -143,6 +143,7 @@ export const updateSubscriptionStatus = mutation({
         discordId: v.string(),
         stripeCustomerId: v.optional(v.string()), // Optional for manual/role-based sync
         subscriptionStatus: v.string(),
+        subscriptionName: v.optional(v.string()),
         roleId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
@@ -167,9 +168,14 @@ export const updateSubscriptionStatus = mutation({
             updatedAt: Date.now(),
         };
 
+        if (args.subscriptionName) {
+            patchData.subscriptionName = args.subscriptionName;
+        }
+
         if (args.stripeCustomerId) {
             patchData.stripeCustomerId = args.stripeCustomerId;
         }
+
 
         await ctx.db.patch(user._id, patchData);
     },

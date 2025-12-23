@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
+import { convex } from '@/lib/convex';
+import { api } from '../../../../convex/_generated/api';
 
 export async function POST(req: Request) {
     try {
@@ -9,23 +11,24 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing discordId' }, { status: 400 });
         }
 
-        const session = await stripe.checkout.sessions.create({
+        // Fetch user from Convex to get Stripe Customer ID
+        let stripeCustomerId: string | undefined;
+        if (userId) {
+            try {
+                const user = await convex.query(api.users.getUserByClerkIdQuery, { clerkId: userId });
+                if (user?.stripeCustomerId) {
+                    stripeCustomerId = user.stripeCustomerId;
+                }
+            } catch (error) {
+                console.error('Error fetching user from Convex:', error);
+            }
+        }
+
+        const sessionParams: any = {
             payment_method_types: ['card'],
             line_items: [
                 {
-                    // Replace with your actual price ID or create a product on the fly (not recommended for prod)
-                    // For now, I'll use a placeholder or assume the user provides it via env or it's hardcoded.
-                    // The prompt didn't specify a price ID, so I'll add a comment.
-                    price_data: {
-                        currency: 'jpy',
-                        product_data: {
-                            name: 'Premium Membership',
-                        },
-                        unit_amount: 980,
-                        recurring: {
-                            interval: 'month',
-                        },
-                    },
+                    price: 'price_1Sh8jc097600wFiQBljFwC9N',
                     quantity: 1,
                 },
             ],
@@ -34,9 +37,15 @@ export async function POST(req: Request) {
             cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
             metadata: {
                 discordId,
-                userId: userId || '', // Optional
+                userId: userId || '',
             },
-        });
+        };
+
+        if (stripeCustomerId) {
+            sessionParams.customer = stripeCustomerId;
+        }
+
+        const session = await stripe.checkout.sessions.create(sessionParams);
 
         return NextResponse.json({ url: session.url });
     } catch (error: any) {

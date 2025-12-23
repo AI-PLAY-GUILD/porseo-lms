@@ -77,12 +77,23 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     // Action 1: Update Convex DB
     // We use the string identifier for the mutation since we don't have generated types here
     // Changed to "users:..." because internal.ts is private
+
+    // Retrieve the session with line_items expanded to get the product name
+    const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ['line_items'],
+    });
+
+    const lineItem = fullSession.line_items?.data[0];
+    const subscriptionName = lineItem?.description || 'Premium Membership';
+
     await convex.mutation("users:updateSubscriptionStatus" as any, {
         discordId,
         stripeCustomerId: customerId,
         subscriptionStatus: 'active',
+        subscriptionName: subscriptionName,
         roleId: roleId, // Pass the role ID to Convex
     });
+
 
     // Action 2: Add Discord Role
     if (discordToken && guildId && roleId) {

@@ -10,6 +10,7 @@ import { ArrowRight, LayoutDashboard, ShieldCheck, CreditCard } from "lucide-rea
 import { useRef, useState, useEffect } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { StripeLinkModal } from "@/components/stripe-link-modal";
 
 export default function Home() {
     const { isSignedIn, user, isLoaded } = useUser();
@@ -152,19 +153,24 @@ export default function Home() {
                                         </Link>
                                     </Button>
                                 ) : (
-                                    <Button
-                                        onClick={handleCheckout}
-                                        disabled={checkoutLoading}
-                                        size="lg"
-                                        className="w-full h-14 text-lg font-bold bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white hover:scale-[1.02] transition-all duration-300 rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.4)]"
-                                    >
-                                        {checkoutLoading ? "Loading..." : (
-                                            <span className="flex items-center justify-center gap-2">
-                                                <CreditCard className="w-5 h-5" />
-                                                Join Now (¥980/mo)
-                                            </span>
-                                        )}
-                                    </Button>
+                                    <>
+                                        <Button
+                                            onClick={handleCheckout}
+                                            disabled={checkoutLoading}
+                                            size="lg"
+                                            className="w-full h-14 text-lg font-bold bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white hover:scale-[1.02] transition-all duration-300 rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.4)]"
+                                        >
+                                            {checkoutLoading ? "Loading..." : (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <CreditCard className="w-5 h-5" />
+                                                    Join Now (¥980/mo)
+                                                </span>
+                                            )}
+                                        </Button>
+                                        <div className="flex justify-center">
+                                            <StripeLinkModal />
+                                        </div>
+                                    </>
                                 )}
 
                                 {userData?.isAdmin && (
@@ -203,11 +209,11 @@ export default function Home() {
                         </div>
                     )}
                 </div>
-            </main>
+            </main >
 
             <footer className="absolute bottom-6 text-[10px] text-gray-600 z-10 uppercase tracking-widest">
                 © 2025 PORSEO AI Community Platform
             </footer>
-        </div>
+        </div >
     );
 }
