@@ -7,6 +7,8 @@ import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 
+import { BrutalistLoader } from "@/components/ui/brutalist-loader";
+
 export default function EditVideoPage() {
     const params = useParams();
     const videoId = params.id as Id<"videos">;
@@ -127,7 +129,11 @@ export default function EditVideoPage() {
         }
     };
 
-    if (userData === undefined || video === undefined) return <div className="p-8">読み込み中...</div>;
+    if (userData === undefined || video === undefined) return (
+        <div className="flex items-center justify-center min-h-screen bg-cream">
+            <BrutalistLoader />
+        </div>
+    );
     if (!userData?.isAdmin) return null;
     if (video === null) return <div className="p-8">動画が見つかりません</div>;
 

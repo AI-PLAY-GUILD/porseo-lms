@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 
+import { BrutalistLoader } from "@/components/ui/brutalist-loader";
+
 export default function AdminLayout({
     children,
 }: Readonly<{
@@ -25,8 +27,8 @@ export default function AdminLayout({
 
     if (userData === undefined) {
         return (
-            <div className="flex h-screen w-full items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <div className="flex h-screen w-full items-center justify-center bg-cream">
+                <BrutalistLoader />
             </div>
         );
     }

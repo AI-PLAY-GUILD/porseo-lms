@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Calendar, FileText, List } from "lucide-react";
+import { BrutalistLoader } from "@/components/ui/brutalist-loader";
 
 export default function VideoPage() {
     const params = useParams();
@@ -32,7 +33,7 @@ export default function VideoPage() {
     if (video === undefined || access === undefined) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
-                <div className="animate-pulse text-muted-foreground">読み込み中...</div>
+                <BrutalistLoader />
             </div>
         );
     }

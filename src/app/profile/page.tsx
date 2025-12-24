@@ -22,6 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, User, Shield, Mail } from "lucide-react";
 import { useState } from "react";
 
+import { BrutalistLoader } from "@/components/ui/brutalist-loader";
+
 export default function ProfilePage() {
     const userData = useQuery(api.users.getUser);
     const [loading, setLoading] = useState(false);
@@ -49,7 +51,7 @@ export default function ProfilePage() {
     if (userData === undefined) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin h-8 w-8 border-4 border-primary rounded-full border-t-transparent"></div>
+                <BrutalistLoader />
             </div>
         );
     }
@@ -64,7 +66,7 @@ export default function ProfilePage() {
         <SidebarProvider>
             <AppSidebar user={{ name: userData.name, email: userData.email, avatar: userData.imageUrl }} />
             <SidebarInset>
-                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b w-full">
+                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 w-full">
                     <div className="flex items-center gap-2 px-4">
                         <Breadcrumb>
                             <BreadcrumbList>
