@@ -8,6 +8,8 @@ import { StripeLinkModal } from "@/components/stripe-link-modal";
 import { BrutalistHeader } from "@/components/landing/BrutalistHeader";
 import { BrutalistHero } from "@/components/landing/BrutalistHero";
 import { BrutalistFeatures } from "@/components/landing/BrutalistFeatures";
+import { BrutalistShowcase } from "@/components/landing/BrutalistShowcase";
+import { BrutalistTeam } from "@/components/landing/BrutalistTeam";
 import { BrutalistPricing } from "@/components/landing/BrutalistPricing";
 import { BrutalistFooter } from "@/components/landing/BrutalistFooter";
 import { BackToTop } from "@/components/landing/back-to-top";
@@ -103,7 +105,7 @@ export default function Home() {
 
     return (
         <div className="min-h-screen bg-cream text-black font-body selection:bg-pop-yellow selection:text-black overflow-x-hidden">
-            <BrutalistHeader isSignedIn={isSignedIn ?? false} isMember={isMember ?? false} />
+            <BrutalistHeader isSignedIn={isSignedIn ?? false} isMember={isMember ?? false} isAdmin={userData?.isAdmin ?? false} />
 
             <main>
                 <BrutalistHero
@@ -113,6 +115,10 @@ export default function Home() {
                 />
 
                 <BrutalistFeatures />
+
+                <BrutalistShowcase />
+
+                <BrutalistTeam />
 
                 {/* Removed LandingContent and LandingTeam for now as they are not brutalized yet. 
                     Can add them back if needed or create Brutalist versions. 

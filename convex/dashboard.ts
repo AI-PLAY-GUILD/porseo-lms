@@ -37,7 +37,7 @@ export const getStats = query({
             .withIndex("by_user", (q) => q.eq("userId", user._id))
             .collect();
 
-        const totalMinutes = logs.reduce((acc, log) => acc + log.minutesWatched, 0);
+        const totalMinutes = Math.ceil(logs.reduce((acc, log) => acc + log.minutesWatched, 0));
         const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
 
         // Chart Data Construction

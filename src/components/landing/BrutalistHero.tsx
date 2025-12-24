@@ -43,7 +43,7 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
             </div>
 
             <h1 ref={titleRef} className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tight mb-8 text-black leading-[0.9]">
-                MASTER <span className="text-pop-red text-stroke-2 text-transparent">AI</span>,
+                PLAY WITH <span className="text-pop-red text-stroke-2 text-transparent">AI</span>,
                 <br />
                 SHAPE THE <span className="bg-pop-yellow px-2 border-4 border-black transform inline-block -rotate-2">FUTURE</span>
             </h1>

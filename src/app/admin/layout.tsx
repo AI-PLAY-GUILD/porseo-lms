@@ -40,15 +40,15 @@ export default function AdminLayout({
     return (
         <SidebarProvider>
             <AdminSidebar user={userData ? { name: userData.name, email: userData.email, avatar: userData.imageUrl } : undefined} />
-            <SidebarInset>
-                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b">
+            <SidebarInset className="bg-cream">
+                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 w-full bg-cream px-4 border-b-2 border-black">
                     <div className="flex items-center gap-2">
-                        <SidebarTrigger className="-ml-1" />
-                        <Separator orientation="vertical" className="mr-2 h-4" />
-                        <span className="font-semibold">管理者コンソール</span>
+                        <SidebarTrigger className="hover:bg-pop-yellow border-2 border-black rounded-md transition-colors" />
+                        <Separator orientation="vertical" className="mr-2 h-4 bg-black" />
+                        <span className="font-black text-black">管理者コンソール</span>
                     </div>
                 </header>
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+                <div className="flex flex-1 flex-col gap-6 p-6 pt-6">
                     {children}
                 </div>
             </SidebarInset>

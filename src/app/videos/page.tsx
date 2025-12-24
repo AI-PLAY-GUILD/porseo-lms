@@ -83,13 +83,13 @@ export default function AllVideosPage() {
                                                 </div>
                                                 <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-200 border-t-2 border-black">
                                                     <div
-                                                        className="h-full bg-pop-green"
+                                                        className="h-full bg-pop-purple"
                                                         style={{ width: `${video.progress}%` }}
                                                     />
                                                 </div>
                                                 <div className="absolute top-2 left-2 z-10">
                                                     <Badge className="bg-pop-yellow text-black border-2 border-black shadow-sm font-bold rounded-md">
-                                                        残り {Math.max(0, 100 - video.progress)}%
+                                                        {video.progress}%
                                                     </Badge>
                                                 </div>
                                             </div>
@@ -146,7 +146,7 @@ export default function AllVideosPage() {
                                                         学習済み
                                                     </Badge>
                                                 )}
-                                                {!video.userProgress?.completed && video.userProgress && video.userProgress.currentTime > 0 && (
+                                                {!video.userProgress?.completed && video.userProgress && (
                                                     <Badge className="bg-pop-yellow text-black border-2 border-black shadow-sm font-bold">
                                                         学習中
                                                     </Badge>

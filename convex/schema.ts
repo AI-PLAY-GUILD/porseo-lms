@@ -61,6 +61,7 @@ export default defineSchema({
         videoId: v.id("videos"),
         currentTime: v.number(),
         completed: v.boolean(),
+        isHidden: v.optional(v.boolean()),
         lastWatchedAt: v.number(),
         createdAt: v.number(),
         updatedAt: v.number(),

@@ -56,7 +56,7 @@ export function BrutalistPricing({ handleCheckout, checkoutLoading }: BrutalistP
                             ))}
                         </div>
 
-                        <Button asChild size="lg" className="w-full max-w-md h-20 text-2xl font-black rounded-xl bg-black text-white hover:bg-gray-800 hover:scale-[1.02] transition-all shadow-[8px_8px_0px_0px_#FF5757] border-4 border-transparent hover:border-black">
+                        <Button asChild size="lg" className="w-full max-w-md h-20 text-2xl font-black rounded-xl bg-black text-white hover:bg-pop-purple hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all shadow-[8px_8px_0px_0px_#FF5757] border-4 border-transparent hover:border-black">
                             <Link href="/join">
                                 START YOUR JOURNEY NOW 🚀
                             </Link>

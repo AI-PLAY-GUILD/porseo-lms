@@ -79,9 +79,19 @@ export const getPublishedVideos = query({
             .order("desc")
             .collect();
 
-        // 2. If not logged in, return videos without progress
+        // Helper to resolve thumbnail
+        const resolveThumbnail = async (storageId?: string) => {
+            if (!storageId) return null;
+            return await ctx.storage.getUrl(storageId);
+        };
+
+        // 2. If not logged in, return videos without progress but WITH thumbnails
         if (!identity) {
-            return videos.map(v => ({ ...v, userProgress: null }));
+            return await Promise.all(videos.map(async (v) => ({
+                ...v,
+                userProgress: null,
+                thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId)
+            })));
         }
 
         const user = await ctx.db
@@ -90,7 +100,11 @@ export const getPublishedVideos = query({
             .first();
 
         if (!user) {
-            return videos.map(v => ({ ...v, userProgress: null }));
+            return await Promise.all(videos.map(async (v) => ({
+                ...v,
+                userProgress: null,
+                thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId)
+            })));
         }
 
         // 3. Get user's progress for all videos
@@ -103,10 +117,7 @@ export const getPublishedVideos = query({
 
         // 4. Merge progress and resolve thumbnail URL
         return await Promise.all(videos.map(async (video) => {
-            let thumbnailUrl = null;
-            if (video.customThumbnailStorageId) {
-                thumbnailUrl = await ctx.storage.getUrl(video.customThumbnailStorageId);
-            }
+            const thumbnailUrl = await resolveThumbnail(video.customThumbnailStorageId);
 
             return {
                 ...video,

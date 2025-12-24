@@ -6,13 +6,15 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { SignInButton } from "@clerk/nextjs";
 
 interface BrutalistHeaderProps {
     isSignedIn: boolean;
     isMember: boolean;
+    isAdmin?: boolean;
 }
 
-export function BrutalistHeader({ isSignedIn, isMember }: BrutalistHeaderProps) {
+export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHeaderProps) {
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
@@ -61,14 +63,23 @@ export function BrutalistHeader({ isSignedIn, isMember }: BrutalistHeaderProps) 
 
                 <div className="hidden md:flex items-center gap-4">
                     {isSignedIn ? (
-                        <Button asChild className="bg-pop-green text-black border-2 border-black brutal-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none font-bold rounded-lg">
-                            <Link href="/dashboard">DASHBOARD</Link>
-                        </Button>
+                        <div className="flex gap-3">
+                            {isAdmin && (
+                                <Button asChild className="bg-pop-purple text-white border-2 border-black brutal-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none font-bold rounded-lg">
+                                    <Link href="/admin">ADMIN</Link>
+                                </Button>
+                            )}
+                            <Button asChild className="bg-pop-green text-black border-2 border-black brutal-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none font-bold rounded-lg">
+                                <Link href="/dashboard">DASHBOARD</Link>
+                            </Button>
+                        </div>
                     ) : (
                         <div className="flex gap-3">
-                            <Button asChild variant="ghost" className="text-black font-bold hover:bg-black/5 hover:text-pop-purple">
-                                <Link href="/sign-in">LOGIN</Link>
-                            </Button>
+                            <SignInButton mode="modal" forceRedirectUrl="/playground">
+                                <Button variant="ghost" className="text-black font-bold hover:bg-black/5 hover:text-pop-purple cursor-pointer">
+                                    LOGIN
+                                </Button>
+                            </SignInButton>
                             <Button asChild className="bg-black text-white border-2 border-black hover:bg-gray-800 brutal-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none font-bold rounded-lg">
                                 <Link href="/join">JOIN NOW</Link>
                             </Button>
@@ -97,14 +108,23 @@ export function BrutalistHeader({ isSignedIn, isMember }: BrutalistHeaderProps) 
                                 ))}
                                 <div className="h-1 bg-black my-2" />
                                 {isSignedIn ? (
-                                    <Button asChild className="w-full bg-pop-green text-black border-2 border-black brutal-shadow font-bold h-12">
-                                        <Link href="/dashboard">DASHBOARD</Link>
-                                    </Button>
+                                    <div className="flex flex-col gap-4">
+                                        {isAdmin && (
+                                            <Button asChild className="w-full bg-pop-purple text-white border-2 border-black brutal-shadow font-bold h-12">
+                                                <Link href="/admin">ADMIN</Link>
+                                            </Button>
+                                        )}
+                                        <Button asChild className="w-full bg-pop-green text-black border-2 border-black brutal-shadow font-bold h-12">
+                                            <Link href="/dashboard">DASHBOARD</Link>
+                                        </Button>
+                                    </div>
                                 ) : (
                                     <div className="flex flex-col gap-4">
-                                        <Button asChild variant="outline" className="w-full border-2 border-black font-bold h-12 bg-white text-black brutal-shadow">
-                                            <Link href="/sign-in">LOGIN</Link>
-                                        </Button>
+                                        <SignInButton mode="modal" forceRedirectUrl="/playground">
+                                            <Button variant="outline" className="w-full border-2 border-black font-bold h-12 bg-white text-black brutal-shadow cursor-pointer">
+                                                LOGIN
+                                            </Button>
+                                        </SignInButton>
                                         <Button asChild className="w-full bg-black text-white border-2 border-black font-bold h-12 brutal-shadow">
                                             <Link href="/join">JOIN NOW</Link>
                                         </Button>
