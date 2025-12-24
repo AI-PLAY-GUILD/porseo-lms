@@ -134,7 +134,7 @@ export default function JoinPage() {
                         <span className="text-xl sm:text-2xl font-black text-black tracking-[0.2em] uppercase bg-pop-yellow px-4 border-2 border-black transform -rotate-2 brutal-shadow-sm">
                             AI Play Guild
                         </span>
-                        <span className="text-5xl sm:text-7xl font-black tracking-tighter text-black mt-4">
+                        <span className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter text-black mt-4">
                             {isSignedIn ? "PLAYGROUND AREA" : "CHOOSE YOUR PLAN"}
                         </span>
                     </h1>
@@ -207,7 +207,7 @@ export default function JoinPage() {
 
                                     <div>
                                         <div className="flex items-baseline justify-center gap-1 text-black">
-                                            <span className="text-6xl font-black tracking-tighter">¥4,000</span>
+                                            <span className="text-5xl sm:text-6xl font-black tracking-tighter">¥4,000</span>
                                             <span className="text-xl text-gray-500 font-bold">/ month</span>
                                         </div>
                                         <p className="text-black text-sm mt-2 font-bold bg-pop-green/20 inline-block px-2 py-1 rounded-md border-2 border-transparent">

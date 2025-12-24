@@ -84,7 +84,7 @@ export default function ProfilePage() {
                 <div className="flex flex-1 flex-col gap-8 p-8 max-w-4xl mx-auto w-full">
 
                     {/* Header Section */}
-                    <div className="flex items-center gap-6">
+                    <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
                         <Avatar className="h-24 w-24 border-4 border-muted">
                             <AvatarImage src={userData.imageUrl} alt={userData.name} />
                             <AvatarFallback className="text-2xl">
@@ -93,11 +93,11 @@ export default function ProfilePage() {
                         </Avatar>
                         <div className="space-y-1">
                             <h1 className="text-3xl font-bold">{userData.name}</h1>
-                            <div className="flex items-center gap-2 text-muted-foreground">
+                            <div className="flex items-center justify-center sm:justify-start gap-2 text-muted-foreground">
                                 <Mail className="w-4 h-4" />
                                 <span>{userData.email}</span>
                             </div>
-                            <div className="flex items-center gap-2 mt-2">
+                            <div className="flex items-center justify-center sm:justify-start gap-2 mt-2">
                                 {userData.isAdmin && (
                                     <Badge variant="secondary" className="gap-1">
                                         <Shield className="w-3 h-3" />

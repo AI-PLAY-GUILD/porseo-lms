@@ -42,32 +42,32 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
                 <span className="font-heading tracking-wide">Next Gen AI Community</span>
             </div>
 
-            <h1 ref={titleRef} className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tight mb-8 text-black leading-[0.9]">
+            <h1 ref={titleRef} className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tight mb-8 text-black leading-[0.9]">
                 PLAY WITH <span className="text-pop-red text-stroke-2 text-transparent">AI</span>,
                 <br />
                 SHAPE THE <span className="bg-pop-yellow px-2 border-4 border-black transform inline-block -rotate-2">FUTURE</span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-black font-bold max-w-2xl mb-12 leading-relaxed bg-white/50 backdrop-blur-sm p-4 rounded-xl border-2 border-black brutal-shadow-sm transform rotate-1">
+            <p className="text-lg md:text-2xl text-black font-bold max-w-2xl mb-12 leading-relaxed bg-white/50 backdrop-blur-sm p-4 rounded-xl border-2 border-black brutal-shadow-sm transform rotate-1">
                 AI Play Guildは、最先端のAI技術を遊び倒す<br className="hidden md:block" />
                 プレミアムコミュニティです。
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto px-4 sm:px-0">
                 {isSignedIn ? (
-                    <Button asChild size="lg" className="h-16 px-10 text-xl font-black rounded-xl bg-pop-green text-black border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
+                    <Button asChild size="lg" className="h-14 sm:h-16 w-full sm:w-auto px-6 sm:px-10 text-lg sm:text-xl font-black rounded-xl bg-pop-green text-black border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
                         <Link href="/dashboard">
-                            GO TO DASHBOARD <ArrowRight className="ml-2 w-6 h-6" />
+                            GO TO DASHBOARD <ArrowRight className="ml-2 w-5 sm:w-6 h-5 sm:h-6" />
                         </Link>
                     </Button>
                 ) : (
                     <>
-                        <Button asChild size="lg" className="h-16 px-10 text-xl font-black rounded-xl bg-pop-red text-white border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
+                        <Button asChild size="lg" className="h-14 sm:h-16 w-full sm:w-auto px-6 sm:px-10 text-lg sm:text-xl font-black rounded-xl bg-pop-red text-white border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
                             <Link href="/join">
                                 JOIN COMMUNITY
                             </Link>
                         </Button>
-                        <Button asChild variant="outline" size="lg" className="h-16 px-10 text-xl font-black rounded-xl bg-white text-black border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
+                        <Button asChild variant="outline" size="lg" className="h-14 sm:h-16 w-full sm:w-auto px-6 sm:px-10 text-lg sm:text-xl font-black rounded-xl bg-white text-black border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
                             <Link href="#features">
                                 LEARN MORE
                             </Link>

@@ -95,7 +95,7 @@ export default function DashboardPage() {
             </TabsList>
             <TabsContent value="overview" className="space-y-6">
               {/* Stats Cards */}
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-pop-yellow/20 border-b-2 border-black">
                     <CardTitle className="text-sm font-black text-black uppercase tracking-wider">総学習時間</CardTitle>
@@ -144,9 +144,9 @@ export default function DashboardPage() {
 
 
 
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
                 {/* Chart Section */}
-                <Card className="col-span-4 bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
+                <Card className="col-span-1 md:col-span-2 lg:col-span-4 bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
                   <CardHeader className="border-b-2 border-black bg-gray-50">
                     <CardTitle className="font-black text-xl">学習の推移</CardTitle>
                     <CardDescription className="font-bold text-gray-500">過去7日間の学習時間</CardDescription>
@@ -164,7 +164,7 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* In-Progress Videos Section */}
-                <Card className="col-span-3 bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
+                <Card className="col-span-1 md:col-span-2 lg:col-span-3 bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
                   <CardHeader className="border-b-2 border-black bg-gray-50">
                     <CardTitle className="font-black text-xl">学習中のコンテンツ</CardTitle>
                     <CardDescription className="font-bold text-gray-500">前回の続きから始めましょう</CardDescription>

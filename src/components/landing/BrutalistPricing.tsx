@@ -33,7 +33,7 @@ export function BrutalistPricing({ handleCheckout, checkoutLoading }: BrutalistP
                             POPULAR CHOICE
                         </div>
 
-                        <h2 className="text-5xl md:text-7xl font-black text-black mb-6 uppercase tracking-tighter mt-4">
+                        <h2 className="text-3xl sm:text-5xl md:text-7xl font-black text-black mb-6 uppercase tracking-tighter mt-4">
                             Simple Pricing
                         </h2>
                         <p className="text-xl font-bold text-black mb-12">
@@ -41,8 +41,8 @@ export function BrutalistPricing({ handleCheckout, checkoutLoading }: BrutalistP
                         </p>
 
                         <div className="flex items-baseline justify-center gap-2 mb-12">
-                            <span className="text-7xl md:text-8xl font-black text-black">¥980</span>
-                            <span className="text-2xl font-bold text-black">/ month</span>
+                            <span className="text-5xl sm:text-7xl md:text-8xl font-black text-black">¥980</span>
+                            <span className="text-xl sm:text-2xl font-bold text-black">/ month</span>
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-x-12 gap-y-6 text-left max-w-2xl mx-auto mb-12 bg-cream p-8 rounded-xl border-4 border-black">
@@ -56,7 +56,7 @@ export function BrutalistPricing({ handleCheckout, checkoutLoading }: BrutalistP
                             ))}
                         </div>
 
-                        <Button asChild size="lg" className="w-full max-w-md h-20 text-2xl font-black rounded-xl bg-black text-white hover:bg-pop-purple hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all shadow-[8px_8px_0px_0px_#FF5757] border-4 border-transparent hover:border-black">
+                        <Button asChild size="lg" className="w-full max-w-md h-16 sm:h-20 text-xl sm:text-2xl font-black rounded-xl bg-black text-white hover:bg-pop-purple hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all shadow-[8px_8px_0px_0px_#FF5757] border-4 border-transparent hover:border-black">
                             <Link href="/join">
                                 START YOUR JOURNEY NOW 🚀
                             </Link>

@@ -44,11 +44,11 @@ export function BrutalistShowcase() {
 
                     {/* Left Column: Text Content */}
                     <div className="lg:w-1/3 text-left">
-                        <h2 className="text-5xl md:text-6xl font-black text-black uppercase tracking-tighter mb-6 leading-tight">
+                        <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-black uppercase tracking-tighter mb-6 leading-tight">
                             HANDS-ON <br />
                             <span className="text-white text-stroke-2">SHOWCASE</span>
                         </h2>
-                        <p className="text-xl font-bold text-black mb-6">
+                        <p className="text-lg sm:text-xl font-bold text-black mb-6">
                             実際に作成するプロジェクトの一部をチラ見せ。<br />
                             手を動かして、AIを使い倒せ。
                         </p>

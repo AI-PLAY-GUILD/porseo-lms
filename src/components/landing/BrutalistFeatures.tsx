@@ -44,10 +44,10 @@ export function BrutalistFeatures() {
         <section id="features" className="py-24 bg-white border-b-4 border-black relative">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-20">
-                    <h2 className="text-5xl md:text-7xl font-black mb-6 text-black uppercase tracking-tighter">
+                    <h2 className="text-3xl sm:text-5xl md:text-7xl font-black mb-6 text-black uppercase tracking-tighter">
                         Why <span className="bg-pop-purple text-white px-4 transform -rotate-2 inline-block border-4 border-black">AI Play Guild?</span>
                     </h2>
-                    <p className="text-xl font-bold text-black max-w-2xl mx-auto">
+                    <p className="text-lg sm:text-xl font-bold text-black max-w-2xl mx-auto">
                         AI時代を生き抜くための必須スキルと、<br />
                         最高にクレイジーな仲間がここにいる。
                     </p>
