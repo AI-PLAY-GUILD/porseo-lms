@@ -5,28 +5,31 @@ import Link from "next/link";
 
 const team = [
     {
-        name: "SHUN",
-        role: "FOUNDER / AI EXPLORER",
-        description: "寝ても覚めてもAI。新しい技術を見つけると試さずにはいられない。",
+        name: "TAIYO",
+        role: "COMMUNITY OWNER",
+        description: "本ギルドの創設者。スライド作成支援アプリ『Kirigami』を開発・運営する現役大学生エンジニア。「理論より実装」を掲げ、手を動かす楽しさを全力で語ります。圧倒的な実演スピードで、AIの遊び方を独自の方法論でメンバーに伝え続けます！",
         color: "bg-pop-yellow",
         image: "🦁",
-        imageUrl: "" // Add image URL here
+        imageUrl: "https://pbs.twimg.com/profile_images/1958595510232915969/Wz8kSWMa_400x400.jpg", // Add image URL here
+        twitterUrl: "https://x.com/taiyo_ai_gakuse?s=20"
     },
     {
-        name: "AI AGENT",
-        role: "COMMUNITY MANAGER",
-        description: "24時間365日、コミュニティを監視...いや、見守っています。",
+        name: "SUGURU",
+        role: "CONTENTS OWNER",
+        description: "株式会社Uravation代表。GPTs国内トップクラスの実績を持ち、大手企業のAI導入も支援。「作ったものをどう社会に届けるか」という出口戦略をサポートし、個人の遊びを、市場価値のある「成果」へと導きます！",
         color: "bg-pop-green",
         image: "🤖",
-        imageUrl: "" // Add image URL here
+        imageUrl: "https://pbs.twimg.com/profile_images/1765706549824221184/N0yR_7Sj_400x400.jpg", // Add image URL here
+        twitterUrl: "https://x.com/SuguruKun_ai?s=20"
     },
     {
-        name: "DEV GURU",
-        role: "TECH LEAD",
-        description: "コードで世界を変える。バグは友達、仕様変更は恋人。",
+        name: "SHUN",
+        role: "CX OFFICER",
+        description: "本ギルドのLP、学習管理システムの開発者。メンバーが迷わず、挫折せず、熱量を保ったまま走り続けられるよう、システムと体験（CX）のすべてを設計しています。「迷い」を取り除き、安心して「熱狂」できる場所を提供します！",
         color: "bg-pop-red",
         image: "⚡️",
-        imageUrl: "" // Add image URL here
+        imageUrl: "https://media.licdn.com/dms/image/v2/D4E03AQGC097StsvG5A/profile-displayphoto-scale_400_400/B4EZjHshs0HgAg-/0/1755696995772?e=1768435200&v=beta&t=NMlPGFiHNXfkSQ69AosFC0jD9SnalTWvYB6fqMvZxD8", // Add image URL here
+        twitterUrl: "https://x.com/porseo__ai"
     }
 ];
 
@@ -43,8 +46,8 @@ export function BrutalistTeam() {
                         MEET THE <span className="bg-white text-black px-4 transform rotate-2 inline-block border-4 border-black">CREW</span>
                     </h2>
                     <p className="text-xl font-bold text-white max-w-2xl mx-auto bg-black/20 p-4 rounded-xl backdrop-blur-sm border-2 border-black/50">
-                        このクレイジーなコミュニティを運営する<br />
-                        愉快なメンバーたち。
+                        あなたの熱狂を最大化するために集まった、<br />
+                        3名の領域別運営陣。
                     </p>
                 </div>
 
@@ -77,7 +80,7 @@ export function BrutalistTeam() {
 
                                 {/* Social Links */}
                                 <div className="flex gap-4 mt-auto">
-                                    <Link href="#" className="w-12 h-12 rounded-full bg-black text-white border-2 border-black flex items-center justify-center hover:bg-gray-800 transition-colors brutal-shadow-sm hover:translate-y-1 hover:shadow-none">
+                                    <Link href={member.twitterUrl} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-full bg-black text-white border-2 border-black flex items-center justify-center hover:bg-gray-800 transition-colors brutal-shadow-sm hover:translate-y-1 hover:shadow-none">
                                         <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current" aria-hidden="true">
                                             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                                         </svg>

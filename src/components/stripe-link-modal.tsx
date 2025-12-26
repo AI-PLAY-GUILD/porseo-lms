@@ -53,7 +53,7 @@ export function StripeLinkModal() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="link" className="text-gray-400 hover:text-white text-sm underline">
+                <Button variant="link" className="text-gray-400 hover:text-white text-xs font-bold underline decoration-gray-600 hover:decoration-white transition-all">
                     AIで遊ぼうコミュニティだった方はこちら
                 </Button>
             </DialogTrigger>

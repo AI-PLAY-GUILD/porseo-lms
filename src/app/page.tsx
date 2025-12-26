@@ -13,6 +13,10 @@ import { BrutalistTeam } from "@/components/landing/BrutalistTeam";
 import { BrutalistPricing } from "@/components/landing/BrutalistPricing";
 import { BrutalistFooter } from "@/components/landing/BrutalistFooter";
 import { BackToTop } from "@/components/landing/back-to-top";
+import { BrutalistLearning } from "@/components/landing/BrutalistLearning";
+import { BrutalistCommunity } from "@/components/landing/BrutalistCommunity";
+import { BrutalistFAQ } from "@/components/landing/BrutalistFAQ";
+import { BrutalistHackathon } from "@/components/landing/BrutalistHackathon";
 
 export default function Home() {
     const { isSignedIn, user, isLoaded } = useUser();
@@ -118,6 +122,12 @@ export default function Home() {
 
                 <BrutalistShowcase />
 
+                <BrutalistCommunity />
+
+                <BrutalistLearning />
+
+                <BrutalistHackathon />
+
                 <BrutalistTeam />
 
                 {/* Removed LandingContent and LandingTeam for now as they are not brutalized yet. 
@@ -129,9 +139,9 @@ export default function Home() {
                     checkoutLoading={checkoutLoading}
                 />
 
-                <div className="flex justify-center pb-10 relative z-10">
-                    <StripeLinkModal />
-                </div>
+                <BrutalistFAQ />
+
+
             </main>
 
             <BrutalistFooter />

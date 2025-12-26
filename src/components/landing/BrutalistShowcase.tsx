@@ -49,8 +49,8 @@ export function BrutalistShowcase() {
                             <span className="text-white text-stroke-2">SHOWCASE</span>
                         </h2>
                         <p className="text-lg sm:text-xl font-bold text-black mb-6">
-                            実際に作成するプロジェクトの一部をチラ見せ。<br />
-                            手を動かして、AIを使い倒せ。
+                            過去のハンズオン動画が見放題！<br />
+                            見ながらすぐに実践して、AIを遊び倒そう！
                         </p>
 
                         {/* Navigation Controls (Desktop) */}

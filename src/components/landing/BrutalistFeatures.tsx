@@ -1,40 +1,40 @@
-import { Bot, Zap, Users, Code, Video, Globe } from "lucide-react";
+import { Gamepad2, Bomb, Megaphone, Terminal, LineChart, Users } from "lucide-react";
 
 const features = [
     {
-        icon: Bot,
-        title: "Latest AI Models",
-        description: "GPT-4, Claude 3, Geminiなど、最新モデルを遊び倒せ！",
+        icon: Gamepad2,
+        title: "まずは遊ぶ",
+        description: "まずは手を動かして遊ぶことがモットー。自分のやりたいことを AIで実現し続け成長する。",
         color: "bg-pop-red"
     },
     {
-        icon: Video,
-        title: "Exclusive Content",
-        description: "メンバー限定の動画講座で、爆速スキルアップ。",
+        icon: Bomb,
+        title: "失敗を称える",
+        description: "エラーログは「挑戦の証」。みんなで讃え合えるような環境。",
         color: "bg-pop-yellow"
     },
     {
-        icon: Users,
-        title: "Active Community",
-        description: "同じ志を持つ仲間と、熱く語り合おう。",
+        icon: Megaphone,
+        title: "世界へ発信",
+        description: "運営者のXフォロワーは総計10万人以上。あなたの作ったものを社会へ公開。",
         color: "bg-pop-green"
     },
     {
-        icon: Code,
-        title: "Hands-on Projects",
-        description: "実践的なプロジェクトで、手を動かして学べ。",
+        icon: Terminal,
+        title: "実践的ハンズオン",
+        description: "単なるツール紹介ではなく、創り、楽しむことに特化した実践的なライブハンズオンを週３回開催。",
         color: "bg-pop-purple"
     },
     {
-        icon: Zap,
-        title: "Prompt Engineering",
-        description: "AIを自在に操る、魔法のようなプロンプト術。",
+        icon: LineChart,
+        title: "専用学習システム",
+        description: "学習ログを可視化。迷わず楽しみ続けられるよう、専用システムがサポート。",
         color: "bg-pop-red"
     },
     {
-        icon: Globe,
-        title: "Global Trends",
-        description: "世界の最新トレンドを、いち早くキャッチ。",
+        icon: Users,
+        title: "ギルドコミュニティ",
+        description: "「勉強」は孤独ですが、「遊び」は伝染する。一緒に熱狂できる仲間を作ろう。",
         color: "bg-pop-yellow"
     }
 ];
@@ -49,7 +49,7 @@ export function BrutalistFeatures() {
                     </h2>
                     <p className="text-lg sm:text-xl font-bold text-black max-w-2xl mx-auto">
                         AI時代を生き抜くための必須スキルと、<br />
-                        最高にクレイジーな仲間がここにいる。
+                        一緒に成長できる仲間がここにいる。
                     </p>
                 </div>
 

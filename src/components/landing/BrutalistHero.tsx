@@ -28,7 +28,7 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
     }, { scope: containerRef });
 
     return (
-        <section ref={containerRef} className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 pt-20 text-center z-10 bg-cream overflow-hidden border-b-4 border-black">
+        <section ref={containerRef} className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 pt-40 pb-40 text-center z-10 bg-cream overflow-hidden border-b-4 border-black">
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '30px 30px' }}></div>
 
@@ -39,7 +39,7 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
 
             <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white border-2 border-black brutal-shadow-sm text-black font-bold mb-8 transform -rotate-2 hover:rotate-0 transition-transform cursor-default">
                 <Sparkles className="w-5 h-5 text-pop-yellow fill-pop-yellow" />
-                <span className="font-heading tracking-wide">Next Gen AI Community</span>
+                <span className="font-heading tracking-wide">For The Players</span>
             </div>
 
             <h1 ref={titleRef} className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tight mb-8 text-black leading-[0.9]">
@@ -49,8 +49,8 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
             </h1>
 
             <p className="text-lg md:text-2xl text-black font-bold max-w-2xl mb-12 leading-relaxed bg-white/50 backdrop-blur-sm p-4 rounded-xl border-2 border-black brutal-shadow-sm transform rotate-1">
-                AI Play Guildは、最先端のAI技術を遊び倒す<br className="hidden md:block" />
-                プレミアムコミュニティです。
+                AI PLAY GUILDはAIで遊びながらその楽しさに熱狂し、<br />
+                まだ見ぬ未来を創り出すコミュニティです。
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto px-4 sm:px-0">
@@ -79,14 +79,14 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
             {/* Marquee */}
             <div className="absolute bottom-0 left-0 w-full bg-pop-yellow border-t-4 border-black py-3 overflow-hidden whitespace-nowrap">
                 <div className="animate-scroll inline-block">
-                    <span className="text-2xl font-black mx-8">🚀 LATEST AI MODELS</span>
-                    <span className="text-2xl font-black mx-8">⚡ PROMPT ENGINEERING</span>
+                    <span className="text-2xl font-black mx-8">🚀 LATEST AI NEWS</span>
+                    <span className="text-2xl font-black mx-8">💻 LEARNING DASHBOARD</span>
                     <span className="text-2xl font-black mx-8">🤝 ACTIVE COMMUNITY</span>
-                    <span className="text-2xl font-black mx-8">🛠 HANDS-ON PROJECTS</span>
-                    <span className="text-2xl font-black mx-8">🚀 LATEST AI MODELS</span>
-                    <span className="text-2xl font-black mx-8">⚡ PROMPT ENGINEERING</span>
+                    <span className="text-2xl font-black mx-8">🛠 HANDS-ON</span>
+                    <span className="text-2xl font-black mx-8">🚀 LATEST AI NEWS</span>
+                    <span className="text-2xl font-black mx-8">💻 LEARNING DASHBOARD</span>
                     <span className="text-2xl font-black mx-8">🤝 ACTIVE COMMUNITY</span>
-                    <span className="text-2xl font-black mx-8">🛠 HANDS-ON PROJECTS</span>
+                    <span className="text-2xl font-black mx-8">🛠 HANDS-ON</span>
                 </div>
             </div>
         </section>

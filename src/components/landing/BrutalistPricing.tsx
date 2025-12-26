@@ -11,12 +11,11 @@ interface BrutalistPricingProps {
 
 export function BrutalistPricing({ handleCheckout, checkoutLoading }: BrutalistPricingProps) {
     const benefits = [
-        "全ての動画コンテンツ見放題",
-        "Discordコミュニティへの参加権",
-        "月1回のオンラインミートアップ",
-        "ソースコードのダウンロード",
-        "AIツールの割引特典",
-        "優先サポート"
+        "超実践型ハンズオン（ライブ＆アーカイブ）",
+        "独自学習管理システム利用権",
+        "Discordコミュニティ参加権",
+        "ハッカソンへの参加・フィードバック",
+        "メンバー限定のソースコード共有"
     ];
 
     return (
@@ -30,18 +29,18 @@ export function BrutalistPricing({ handleCheckout, checkoutLoading }: BrutalistP
                     <div className="bg-white rounded-3xl p-8 md:p-16 text-center border-4 border-black brutal-shadow-lg relative">
 
                         <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-pop-red text-white px-8 py-2 rounded-full border-4 border-black font-black text-xl transform rotate-2">
-                            POPULAR CHOICE
+                            JOIN THE COMMUNITY
                         </div>
 
                         <h2 className="text-3xl sm:text-5xl md:text-7xl font-black text-black mb-6 uppercase tracking-tighter mt-4">
-                            Simple Pricing
+                            Membership
                         </h2>
                         <p className="text-xl font-bold text-black mb-12">
-                            追加料金なし。全ての機能にアクセス。
+                            一緒にAIで楽しみながら成長しましょう！
                         </p>
 
                         <div className="flex items-baseline justify-center gap-2 mb-12">
-                            <span className="text-5xl sm:text-7xl md:text-8xl font-black text-black">¥980</span>
+                            <span className="text-5xl sm:text-7xl md:text-8xl font-black text-black">¥4,000</span>
                             <span className="text-xl sm:text-2xl font-bold text-black">/ month</span>
                         </div>
 
@@ -57,12 +56,10 @@ export function BrutalistPricing({ handleCheckout, checkoutLoading }: BrutalistP
                         </div>
 
                         <Button asChild size="lg" className="w-full max-w-md h-16 sm:h-20 text-xl sm:text-2xl font-black rounded-xl bg-black text-white hover:bg-pop-purple hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all shadow-[8px_8px_0px_0px_#FF5757] border-4 border-transparent hover:border-black">
-                            <Link href="/join">
-                                START YOUR JOURNEY NOW 🚀
-                            </Link>
+                            <Link href="/join">JOIN COMMUNITY 🚀</Link>
                         </Button>
                         <p className="mt-6 text-base font-bold text-gray-500">
-                            いつでもキャンセル可能です。
+                            入退会は自由です。自分のペースで楽しみましょう。
                         </p>
                     </div>
                 </div>

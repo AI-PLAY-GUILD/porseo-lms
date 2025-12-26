@@ -75,7 +75,7 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                         </div>
                     ) : (
                         <div className="flex gap-3">
-                            <SignInButton mode="modal" forceRedirectUrl="/playground">
+                            <SignInButton mode="modal" forceRedirectUrl="/join">
                                 <Button variant="ghost" className="text-black font-bold hover:bg-black/5 hover:text-pop-purple cursor-pointer">
                                     LOGIN
                                 </Button>
@@ -120,7 +120,7 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                                     </div>
                                 ) : (
                                     <div className="flex flex-col gap-4">
-                                        <SignInButton mode="modal" forceRedirectUrl="/playground">
+                                        <SignInButton mode="modal" forceRedirectUrl="/join">
                                             <Button variant="outline" className="w-full border-2 border-black font-bold h-12 bg-white text-black brutal-shadow cursor-pointer">
                                                 LOGIN
                                             </Button>

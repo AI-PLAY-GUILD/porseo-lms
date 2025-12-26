@@ -219,10 +219,11 @@ export default function JoinPage() {
 
                                     <div className="space-y-4 text-left">
                                         {[
-                                            "Unlimited Video Access",
-                                            "Exclusive Discord Community",
-                                            "Weekly Live Workshops",
-                                            "Source Code Downloads"
+                                            "超実践型ハンズオン（ライブ＆アーカイブ）",
+                                            "独自学習管理システム利用権",
+                                            "Discordコミュニティ参加権",
+                                            "ハッカソンへの参加・フィードバック",
+                                            "メンバー限定のソースコード共有"
                                         ].map((feature, i) => (
                                             <div key={i} className="flex items-center gap-3 text-base font-bold text-black">
                                                 <div className="w-6 h-6 rounded-full bg-pop-green border-2 border-black flex items-center justify-center flex-shrink-0">

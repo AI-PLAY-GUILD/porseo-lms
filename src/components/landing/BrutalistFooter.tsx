@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { StripeLinkModal } from "@/components/stripe-link-modal";
 
 export function BrutalistFooter() {
     return (
@@ -15,8 +18,7 @@ export function BrutalistFooter() {
                             </span>
                         </Link>
                         <p className="text-gray-300 max-w-sm font-medium">
-                            AI技術を遊び倒し、未来をハックする。<br />
-                            クレイジーな仲間と共に、限界を超えろ。
+                            AIを遊び倒し、まだ見ぬ未来を切り拓く。
                         </p>
                     </div>
 
@@ -43,6 +45,7 @@ export function BrutalistFooter() {
                     <p className="text-gray-400 text-sm font-bold">
                         © 2025 AI PLAY GUILD. ALL RIGHTS RESERVED.
                     </p>
+                    <StripeLinkModal />
                 </div>
             </div>
         </footer>
