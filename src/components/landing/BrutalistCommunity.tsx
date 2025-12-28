@@ -129,7 +129,7 @@ export function BrutalistCommunity() {
 
                         <Button asChild size="lg" className="h-14 sm:h-16 px-8 text-lg sm:text-xl font-black rounded-xl bg-white text-black border-4 border-black hover:bg-pop-yellow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all brutal-shadow">
                             <Link href="/join">
-                                JOIN COMMUNITY <ArrowRight className="ml-2 w-6 h-6" />
+                                今すぐ参加 <ArrowRight className="ml-2 w-6 h-6" />
                             </Link>
                         </Button>
                     </div>

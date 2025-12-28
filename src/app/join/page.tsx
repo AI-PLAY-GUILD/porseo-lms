@@ -168,7 +168,7 @@ export default function JoinPage() {
                                             {checkoutLoading ? "Loading..." : (
                                                 <span className="flex items-center justify-center gap-2">
                                                     <CreditCard className="w-6 h-6" />
-                                                    JOIN NOW (¥980/mo)
+                                                    今すぐ参加する
                                                 </span>
                                             )}
                                         </Button>
@@ -238,7 +238,7 @@ export default function JoinPage() {
                                 <SignInButton mode="modal">
                                     <Button size="lg" className="w-full h-20 text-xl font-black bg-pop-purple text-white border-4 border-black hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-200 rounded-2xl relative z-10 brutal-shadow mt-4 animate-brutal-pulse hover:animate-none">
                                         <span className="flex items-center gap-2">
-                                            SUBSCRIBE NOW
+                                            今すぐ参加する
                                             <ArrowRight className="w-6 h-6" />
                                         </span>
                                     </Button>

@@ -64,12 +64,12 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
                     <>
                         <Button asChild size="lg" className="h-14 sm:h-16 w-full sm:w-auto px-6 sm:px-10 text-lg sm:text-xl font-black rounded-xl bg-pop-red text-white border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
                             <Link href="/join">
-                                JOIN COMMUNITY
+                                今すぐ参加
                             </Link>
                         </Button>
                         <Button asChild variant="outline" size="lg" className="h-14 sm:h-16 w-full sm:w-auto px-6 sm:px-10 text-lg sm:text-xl font-black rounded-xl bg-white text-black border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
                             <Link href="#features">
-                                LEARN MORE
+                                もっと詳しく
                             </Link>
                         </Button>
                     </>

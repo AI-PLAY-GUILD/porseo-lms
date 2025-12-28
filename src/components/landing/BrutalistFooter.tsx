@@ -25,18 +25,18 @@ export function BrutalistFooter() {
                     <div>
                         <h4 className="text-pop-yellow font-black mb-6 uppercase text-lg">Platform</h4>
                         <ul className="space-y-4 font-bold">
-                            <li><Link href="#features" className="text-white hover:text-pop-red transition-colors">FEATURES</Link></li>
-                            <li><Link href="#pricing" className="text-white hover:text-pop-red transition-colors">PRICING</Link></li>
-                            <li><Link href="/dashboard" className="text-white hover:text-pop-red transition-colors">DASHBOARD</Link></li>
+                            <li><Link href="#features" className="text-white hover:text-pop-red transition-colors">特徴</Link></li>
+                            <li><Link href="#pricing" className="text-white hover:text-pop-red transition-colors">料金プラン</Link></li>
+                            <li><Link href="/dashboard" className="text-white hover:text-pop-red transition-colors">ダッシュボード</Link></li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-pop-yellow font-black mb-6 uppercase text-lg">Legal</h4>
                         <ul className="space-y-4 font-bold">
-                            <li><Link href="#" className="text-white hover:text-pop-red transition-colors">TERMS OF SERVICE</Link></li>
-                            <li><Link href="#" className="text-white hover:text-pop-red transition-colors">PRIVACY POLICY</Link></li>
-                            <li><Link href="#" className="text-white hover:text-pop-red transition-colors">CONTACT</Link></li>
+                            <li><Link href="#" className="text-white hover:text-pop-red transition-colors">利用規約</Link></li>
+                            <li><Link href="#" className="text-white hover:text-pop-red transition-colors">プライバシーポリシー</Link></li>
+                            <li><Link href="#" className="text-white hover:text-pop-red transition-colors">お問い合わせ</Link></li>
                         </ul>
                     </div>
                 </div>

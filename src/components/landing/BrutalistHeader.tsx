@@ -26,8 +26,8 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
     }, []);
 
     const navItems = [
-        { name: "FEATURES", href: "#features" },
-        { name: "PRICING", href: "#pricing" },
+        { name: "特徴", href: "#features" },
+        { name: "料金プラン", href: "#pricing" },
         { name: "FAQ", href: "#faq" },
     ];
 
@@ -66,22 +66,22 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                         <div className="flex gap-3">
                             {isAdmin && (
                                 <Button asChild className="bg-pop-purple text-white border-2 border-black brutal-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none font-bold rounded-lg">
-                                    <Link href="/admin">ADMIN</Link>
+                                    <Link href="/admin">管理画面</Link>
                                 </Button>
                             )}
                             <Button asChild className="bg-pop-green text-black border-2 border-black brutal-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none font-bold rounded-lg">
-                                <Link href="/dashboard">DASHBOARD</Link>
+                                <Link href="/dashboard">ダッシュボード</Link>
                             </Button>
                         </div>
                     ) : (
                         <div className="flex gap-3">
                             <SignInButton mode="modal" forceRedirectUrl="/join">
                                 <Button variant="ghost" className="text-black font-bold hover:bg-black/5 hover:text-pop-purple cursor-pointer">
-                                    LOGIN
+                                    ログイン
                                 </Button>
                             </SignInButton>
                             <Button asChild className="bg-black text-white border-2 border-black hover:bg-gray-800 brutal-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none font-bold rounded-lg">
-                                <Link href="/join">JOIN NOW</Link>
+                                <Link href="/join">今すぐ参加</Link>
                             </Button>
                         </div>
                     )}
@@ -111,22 +111,22 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                                     <div className="flex flex-col gap-4">
                                         {isAdmin && (
                                             <Button asChild className="w-full bg-pop-purple text-white border-2 border-black brutal-shadow font-bold h-12">
-                                                <Link href="/admin">ADMIN</Link>
+                                                <Link href="/admin">管理画面</Link>
                                             </Button>
                                         )}
                                         <Button asChild className="w-full bg-pop-green text-black border-2 border-black brutal-shadow font-bold h-12">
-                                            <Link href="/dashboard">DASHBOARD</Link>
+                                            <Link href="/dashboard">ダッシュボード</Link>
                                         </Button>
                                     </div>
                                 ) : (
                                     <div className="flex flex-col gap-4">
                                         <SignInButton mode="modal" forceRedirectUrl="/join">
                                             <Button variant="outline" className="w-full border-2 border-black font-bold h-12 bg-white text-black brutal-shadow cursor-pointer">
-                                                LOGIN
+                                                ログイン
                                             </Button>
                                         </SignInButton>
                                         <Button asChild className="w-full bg-black text-white border-2 border-black font-bold h-12 brutal-shadow">
-                                            <Link href="/join">JOIN NOW</Link>
+                                            <Link href="/join">今すぐ参加</Link>
                                         </Button>
                                     </div>
                                 )}

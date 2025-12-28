@@ -56,7 +56,7 @@ export function BrutalistPricing({ handleCheckout, checkoutLoading }: BrutalistP
                         </div>
 
                         <Button asChild size="lg" className="w-full max-w-md h-16 sm:h-20 text-xl sm:text-2xl font-black rounded-xl bg-black text-white hover:bg-pop-purple hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all shadow-[8px_8px_0px_0px_#FF5757] border-4 border-transparent hover:border-black">
-                            <Link href="/join">JOIN COMMUNITY 🚀</Link>
+                            <Link href="/join">今すぐ参加 🚀</Link>
                         </Button>
                         <p className="mt-6 text-base font-bold text-gray-500">
                             入退会は自由です。自分のペースで楽しみましょう。
