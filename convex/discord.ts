@@ -3,11 +3,11 @@
 import { action } from "./_generated/server";
 import { v } from "convex/values";
 
-export const getDiscordRoles = action({
+export const getDiscordRolesV2 = action({
     args: {},
     handler: async (ctx) => {
         try {
-            console.log("[Discord API] Starting getDiscordRoles...");
+            console.log("[Discord API] Starting getDiscordRoles... (v2)");
             const identity = await ctx.auth.getUserIdentity();
             if (!identity) {
                 throw new Error("Unauthenticated");

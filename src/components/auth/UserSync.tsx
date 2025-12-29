@@ -8,7 +8,7 @@ import { useEffect } from "react";
 export default function UserSync() {
     const { user, isLoaded } = useUser();
     const syncUser = useMutation(api.users.syncUser);
-    const getDiscordRoles = useAction(api.discord.getDiscordRoles);
+    const getDiscordRoles = useAction(api.discord.getDiscordRolesV2);
     const updateDiscordRoles = useMutation(api.users.updateDiscordRoles);
     const createCustomer = useAction(api.stripe.createCustomer);
 
