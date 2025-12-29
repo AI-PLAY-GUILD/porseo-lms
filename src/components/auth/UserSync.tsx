@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useUser, useAuth } from "@clerk/nextjs";
 import { useMutation, useAction, useConvexAuth } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useEffect } from "react";
@@ -13,10 +13,15 @@ export default function UserSync() {
     const createCustomer = useAction(api.stripe.createCustomer);
 
     const { isAuthenticated } = useConvexAuth();
+    const { getToken } = useAuth();
 
     useEffect(() => {
         const sync = async () => {
             if (!isLoaded || !user) return;
+
+            // DEBUG: Check token
+            const token = await getToken({ template: "convex" });
+            console.log("DEBUG: Clerk Token for Convex:", token);
 
             // 1. 基本情報を同期 (これは認証不要でも動くように設計されている場合が多いが、念のため)
             await syncUser({
