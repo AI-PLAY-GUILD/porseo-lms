@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useMutation, useAction } from "convex/react";
+import { useMutation, useAction, useConvexAuth } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useEffect } from "react";
 
@@ -12,17 +12,22 @@ export default function UserSync() {
     const updateDiscordRoles = useMutation(api.users.updateDiscordRoles);
     const createCustomer = useAction(api.stripe.createCustomer);
 
+    const { isAuthenticated } = useConvexAuth();
+
     useEffect(() => {
         const sync = async () => {
             if (!isLoaded || !user) return;
 
-            // 1. 基本情報を同期
+            // 1. 基本情報を同期 (これは認証不要でも動くように設計されている場合が多いが、念のため)
             await syncUser({
                 clerkId: user.id,
                 email: user.primaryEmailAddress?.emailAddress ?? "",
                 name: user.fullName ?? user.username ?? "Unknown",
                 imageUrl: user.imageUrl,
             });
+
+            // 認証が完了していない場合は、認証が必要なアクションをスキップ
+            if (!isAuthenticated) return;
 
             try {
                 // 2. Stripe Customer作成 (存在しない場合)
@@ -42,7 +47,7 @@ export default function UserSync() {
         };
 
         sync();
-    }, [isLoaded, user, syncUser, getDiscordRoles, updateDiscordRoles]);
+    }, [isLoaded, user, isAuthenticated, syncUser, getDiscordRoles, updateDiscordRoles]);
 
     return null;
 }

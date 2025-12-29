@@ -1,7 +1,7 @@
 export default {
     providers: [
         {
-            domain: process.env.CLERK_ISSUER_URL,
+            domain: "https://clerk.aiplayguild.com",
             applicationID: "convex",
         },
     ],
