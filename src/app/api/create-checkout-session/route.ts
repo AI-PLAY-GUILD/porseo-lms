@@ -28,7 +28,7 @@ export async function POST(req: Request) {
             payment_method_types: ['card'],
             line_items: [
                 {
-                    price: 'price_1Sh8jc097600wFiQBljFwC9N',
+                    price: process.env.STRIPE_PRICE_ID!,
                     quantity: 1,
                 },
             ],
