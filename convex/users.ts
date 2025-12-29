@@ -270,3 +270,60 @@ export const getAllUsers = query({
         return await ctx.db.query("users").order("desc").collect();
     },
 });
+
+export const syncCurrentUser = mutation({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Called syncCurrentUser without authentication");
+        }
+
+        const clerkId = identity.subject;
+        const email = identity.email;
+        const name = identity.name || identity.nickname || "Anonymous";
+        const imageUrl = identity.pictureUrl;
+
+        let user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkId))
+            .first();
+
+        if (user) {
+            // User already exists, update if needed (optional, but good for consistency)
+            // For now, we just return the ID as the goal is to ensure existence
+            return user._id;
+        }
+
+        // Check by email to avoid duplicates if migration happened
+        if (email) {
+            const existingByEmail = await ctx.db
+                .query("users")
+                .withIndex("by_email", (q) => q.eq("email", email))
+                .first();
+            if (existingByEmail) {
+                await ctx.db.patch(existingByEmail._id, {
+                    clerkId: clerkId,
+                    name: name,
+                    imageUrl: imageUrl,
+                    updatedAt: Date.now(),
+                });
+                return existingByEmail._id;
+            }
+        }
+
+        // Create new user
+        const newUserId = await ctx.db.insert("users", {
+            clerkId: clerkId,
+            email: email || "",
+            name: name,
+            imageUrl: imageUrl,
+            discordRoles: [],
+            isAdmin: false, // Default to false
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+        });
+
+        return newUserId;
+    },
+});

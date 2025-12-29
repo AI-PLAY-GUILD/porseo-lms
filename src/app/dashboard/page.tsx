@@ -1,6 +1,9 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
+
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -50,9 +53,34 @@ export default function DashboardPage() {
     );
   }
 
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const syncUser = useMutation(api.users.syncCurrentUser);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    const sync = async () => {
+      if (stats === null && isUserLoaded && user && !isSyncing) {
+        setIsSyncing(true);
+        try {
+          await syncUser();
+        } catch (error) {
+          console.error("Failed to sync user:", error);
+        } finally {
+          setIsSyncing(false);
+        }
+      }
+    };
+    sync();
+  }, [stats, isUserLoaded, user, isSyncing, syncUser]);
+
   // statsがnullの場合は未ログインかユーザーが存在しない（通常はmiddlewareで弾かれるが念のため）
   if (stats === null) {
-    return <div>ユーザーデータの取得に失敗しました。</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-cream flex-col">
+        <BrutalistLoader />
+        <p className="mt-4 font-bold text-gray-500 animate-pulse">ユーザー情報を同期中...</p>
+      </div>
+    );
   }
 
   return (
