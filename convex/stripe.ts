@@ -7,7 +7,7 @@ import Stripe from "stripe";
 
 export const createCustomer = action({
     args: {},
-    handler: async (ctx): Promise<string> => {
+    handler: async (ctx): Promise<{ customerId: string; discordRoles: string[] }> => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
             throw new Error("Unauthenticated");
@@ -21,46 +21,93 @@ export const createCustomer = action({
             throw new Error("User not found");
         }
 
-        if (user.stripeCustomerId) {
-            return user.stripeCustomerId;
+        // --- Discord Logic Start ---
+        let discordRoles: string[] = [];
+        try {
+            console.log("[Stripe+Discord] Starting Discord sync...");
+            const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+            const guildId = process.env.NEXT_PUBLIC_DISCORD_GUILD_ID;
+
+            if (clerkSecretKey && guildId) {
+                const clerkResponse = await fetch(
+                    `https://api.clerk.com/v1/users/${identity.subject}/oauth_access_tokens/oauth_discord`,
+                    {
+                        headers: { Authorization: `Bearer ${clerkSecretKey}` },
+                    }
+                );
+
+                if (clerkResponse.ok) {
+                    const clerkData = await clerkResponse.json();
+                    if (clerkData.length > 0 && clerkData[0].token) {
+                        const accessToken = clerkData[0].token;
+                        const discordResponse = await fetch(
+                            `https://discord.com/api/users/@me/guilds/${guildId}/member`,
+                            {
+                                headers: { Authorization: `Bearer ${accessToken}` },
+                            }
+                        );
+
+                        if (discordResponse.ok) {
+                            const discordData = await discordResponse.json();
+                            discordRoles = discordData.roles as string[];
+                            console.log(`[Stripe+Discord] Fetched ${discordRoles.length} roles`);
+                        } else {
+                            console.error("[Stripe+Discord] Discord API failed:", await discordResponse.text());
+                        }
+                    } else {
+                        console.log("[Stripe+Discord] No Discord token found");
+                    }
+                } else {
+                    console.error("[Stripe+Discord] Clerk API failed:", await clerkResponse.text());
+                }
+            } else {
+                console.error("[Stripe+Discord] Missing env variables");
+            }
+        } catch (e) {
+            console.error("[Stripe+Discord] Error fetching roles:", e);
+            // Don't fail the whole action if Discord fails, just log it
         }
-
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-            apiVersion: "2025-12-15.clover",
-        });
-
-        // 1. Search for existing customer by email
-        const existingCustomers = await stripe.customers.list({
-            email: user.email,
-            limit: 1,
-        });
+        // --- Discord Logic End ---
 
         let customerId: string;
-
-        if (existingCustomers.data.length > 0) {
-            // Found existing customer
-            customerId = existingCustomers.data[0].id;
-            console.log(`Found existing Stripe customer for ${user.email}: ${customerId}`);
+        if (user.stripeCustomerId) {
+            customerId = user.stripeCustomerId;
         } else {
-            // Create new customer
-            const customer = await stripe.customers.create({
-                email: user.email,
-                name: user.name,
-                metadata: {
-                    clerkId: user.clerkId,
-                    userId: user._id,
-                },
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+                apiVersion: "2025-12-15.clover",
             });
-            customerId = customer.id;
-            console.log(`Created new Stripe customer for ${user.email}: ${customerId}`);
+
+            // 1. Search for existing customer by email
+            const existingCustomers = await stripe.customers.list({
+                email: user.email,
+                limit: 1,
+            });
+
+            if (existingCustomers.data.length > 0) {
+                // Found existing customer
+                customerId = existingCustomers.data[0].id;
+                console.log(`Found existing Stripe customer for ${user.email}: ${customerId}`);
+            } else {
+                // Create new customer
+                const customer = await stripe.customers.create({
+                    email: user.email,
+                    name: user.name,
+                    metadata: {
+                        clerkId: user.clerkId,
+                        userId: user._id,
+                    },
+                });
+                customerId = customer.id;
+                console.log(`Created new Stripe customer for ${user.email}: ${customerId}`);
+            }
+
+            await ctx.runMutation(internal.internal.setStripeCustomerId, {
+                userId: user._id,
+                stripeCustomerId: customerId,
+            });
         }
 
-        await ctx.runMutation(internal.internal.setStripeCustomerId, {
-            userId: user._id,
-            stripeCustomerId: customerId,
-        });
-
-        return customerId;
+        return { customerId, discordRoles };
     },
 });
 
