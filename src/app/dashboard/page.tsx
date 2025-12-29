@@ -219,7 +219,9 @@ export default function DashboardPage() {
                                 </p>
                                 <div className="flex items-center text-xs font-bold text-gray-500">
                                   <Clock className="mr-1 h-3 w-3" />
-                                  {new Date(video.lastWatchedAt).toLocaleDateString()}
+                                  <span suppressHydrationWarning>
+                                    {new Date(video.lastWatchedAt).toLocaleDateString("ja-JP")}
+                                  </span>
                                 </div>
                               </div>
                             </div>
