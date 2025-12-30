@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, SignOutButton } from "@clerk/nextjs";
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -10,7 +10,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, Lock, BookOpen, Clock, Trophy, Activity } from "lucide-react";
+import { PlayCircle, Lock, BookOpen, Clock, Trophy, Activity, LogOut } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   SidebarInset,
@@ -128,6 +128,14 @@ export default function DashboardPage() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
+          </div>
+          <div className="ml-auto">
+            <SignOutButton>
+              <Button variant="outline" size="sm" className="font-bold border-2 border-black bg-white hover:bg-gray-100 brutal-shadow-sm">
+                <LogOut className="mr-2 h-4 w-4" />
+                ログアウト
+              </Button>
+            </SignOutButton>
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-6 p-6 pt-6">

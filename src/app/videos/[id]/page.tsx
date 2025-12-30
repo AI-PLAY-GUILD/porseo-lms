@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { useRef } from "react";
+import { SignOutButton } from "@clerk/nextjs";
 import { api } from "../../../../convex/_generated/api";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -13,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Calendar, FileText, List } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, List, LogOut } from "lucide-react";
 import { BrutalistLoader } from "@/components/ui/brutalist-loader";
 
 export default function VideoPage() {
@@ -79,12 +80,20 @@ export default function VideoPage() {
         <div className="w-full max-w-[1800px] mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
             {/* Header Section */}
             <div className="space-y-4">
-                <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary">
-                    <Link href="/videos" className="flex items-center gap-2">
-                        <ArrowLeft className="w-4 h-4" />
-                        動画一覧に戻る
-                    </Link>
-                </Button>
+                <div className="flex items-center justify-between">
+                    <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary">
+                        <Link href="/videos" className="flex items-center gap-2">
+                            <ArrowLeft className="w-4 h-4" />
+                            動画一覧に戻る
+                        </Link>
+                    </Button>
+                    <SignOutButton>
+                        <Button variant="outline" size="sm" className="font-bold border-2 border-black bg-white hover:bg-gray-100 brutal-shadow-sm">
+                            <LogOut className="mr-2 h-4 w-4" />
+                            ログアウト
+                        </Button>
+                    </SignOutButton>
+                </div>
 
                 <div className="space-y-2">
                     <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{video.title}</h1>

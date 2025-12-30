@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { SignOutButton } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
@@ -19,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, User, Shield, Mail } from "lucide-react";
+import { CreditCard, User, Shield, Mail, LogOut } from "lucide-react";
 import { useState } from "react";
 
 import { BrutalistLoader } from "@/components/ui/brutalist-loader";
@@ -66,8 +67,8 @@ export default function ProfilePage() {
         <SidebarProvider>
             <AppSidebar user={{ name: userData.name, email: userData.email, avatar: userData.imageUrl }} />
             <SidebarInset>
-                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 w-full">
-                    <div className="flex items-center gap-2 px-4">
+                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 w-full px-4">
+                    <div className="flex items-center gap-2">
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
@@ -79,6 +80,14 @@ export default function ProfilePage() {
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
+                    </div>
+                    <div className="ml-auto">
+                        <SignOutButton>
+                            <Button variant="outline" size="sm" className="font-bold border-2 border-black bg-white hover:bg-gray-100 brutal-shadow-sm">
+                                <LogOut className="mr-2 h-4 w-4" />
+                                ログアウト
+                            </Button>
+                        </SignOutButton>
                     </div>
                 </header>
                 <div className="flex flex-1 flex-col gap-8 p-8 max-w-4xl mx-auto w-full">
