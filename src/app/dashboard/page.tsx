@@ -38,6 +38,11 @@ export default function DashboardPage() {
   const videos = useQuery(api.videos.getPublishedVideos);
   const stats = useQuery(api.dashboard.getStats);
 
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const syncUser = useMutation(api.users.syncCurrentUser);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
   const chartConfig = {
     hours: {
       label: "学習時間 (時間)",
@@ -45,30 +50,9 @@ export default function DashboardPage() {
     },
   };
 
-  if (videos === undefined || stats === undefined) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-cream">
-        <BrutalistLoader />
-      </div>
-    );
-  }
-
-  const { user, isLoaded: isUserLoaded } = useUser();
-  const syncUser = useMutation(api.users.syncCurrentUser);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  if (!isMounted) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-cream">
-        <BrutalistLoader />
-      </div>
-    );
-  }
 
   useEffect(() => {
     const sync = async () => {
@@ -86,12 +70,28 @@ export default function DashboardPage() {
     sync();
   }, [stats, isUserLoaded, user, isSyncing, syncUser]);
 
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-cream">
+        <BrutalistLoader />
+      </div>
+    );
+  }
+
   // statsがnullの場合は未ログインかユーザーが存在しない（通常はmiddlewareで弾かれるが念のため）
   if (stats === null) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-cream flex-col">
         <BrutalistLoader />
         <p className="mt-4 font-bold text-gray-500 animate-pulse">ユーザー情報を同期中...</p>
+      </div>
+    );
+  }
+
+  if (videos === undefined || stats === undefined) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-cream">
+        <BrutalistLoader />
       </div>
     );
   }
