@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 
@@ -35,6 +36,7 @@ import { PaymentFailureDialog } from "@/components/payment-failure-dialog";
 import { BrutalistLoader } from "@/components/ui/brutalist-loader";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const videos = useQuery(api.videos.getPublishedVideos);
   const stats = useQuery(api.dashboard.getStats);
 
@@ -69,6 +71,16 @@ export default function DashboardPage() {
     };
     sync();
   }, [stats, isUserLoaded, user, isSyncing, syncUser]);
+
+  // Gatekeeper: Redirect if not active and not past_due
+  useEffect(() => {
+    if (isMounted && stats) {
+      const status = stats.subscriptionStatus;
+      if (status !== 'active' && status !== 'past_due') {
+        router.push('/join');
+      }
+    }
+  }, [isMounted, stats, router]);
 
   if (!isMounted) {
     return (
