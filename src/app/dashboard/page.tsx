@@ -56,6 +56,19 @@ export default function DashboardPage() {
   const { user, isLoaded: isUserLoaded } = useUser();
   const syncUser = useMutation(api.users.syncCurrentUser);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-cream">
+        <BrutalistLoader />
+      </div>
+    );
+  }
 
   useEffect(() => {
     const sync = async () => {
