@@ -2,10 +2,16 @@ import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { convex } from '@/lib/convex';
 import { api } from '../../../../convex/_generated/api';
+import { auth } from '@clerk/nextjs/server';
 
 export async function POST(req: Request) {
     try {
-        const { discordId, userId } = await req.json();
+        const { userId } = await auth();
+        if (!userId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { discordId } = await req.json();
 
         if (!discordId) {
             return NextResponse.json({ error: 'Missing discordId' }, { status: 400 });
@@ -50,6 +56,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ url: session.url });
     } catch (error: any) {
         console.error('Error creating checkout session:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

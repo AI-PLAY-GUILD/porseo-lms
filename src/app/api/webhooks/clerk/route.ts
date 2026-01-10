@@ -67,11 +67,12 @@ export async function POST(req: Request) {
         const name = `${first_name || ''} ${last_name || ''}`.trim() || 'Anonymous'
 
         try {
-            await convex.mutation("users:syncUser" as any, {
+            await convex.mutation("users:webhookSyncUser" as any, {
                 clerkId: id,
                 email: email,
                 name: name,
                 imageUrl: image_url,
+                secret: process.env.CLERK_WEBHOOK_SECRET!,
             })
         } catch (error) {
             console.error('Error syncing user to Convex:', error)

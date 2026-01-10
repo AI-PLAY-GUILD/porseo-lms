@@ -7,7 +7,7 @@ import { useEffect } from "react";
 
 export default function UserSync() {
     const { user, isLoaded } = useUser();
-    const syncUser = useMutation(api.users.syncUser);
+    const syncUser = useMutation(api.users.syncCurrentUser);
     const updateDiscordRoles = useMutation(api.users.updateDiscordRoles);
     const createCustomer = useAction(api.stripe.createCustomer);
 
@@ -27,12 +27,7 @@ export default function UserSync() {
             }
 
             // 1. 基本情報を同期
-            await syncUser({
-                clerkId: user.id,
-                email: user.primaryEmailAddress?.emailAddress ?? "",
-                name: user.fullName ?? user.username ?? "Unknown",
-                imageUrl: user.imageUrl,
-            });
+            await syncUser();
 
             // 認証が完了していない場合は、認証が必要なアクションをスキップ
             if (!isAuthenticated) return;

@@ -1,14 +1,19 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
-export const syncUser = mutation({
+export const webhookSyncUser = mutation({
     args: {
         clerkId: v.string(),
         email: v.string(),
         name: v.string(),
         imageUrl: v.optional(v.string()),
+        secret: v.string(),
     },
     handler: async (ctx, args) => {
+        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+
         let existing = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
@@ -36,15 +41,20 @@ export const syncUser = mutation({
 
         if (existing) {
             await ctx.db.patch(existing._id, {
-                ...args,
                 clerkId: args.clerkId, // Ensure Clerk ID is updated (crucial for migration linking)
+                email: args.email,
+                name: args.name,
+                imageUrl: args.imageUrl,
                 isAdmin: existing.isAdmin || isAdmin,
                 updatedAt: Date.now(),
             });
             return existing._id;
         } else {
             const newUserId = await ctx.db.insert("users", {
-                ...args,
+                clerkId: args.clerkId,
+                email: args.email,
+                name: args.name,
+                imageUrl: args.imageUrl,
                 discordRoles: [],
                 isAdmin,
                 createdAt: Date.now(),
