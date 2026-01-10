@@ -11,9 +11,11 @@
 import type * as admin from "../admin.js";
 import type * as ai from "../ai.js";
 import type * as dashboard from "../dashboard.js";
+import type * as debug_user from "../debug_user.js";
 import type * as discord from "../discord.js";
 import type * as internal_ from "../internal.js";
 import type * as migration_action from "../migration_action.js";
+import type * as migrations from "../migrations.js";
 import type * as rag from "../rag.js";
 import type * as ragDb from "../ragDb.js";
 import type * as stripe from "../stripe.js";
@@ -32,9 +34,11 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   ai: typeof ai;
   dashboard: typeof dashboard;
+  debug_user: typeof debug_user;
   discord: typeof discord;
   internal: typeof internal_;
   migration_action: typeof migration_action;
+  migrations: typeof migrations;
   rag: typeof rag;
   ragDb: typeof ragDb;
   stripe: typeof stripe;
