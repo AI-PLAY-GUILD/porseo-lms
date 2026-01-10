@@ -327,3 +327,14 @@ export const syncCurrentUser = mutation({
         return newUserId;
     },
 });
+
+export const checkUserByEmail = query({
+    args: { email: v.string() },
+    handler: async (ctx, args) => {
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_email", (q) => q.eq("email", args.email))
+            .first();
+        return !!user;
+    },
+});

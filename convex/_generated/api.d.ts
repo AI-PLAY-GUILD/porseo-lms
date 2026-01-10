@@ -13,6 +13,7 @@ import type * as ai from "../ai.js";
 import type * as dashboard from "../dashboard.js";
 import type * as discord from "../discord.js";
 import type * as internal_ from "../internal.js";
+import type * as migration_action from "../migration_action.js";
 import type * as rag from "../rag.js";
 import type * as ragDb from "../ragDb.js";
 import type * as stripe from "../stripe.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   dashboard: typeof dashboard;
   discord: typeof discord;
   internal: typeof internal_;
+  migration_action: typeof migration_action;
   rag: typeof rag;
   ragDb: typeof ragDb;
   stripe: typeof stripe;

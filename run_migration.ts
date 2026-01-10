@@ -7,10 +7,10 @@
  *    [
  *      {
  *        "email": "user@example.com",
- *        "clerkId": "user_...",
  *        "stripeCustomerId": "cus_...",
  *        "name": "User Name",
- *        "subscriptionStatus": "active"
+ *        "subscriptionStatus": "active",
+ *        "clerkId": "user_..." // Optional: Omit for Wix users
  *      },
  *      ...
  *    ]

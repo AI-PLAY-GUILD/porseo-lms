@@ -64,7 +64,7 @@ export const batchMigrateUsers = internalMutation({
         users: v.array(
             v.object({
                 email: v.string(),
-                clerkId: v.string(),
+                clerkId: v.optional(v.string()),
                 stripeCustomerId: v.string(),
                 name: v.string(),
                 subscriptionStatus: v.optional(v.string()),
@@ -80,11 +80,20 @@ export const batchMigrateUsers = internalMutation({
 
         for (const user of args.users) {
             try {
-                // Check if user already exists by Clerk ID
-                const existingUser = await ctx.db
-                    .query("users")
-                    .withIndex("by_clerk_id", (q) => q.eq("clerkId", user.clerkId))
-                    .first();
+                // Check if user already exists by Clerk ID (if provided)
+                let existingUser = null;
+                if (user.clerkId) {
+                    existingUser = await ctx.db
+                        .query("users")
+                        .withIndex("by_clerk_id", (q) => q.eq("clerkId", user.clerkId!))
+                        .first();
+                } else {
+                    // If no Clerk ID, check by email (Wix migration case)
+                    existingUser = await ctx.db
+                        .query("users")
+                        .withIndex("by_email", (q) => q.eq("email", user.email))
+                        .first();
+                }
 
                 if (existingUser) {
                     // Update existing user
@@ -96,8 +105,8 @@ export const batchMigrateUsers = internalMutation({
                 } else {
                     // Create new user
                     await ctx.db.insert("users", {
-                        // Use provided Clerk ID if available, otherwise use a placeholder that won't collide with real Clerk IDs
-                        clerkId: user.clerkId || `migrated:${user.email}`,
+                        // Use provided Clerk ID if available, otherwise use a placeholder for Wix migration
+                        clerkId: user.clerkId || `wix_migration:${user.email}`,
                         email: user.email,
                         name: user.name,
                         stripeCustomerId: user.stripeCustomerId,
