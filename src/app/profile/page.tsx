@@ -132,17 +132,19 @@ export default function ProfilePage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
-                                <div>
-                                    <p className="font-medium">現在のプラン</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {isPremium ? "プレミアムプラン (月額 ¥980)" : "フリープラン"}
-                                    </p>
+                            {(userData.stripeCustomerId || !isPremium) && (
+                                <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                                    <div>
+                                        <p className="font-medium">現在のプラン</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {isPremium ? "プレミアムプラン (月額 ¥980)" : "フリープラン"}
+                                        </p>
+                                    </div>
+                                    <Badge variant={isPremium ? "default" : "secondary"}>
+                                        {isPremium ? "有効" : "未契約"}
+                                    </Badge>
                                 </div>
-                                <Badge variant={isPremium ? "default" : "secondary"}>
-                                    {isPremium ? "有効" : "未契約"}
-                                </Badge>
-                            </div>
+                            )}
 
                             {isPremium ? (
                                 userData.stripeCustomerId ? (
@@ -163,7 +165,6 @@ export default function ProfilePage() {
                                         <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-md text-sm text-yellow-800">
                                             <p className="font-bold mb-2">旧システムでご契約のお客様へ</p>
                                             <p className="mb-2">
-                                                Stripe連携がされていないため、こちらの画面からは解約手続きが行えません。
                                                 お手数ですが、以下の手順で解約をお願いいたします。
                                             </p>
                                             <ol className="list-decimal list-inside space-y-1 ml-2">
