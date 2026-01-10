@@ -145,18 +145,40 @@ export default function ProfilePage() {
                             </div>
 
                             {isPremium ? (
-                                <div className="space-y-4">
-                                    <Button
-                                        onClick={handleManageSubscription}
-                                        disabled={loading}
-                                        className="w-full sm:w-auto"
-                                    >
-                                        {loading ? "読み込み中..." : "契約内容の確認・変更・解約"}
-                                    </Button>
-                                    <p className="text-xs text-muted-foreground">
-                                        ※ Stripeの安全な管理画面へ移動します。
-                                    </p>
-                                </div>
+                                userData.stripeCustomerId ? (
+                                    <div className="space-y-4">
+                                        <Button
+                                            onClick={handleManageSubscription}
+                                            disabled={loading}
+                                            className="w-full sm:w-auto"
+                                        >
+                                            {loading ? "読み込み中..." : "契約内容の確認・変更・解約"}
+                                        </Button>
+                                        <p className="text-xs text-muted-foreground">
+                                            ※ Stripeの安全な管理画面へ移動します。
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-md text-sm text-yellow-800">
+                                            <p className="font-bold mb-2">旧システムでご契約のお客様へ</p>
+                                            <p className="mb-2">
+                                                Stripe連携がされていないため、こちらの画面からは解約手続きが行えません。
+                                                お手数ですが、以下の手順で解約をお願いいたします。
+                                            </p>
+                                            <ol className="list-decimal list-inside space-y-1 ml-2">
+                                                <li>
+                                                    <a href="https://www.ai-porseo.com/" target="_blank" rel="noopener noreferrer" className="underline text-blue-600 hover:text-blue-800">
+                                                        https://www.ai-porseo.com/
+                                                    </a>
+                                                    にアクセスしてログイン
+                                                </li>
+                                                <li>マイページ ＞ コミュニティ契約一覧 を選択</li>
+                                                <li>該当の契約をクリックし「キャンセルする」ボタンを押す</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                )
                             ) : (
                                 <div className="space-y-4">
                                     <p className="text-sm text-muted-foreground">
