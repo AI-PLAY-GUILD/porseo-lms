@@ -12,7 +12,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.36.2",
     "@discordjs/rest": "^2.6.0",
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^1.35.0",
     "@gsap/react": "^2.1.2",
     "@mux/mux-node": "^12.8.1",
     "@mux/mux-player-react": "^3.10.1",

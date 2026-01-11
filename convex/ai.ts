@@ -3,7 +3,7 @@
 import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { google } from "@google/genai";
 import Mux from "@mux/mux-node";
 
 const mux = new Mux({
@@ -39,12 +39,8 @@ export const generateVideoMetadata = action({
 
         console.log("Using transcription text length:", subtitleText.length);
 
-        // 2. Geminiで分析
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: "gemini-3-pro",
-            generationConfig: { responseMimeType: "application/json" } // JSON出力を強制
-        });
+        // 2. Geminiで分析 (New SDK)
+        const client = new google.genai.Client({ apiKey: apiKey });
 
         const prompt = `
 あなたは教育動画のプロフェッショナルな編集者です。
@@ -71,21 +67,46 @@ Markdownのコードブロックや、説明文は一切不要です。純粋な
 ${subtitleText}
 `;
 
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
+        let responseText = "";
+        try {
+            const response = await client.models.generateContent({
+                model: "gemini-3-pro",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                },
+            });
+
+            // 新しいSDKのレスポンス構造に合わせてテキストを取得
+            // 通常は response.text() が使えるはずだが、念のため構造を確認しながら取得
+            if (response.text) {
+                responseText = response.text();
+            } else if (response.candidates && response.candidates.length > 0) {
+                // フォールバック
+                const part = response.candidates[0].content.parts[0];
+                if ('text' in part) {
+                    responseText = part.text;
+                }
+            }
+
+            if (!responseText) {
+                console.error("Empty response from Gemini:", JSON.stringify(response, null, 2));
+                throw new Error("AIからの応答が空でした。");
+            }
+
+        } catch (error: any) {
+            console.error("Gemini API Error:", error);
+            throw new Error(`AI分析中にエラーが発生しました: ${error.message}`);
+        }
 
         console.log("Gemini Response:", responseText);
 
         // JSONパース
         let aiData;
         try {
-            // responseMimeType: "application/json" を指定していても、念のため抽出処理を入れる
-            // ただし、今回は単純にパースを試みる
             aiData = JSON.parse(responseText);
         } catch (e) {
             console.log("JSON Parse failed, trying regex extraction...");
-            // フォールバック: 最初の { から 最後の } までではなく、
-            // 最初の { から、対応する } までを探す簡易ロジック、または単純に最初の { から最後の } まで
             const jsonMatch = responseText.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
                 try {
