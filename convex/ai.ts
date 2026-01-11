@@ -42,7 +42,7 @@ export const generateVideoMetadata = action({
         // 2. Geminiで分析
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: "gemini-3-pro-preview",
+            model: "gemini-3-pro",
             generationConfig: { responseMimeType: "application/json" } // JSON出力を強制
         });
 

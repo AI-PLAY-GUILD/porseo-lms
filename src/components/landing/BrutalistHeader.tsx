@@ -40,8 +40,8 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
         >
             <div className="container mx-auto px-4 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2 group">
-                    <div className="w-10 h-10 bg-pop-red border-2 border-black flex items-center justify-center text-white font-black text-xl brutal-shadow-sm group-hover:translate-x-1 group-hover:translate-y-1 group-hover:shadow-none transition-all">
-                        AI
+                    <div className="w-10 h-10 bg-white border-2 border-black flex items-center justify-center text-white font-black text-xl brutal-shadow-sm group-hover:translate-x-1 group-hover:translate-y-1 group-hover:shadow-none transition-all overflow-hidden">
+                        <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
                     </div>
                     <span className="text-2xl font-black text-black tracking-tighter">
                         AI PLAY GUILD

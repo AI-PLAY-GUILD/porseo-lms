@@ -99,8 +99,8 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
     <Sidebar {...props} className="bg-cream text-black">
       <SidebarHeader className="bg-cream p-4">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pop-red border-2 border-black text-white brutal-shadow-sm">
-            <BookOpen className="size-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white border-2 border-black text-white brutal-shadow-sm overflow-hidden">
+            <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <div className="grid flex-1 text-left leading-tight">
             <span className="truncate font-black text-lg tracking-tight text-black">AI PLAY GUILD</span>
