@@ -111,7 +111,7 @@ export const ingest = action({
 
             const promises = batch.map(async (chunk) => {
                 const result = await client.models.embedContent({
-                    model: "text-embedding-004",
+                    model: "gemini-embedding-001",
                     contents: chunk.text,
                 });
                 // 新しいSDKのレスポンス構造を確認
@@ -149,7 +149,7 @@ export const search = action({
 
         // クエリのEmbedding生成
         const result = await client.models.embedContent({
-            model: "text-embedding-004",
+            model: "gemini-embedding-001",
             contents: args.query,
         });
         const embedding = result.embeddings?.[0]?.values;
@@ -191,7 +191,7 @@ export const chat = action({
 
         // 1. クエリのEmbedding生成
         const embeddingResult = await client.models.embedContent({
-            model: "text-embedding-004",
+            model: "gemini-embedding-001",
             contents: lastMessage.content,
         });
         const embedding = embeddingResult.embeddings?.[0]?.values;
@@ -233,7 +233,7 @@ ${contextText}
 
         // 5. Gemini呼び出し
         const chat = client.chats.create({
-            model: "gemini-2.0-flash",
+            model: "gemini-3-flash-preview",
             config: {
                 systemInstruction: systemPrompt,
                 maxOutputTokens: 1000,
