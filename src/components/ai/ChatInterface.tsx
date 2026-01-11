@@ -47,7 +47,7 @@ export default function ChatInterface({ videoId, onTimestampClick }: ChatInterfa
                 messages: [...messages, userMessage],
             });
 
-            const aiMessage: Message = { role: "model", content: response };
+            const aiMessage: Message = { role: "model", content: response ?? "" };
             setMessages(prev => [...prev, aiMessage]);
         } catch (error) {
             console.error("Chat error:", error);
@@ -131,8 +131,8 @@ export default function ChatInterface({ videoId, onTimestampClick }: ChatInterfa
                     >
                         <div
                             className={`max-w-[85%] p-3 rounded-lg text-sm shadow-sm ${msg.role === "user"
-                                    ? "bg-blue-600 text-white rounded-br-none"
-                                    : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none border dark:border-gray-700"
+                                ? "bg-blue-600 text-white rounded-br-none"
+                                : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none border dark:border-gray-700"
                                 }`}
                         >
                             {msg.role === "user" ? (

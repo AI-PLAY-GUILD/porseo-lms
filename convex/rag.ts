@@ -246,7 +246,7 @@ ${contextText}
         });
 
         const result = await chat.sendMessage({ message: lastMessage.content });
-        const response = result.text;
+        const response = result.text || "";
         console.log("Gemini Chat Response:", response);
 
         return response;
