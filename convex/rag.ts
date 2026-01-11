@@ -233,7 +233,7 @@ ${contextText}
 
         // 5. Gemini呼び出し
         const chat = client.chats.create({
-            model: "gemini-3-flash-preview",
+            model: "gemini-flash-latest",
             config: {
                 systemInstruction: systemPrompt,
                 maxOutputTokens: 1000,
