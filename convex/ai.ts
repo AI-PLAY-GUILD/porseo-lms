@@ -80,7 +80,7 @@ ${subtitleText}
             // 新しいSDKのレスポンス構造に合わせてテキストを取得
             // 通常は response.text() が使えるはずだが、念のため構造を確認しながら取得
             if (response.text) {
-                responseText = response.text();
+                responseText = response.text;
             } else if (response.candidates && response.candidates.length > 0) {
                 // フォールバック
                 const part = response.candidates[0].content.parts[0];
