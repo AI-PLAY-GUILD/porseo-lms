@@ -3,7 +3,7 @@
 import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
-import { google } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import Mux from "@mux/mux-node";
 
 const mux = new Mux({
@@ -40,7 +40,7 @@ export const generateVideoMetadata = action({
         console.log("Using transcription text length:", subtitleText.length);
 
         // 2. Geminiで分析 (New SDK)
-        const client = new google.genai.Client({ apiKey: apiKey });
+        const client = new GoogleGenAI({ apiKey: apiKey });
 
         const prompt = `
 あなたは教育動画のプロフェッショナルな編集者です。
