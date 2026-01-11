@@ -1,0 +1,30 @@
+convex/rag.ts(6,36): error TS2307: Cannot find module '@google/generative-ai' or its corresponding type declarations.
+convex/rag.ts(100,28): error TS2304: Cannot find name 'GoogleGenAI'.
+convex/rag.ts(148,28): error TS2304: Cannot find name 'GoogleGenAI'.
+convex/rag.ts(175,14): error TS7022: 'chat' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+convex/rag.ts(180,5): error TS7023: 'handler' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+convex/rag.ts(183,28): error TS2304: Cannot find name 'GoogleGenAI'.
+convex/rag.ts(208,15): error TS7022: 'contextChunks' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+convex/rag.ts(208,67): error TS7024: Function implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+convex/rag.ts(209,19): error TS7022: 'chunk' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+convex/rag.ts(213,15): error TS7022: 'contextText' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+convex/rag.ts(214,21): error TS7006: Parameter 'c' implicitly has an 'any' type.
+convex/rag.ts(215,18): error TS7006: Parameter 'c' implicitly has an 'any' type.
+convex/rag.ts(219,15): error TS7022: 'systemPrompt' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+convex/rag.ts(235,15): error TS7022: 'chat' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+convex/rag.ts(250,15): error TS7022: 'result' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+convex/rag.ts(251,15): error TS7022: 'response' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+src/app/admin/tags/page.tsx(72,40): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+src/app/admin/users/analytics/page.tsx(136,64): error TS7006: Parameter 'learner' implicitly has an 'any' type.
+src/app/admin/users/analytics/page.tsx(136,73): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/app/admin/users/analytics/page.tsx(203,46): error TS7006: Parameter 'content' implicitly has an 'any' type.
+src/app/admin/users/page.tsx(80,33): error TS7006: Parameter 'user' implicitly has an 'any' type.
+src/app/admin/videos/[id]/edit/page.tsx(255,40): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+src/app/admin/videos/page.tsx(83,34): error TS7006: Parameter 'video' implicitly has an 'any' type.
+src/app/dashboard/page.tsx(236,65): error TS7006: Parameter 'video' implicitly has an 'any' type.
+src/app/videos/[id]/page.tsx(223,70): error TS7006: Parameter 'chapter' implicitly has an 'any' type.
+src/app/videos/[id]/page.tsx(223,79): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/app/videos/page.tsx(79,62): error TS7006: Parameter 'video' implicitly has an 'any' type.
+src/app/videos/page.tsx(130,42): error TS7006: Parameter 'video' implicitly has an 'any' type.
+src/components/landing/BrutalistShowcase.tsx(99,62): error TS7006: Parameter 'video' implicitly has an 'any' type.
+src/components/landing/BrutalistShowcase.tsx(99,69): error TS7006: Parameter 'index' implicitly has an 'any' type.

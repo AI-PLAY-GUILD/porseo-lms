@@ -3,7 +3,7 @@
 import { action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 // VTTパース用のヘルパー関数
 function parseVTT(vttText: string) {
@@ -97,8 +97,7 @@ export const ingest = action({
         // 2. Embedding生成
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const client = new GoogleGenAI({ apiKey: apiKey });
 
         // 既存のチャンクを削除 (再インデックス時)
         // Note: actionからはmutationを直接呼べないので、internalMutation経由で呼ぶ必要があるが、
@@ -111,8 +110,14 @@ export const ingest = action({
             const batch = chunks.slice(i, i + batchSize);
 
             const promises = batch.map(async (chunk) => {
-                const result = await model.embedContent(chunk.text);
-                const embedding = result.embedding.values;
+                const result = await client.models.embedContent({
+                    model: "text-embedding-004",
+                    contents: chunk.text,
+                });
+                // 新しいSDKのレスポンス構造を確認
+                const embedding = result.embeddings?.[0]?.values;
+                if (!embedding) throw new Error("Failed to generate embedding");
+
                 return {
                     videoId: args.videoId,
                     text: chunk.text,
@@ -140,12 +145,15 @@ export const search = action({
     handler: async (ctx, args): Promise<(Doc<"transcription_chunks"> & { score: number })[]> => {
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const client = new GoogleGenAI({ apiKey: apiKey });
 
         // クエリのEmbedding生成
-        const result = await model.embedContent(args.query);
-        const embedding = result.embedding.values;
+        const result = await client.models.embedContent({
+            model: "text-embedding-004",
+            contents: args.query,
+        });
+        const embedding = result.embeddings?.[0]?.values;
+        if (!embedding) throw new Error("Failed to generate embedding for query");
 
         // ベクトル検索
         const searchResults = await ctx.vectorSearch("transcription_chunks", "by_embedding", {
@@ -172,8 +180,7 @@ export const chat = action({
     handler: async (ctx, args) => {
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const client = new GoogleGenAI({ apiKey: apiKey });
 
         const lastMessage = args.messages[args.messages.length - 1];
         if (!lastMessage || lastMessage.role !== "user") {
@@ -183,8 +190,12 @@ export const chat = action({
         console.log(`Chat query: ${lastMessage.content}`);
 
         // 1. クエリのEmbedding生成
-        const embeddingResult = await embeddingModel.embedContent(lastMessage.content);
-        const embedding = embeddingResult.embedding.values;
+        const embeddingResult = await client.models.embedContent({
+            model: "text-embedding-004",
+            contents: lastMessage.content,
+        });
+        const embedding = embeddingResult.embeddings?.[0]?.values;
+        if (!embedding) throw new Error("Failed to generate embedding for chat query");
 
         // 2. ベクトル検索 (現在の動画に限定)
         const searchResults = await ctx.vectorSearch("transcription_chunks", "by_embedding", {
@@ -221,25 +232,21 @@ ${contextText}
 `;
 
         // 5. Gemini呼び出し
-        // systemInstructionを使ってモデルを初期化
-        const model = genAI.getGenerativeModel({
+        const chat = client.chats.create({
             model: "gemini-2.0-flash",
-            systemInstruction: systemPrompt,
-        });
-
-        const chat = model.startChat({
+            config: {
+                systemInstruction: systemPrompt,
+                maxOutputTokens: 1000,
+                temperature: 0.7,
+            },
             history: args.messages.slice(0, -1).map(m => ({
                 role: m.role === "user" ? "user" : "model",
                 parts: [{ text: m.content }],
             })),
-            generationConfig: {
-                maxOutputTokens: 1000,
-                temperature: 0.7,
-            },
         });
 
-        const result = await chat.sendMessage(lastMessage.content);
-        const response = result.response.text();
+        const result = await chat.sendMessage({ message: lastMessage.content });
+        const response = result.text;
         console.log("Gemini Chat Response:", response);
 
         return response;

@@ -1,4 +1,3 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 const fs = require('fs');
 const path = require('path');
 
@@ -14,7 +13,7 @@ envConfig.split('\n').forEach(line => {
 });
 
 async function listModels() {
-    const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+    // const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
     try {
         // Note: listModels might not be directly available on genAI instance in some SDK versions,
         // but let's try or use the model manager if available.
