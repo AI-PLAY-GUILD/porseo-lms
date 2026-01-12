@@ -23,7 +23,7 @@ export const webhookSyncUser = mutation({
         if (!existing) {
             const existingByEmail = await ctx.db
                 .query("users")
-                .withIndex("by_email", (q) => q.eq("email", args.email))
+                .filter((q) => q.eq(q.field("email"), args.email))
                 .first();
 
             // Only link if the existing user looks like a migrated user (e.g. has a placeholder Clerk ID or we just trust the email)
@@ -245,7 +245,7 @@ export const storeUser = mutation({
         // 2. Check by Email (Fix for migration/linking)
         const existingByEmail = await ctx.db
             .query("users")
-            .withIndex("by_email", (q) => q.eq("email", args.email))
+            .filter((q) => q.eq(q.field("email"), args.email))
             .first();
 
         if (existingByEmail) {
@@ -329,7 +329,7 @@ export const syncCurrentUser = mutation({
         if (email) {
             const existingByEmail = await ctx.db
                 .query("users")
-                .withIndex("by_email", (q) => q.eq("email", email))
+                .filter((q) => q.eq(q.field("email"), email))
                 .first();
             if (existingByEmail) {
                 await ctx.db.patch(existingByEmail._id, {
