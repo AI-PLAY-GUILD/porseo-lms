@@ -70,7 +70,7 @@ ${subtitleText}
         let responseText = "";
         try {
             const response = await client.models.generateContent({
-                model: "gemini-pro-latest",
+                model: "gemini-3-pro-preview",
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",

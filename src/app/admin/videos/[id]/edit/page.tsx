@@ -18,7 +18,7 @@ export default function EditVideoPage() {
     const updateVideo = useMutation(api.videos.updateVideo);
     const generateUploadUrl = useMutation(api.videos.generateUploadUrl);
     const generateMetadata = useAction(api.ai.generateVideoMetadata);
-    const ingestTranscription = useAction(api.rag.ingest);
+
     const userData = useQuery(api.users.getUser);
     const allTags = useQuery(api.tags.getTags);
 
@@ -476,31 +476,7 @@ export default function EditVideoPage() {
                     </button>
                 </div>
 
-                <div className="border-t pt-6 mt-2">
-                    <h3 className="font-bold mb-2 flex items-center gap-2">
-                        <span className="text-xl">🔍</span> RAG検索インデックス
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        文字起こしデータをベクトル化して、AIチャットボットが検索できるようにします。<br />
-                        ※文字起こしデータが必要です。
-                    </p>
-                    <button
-                        type="button"
-                        onClick={async () => {
-                            if (!confirm("検索用インデックスを作成しますか？（数分かかる場合があります）")) return;
-                            try {
-                                await ingestTranscription({ videoId });
-                                alert("インデックス作成が完了しました！");
-                            } catch (error: any) {
-                                console.error(error);
-                                alert(`エラーが発生しました: ${error.message}`);
-                            }
-                        }}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-bold flex items-center gap-2"
-                    >
-                        検索インデックスを作成する
-                    </button>
-                </div>
+
 
                 <div className="flex gap-4 pt-4 border-t mt-4">
                     <button
