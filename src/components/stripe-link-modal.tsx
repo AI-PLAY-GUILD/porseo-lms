@@ -64,6 +64,7 @@ export function StripeLinkModal() {
     }, [user, linkStripeCustomer]);
 
     const handleLink = async () => {
+        console.log("[StripeLinkModal] handleLink started", { email, user });
         if (!email) {
             toast.error("メールアドレスを入力してください。");
             return;
@@ -73,7 +74,9 @@ export function StripeLinkModal() {
         try {
             // 1. ログイン済みの場合：そのまま連携処理
             if (user) {
+                console.log("[StripeLinkModal] User is logged in, linking...");
                 const result = await linkStripeCustomer({ email });
+                console.log("[StripeLinkModal] Link result:", result);
                 if (result.success) {
                     toast.success(result.message);
                     setOpen(false);
@@ -86,7 +89,9 @@ export function StripeLinkModal() {
             }
 
             // 2. 未ログインの場合：メールアドレスの存在確認 -> ログイン誘導
+            console.log("[StripeLinkModal] User is not logged in, checking email existence...");
             const exists = await convex.query(api.users.checkUserByEmail, { email });
+            console.log("[StripeLinkModal] Email exists:", exists);
 
             if (exists) {
                 // メールアドレスが存在する場合、セッションストレージに保存してログインへ
@@ -94,13 +99,18 @@ export function StripeLinkModal() {
                 toast.info("アカウントが見つかりました。Discordでログインしてください。");
 
                 if (signIn) {
+                    console.log("[StripeLinkModal] Authenticating with Discord...");
                     await signIn.authenticateWithRedirect({
                         strategy: "oauth_discord",
                         redirectUrl: "/join",
                         redirectUrlComplete: "/join",
                     });
+                } else {
+                    console.error("[StripeLinkModal] signIn object is undefined");
+                    toast.error("ログイン機能の読み込みに失敗しました。リロードしてください。");
                 }
             } else {
+                console.log("[StripeLinkModal] Email not found");
                 toast.error("入力されたメールアドレスのアカウントが見つかりません。");
             }
 
