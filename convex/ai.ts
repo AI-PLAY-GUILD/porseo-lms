@@ -129,11 +129,12 @@ ${subtitleText}
         } catch (error: any) {
             console.error("Gemini API Error:", error);
             // クライアント側でデバッグできるように詳細なエラーを返す
+            // JSON.stringifyでエラーが起きないように、シンプルなオブジェクトを返す
             return {
                 summary: "",
                 chapters: [],
-                error: `AI分析中にエラーが発生しました: ${error.message}`,
-                details: JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+                error: `AI分析中にエラーが発生しました: ${error.message || "Unknown error"}`,
+                details: error.stack || String(error)
             };
         }
     },
