@@ -4,18 +4,13 @@ import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 import { GoogleGenAI } from "@google/genai";
-import Mux from "@mux/mux-node";
-
-const mux = new Mux({
-    tokenId: process.env.MUX_TOKEN_ID!,
-    tokenSecret: process.env.MUX_TOKEN_SECRET!,
-});
+// Muxは使っていないため削除
 
 export const generateVideoMetadata = action({
     args: {
         videoId: v.id("videos"),
         muxAssetId: v.optional(v.string()),
-        transcription: v.optional(v.string()), // クライアントから直接渡される文字起こし
+        transcription: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         try {
@@ -34,13 +29,15 @@ export const generateVideoMetadata = action({
                 }
             }
 
+            // テキストが空の場合のチェックを強化
             if (!subtitleText || subtitleText.trim().length === 0) {
-                throw new Error("文字起こしテキストがありません。入力欄にテキストを入力するか、ファイルを読み込んでください。");
+                console.warn("No transcription found for video:", args.videoId);
+                throw new Error("文字起こしテキストがありません。");
             }
 
             console.log("Using transcription text length:", subtitleText.length);
 
-            // 2. Geminiで分析 (New SDK)
+            // 2. Geminiで分析
             const client = new GoogleGenAI({ apiKey: apiKey });
 
             const prompt = `
@@ -49,18 +46,17 @@ export const generateVideoMetadata = action({
 学習者にとって有益な「要約」と「チャプター（目次）」を作成してください。
 
 # 重要: JSON形式のみを出力してください
-Markdownのコードブロックや、説明文は一切不要です。純粋なJSONのみを出力してください。
+Markdownのコードブロック（\`\`\`jsonなど）は不要です。純粋なJSON文字列のみを出力してください。
 
 ## 出力フォーマット (JSON)
 {
   "summary": "動画全体の要約（300文字程度で、学習のポイントを明確に）",
   "chapters": [
     {
-      "startTime": 0, // 秒単位の開始時間 (数値)
+      "startTime": 0,
       "title": "チャプターのタイトル",
       "description": "そのチャプターの内容（1文）"
-    },
-    ...
+    }
   ]
 }
 
@@ -68,26 +64,36 @@ Markdownのコードブロックや、説明文は一切不要です。純粋な
 ${subtitleText}
 `;
 
-            let responseText = "";
+            // モデル名を具体的に指定 (gemini-1.5-flash)
             const response = await client.models.generateContent({
-                model: "gemini-flash-latest",
-                contents: prompt,
+                model: "gemini-1.5-flash",
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: prompt }
+                        ]
+                    }
+                ],
                 config: {
                     responseMimeType: "application/json",
                 },
             });
 
-            // 新しいSDKのレスポンス構造に合わせてテキストを取得
-            if (response.text) {
-                responseText = response.text;
+            let responseText = "";
+
+            // 3. レスポンスの取得 (修正ポイント: 関数として呼び出す)
+            const textOrFunc = (response as any).text;
+            if (typeof textOrFunc === 'function') {
+                responseText = textOrFunc();
+            } else if (textOrFunc) {
+                // プロパティの場合のフォールバック
+                responseText = textOrFunc as string;
             } else if (response.candidates && response.candidates.length > 0) {
-                // フォールバック
+                // candidatesからの取得フォールバック
                 const candidate = response.candidates[0];
                 if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-                    const part = candidate.content.parts[0];
-                    if (part.text) {
-                        responseText = part.text;
-                    }
+                    responseText = candidate.content.parts[0].text || "";
                 }
             }
 
@@ -95,6 +101,9 @@ ${subtitleText}
                 console.error("Empty response from Gemini:", JSON.stringify(response, null, 2));
                 throw new Error("AIからの応答が空でした。");
             }
+
+            // 余計なMarkdown記法が含まれていた場合のクリーニング（念のため）
+            responseText = responseText.replace(/^```json\s*/, "").replace(/\s*```$/, "");
 
             console.log("Gemini Response:", responseText);
 
@@ -104,12 +113,12 @@ ${subtitleText}
                 aiData = JSON.parse(responseText);
             } catch (e) {
                 console.log("JSON Parse failed, trying regex extraction...");
+                // JSONオブジェクト部分だけを抽出する正規表現
                 const jsonMatch = responseText.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
                     try {
                         aiData = JSON.parse(jsonMatch[0]);
                     } catch (e2) {
-                        console.error("Regex extraction failed:", e2);
                         throw new Error("AIからの応答をJSONとして解析できませんでした。");
                     }
                 } else {
@@ -128,13 +137,11 @@ ${subtitleText}
 
         } catch (error: any) {
             console.error("Gemini API Error:", error);
-            // クライアント側でデバッグできるように詳細なエラーを返す
-            // JSON.stringifyでエラーが起きないように、シンプルなオブジェクトを返す
+            // エラー時もJSON構造を保って返す
             return {
                 summary: "",
                 chapters: [],
                 error: `AI分析中にエラーが発生しました: ${error.message || "Unknown error"}`,
-                details: error.stack || String(error)
             };
         }
     },
