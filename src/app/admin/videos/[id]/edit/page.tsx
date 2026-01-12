@@ -447,8 +447,14 @@ export default function EditVideoPage() {
 
                                 // 結果を即座にフォームに反映
                                 if (result) {
-                                    setSummary(result.summary);
-                                    setChapters(result.chapters);
+                                    if (result.error) {
+                                        console.error("AI Analysis Failed:", result.error);
+                                        console.error("Error Details:", result.details);
+                                        alert(`${result.error}\n\n詳細は開発者ツールのコンソールを確認してください。`);
+                                        return;
+                                    }
+                                    setSummary(result.summary || "");
+                                    setChapters(result.chapters || []);
                                 }
 
                                 alert("AI分析が完了しました！");

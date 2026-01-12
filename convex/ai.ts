@@ -98,7 +98,13 @@ ${subtitleText}
 
         } catch (error: any) {
             console.error("Gemini API Error:", error);
-            throw new Error(`AI分析中にエラーが発生しました: ${error.message}`);
+            // クライアント側でデバッグできるように詳細なエラーを返す
+            return {
+                summary: "",
+                chapters: [],
+                error: `AI分析中にエラーが発生しました: ${error.message}`,
+                details: JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+            };
         }
 
         console.log("Gemini Response:", responseText);
