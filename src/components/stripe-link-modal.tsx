@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAction, useConvex } from "convex/react";
-import { useSignIn, useUser } from "@clerk/nextjs";
+import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ export function StripeLinkModal() {
     const [loading, setLoading] = useState(false);
     const linkStripeCustomer = useAction(api.stripe.linkStripeCustomerByEmail);
     const convex = useConvex();
-    const { signIn } = useSignIn();
+    const { openSignIn } = useClerk();
     const { user } = useUser();
     const router = useRouter();
 
@@ -98,17 +98,10 @@ export function StripeLinkModal() {
                 sessionStorage.setItem("pending_stripe_link_email", email);
                 toast.info("アカウントが見つかりました。Discordでログインしてください。");
 
-                if (signIn) {
-                    console.log("[StripeLinkModal] Authenticating with Discord...");
-                    await signIn.authenticateWithRedirect({
-                        strategy: "oauth_discord",
-                        redirectUrl: "/join",
-                        redirectUrlComplete: "/join",
-                    });
-                } else {
-                    console.error("[StripeLinkModal] signIn object is undefined");
-                    toast.error("ログイン機能の読み込みに失敗しました。リロードしてください。");
-                }
+                console.log("[StripeLinkModal] Opening Clerk SignIn modal...");
+                openSignIn({
+                    forceRedirectUrl: "/join",
+                });
             } else {
                 console.log("[StripeLinkModal] Email not found");
                 toast.error("入力されたメールアドレスのアカウントが見つかりません。");
