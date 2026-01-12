@@ -70,7 +70,7 @@ ${subtitleText}
         let responseText = "";
         try {
             const response = await client.models.generateContent({
-                model: "gemini-3-pro-preview",
+                model: "gemini-flash-latest",
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",
@@ -96,6 +96,36 @@ ${subtitleText}
                 throw new Error("AIからの応答が空でした。");
             }
 
+            console.log("Gemini Response:", responseText);
+
+            // JSONパース
+            let aiData;
+            try {
+                aiData = JSON.parse(responseText);
+            } catch (e) {
+                console.log("JSON Parse failed, trying regex extraction...");
+                const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    try {
+                        aiData = JSON.parse(jsonMatch[0]);
+                    } catch (e2) {
+                        console.error("Regex extraction failed:", e2);
+                        throw new Error("AIからの応答をJSONとして解析できませんでした。");
+                    }
+                } else {
+                    throw new Error("AIからの応答に有効なJSONが含まれていませんでした。");
+                }
+            }
+
+            // 4. DB更新
+            await ctx.runMutation(api.videos.updateVideoAiMetadata, {
+                videoId: args.videoId,
+                summary: aiData.summary,
+                chapters: aiData.chapters,
+            });
+
+            return aiData;
+
         } catch (error: any) {
             console.error("Gemini API Error:", error);
             // クライアント側でデバッグできるように詳細なエラーを返す
@@ -106,35 +136,5 @@ ${subtitleText}
                 details: JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
             };
         }
-
-        console.log("Gemini Response:", responseText);
-
-        // JSONパース
-        let aiData;
-        try {
-            aiData = JSON.parse(responseText);
-        } catch (e) {
-            console.log("JSON Parse failed, trying regex extraction...");
-            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                try {
-                    aiData = JSON.parse(jsonMatch[0]);
-                } catch (e2) {
-                    console.error("Regex extraction failed:", e2);
-                    throw new Error("AIからの応答をJSONとして解析できませんでした。");
-                }
-            } else {
-                throw new Error("AIからの応答に有効なJSONが含まれていませんでした。");
-            }
-        }
-
-        // 4. DB更新
-        await ctx.runMutation(api.videos.updateVideoAiMetadata, {
-            videoId: args.videoId,
-            summary: aiData.summary,
-            chapters: aiData.chapters,
-        });
-
-        return aiData;
     },
 });
