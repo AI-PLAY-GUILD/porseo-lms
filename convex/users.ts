@@ -225,6 +225,7 @@ export const storeUser = mutation({
         discordId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        // 1. Check by Clerk ID
         const user = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
@@ -235,12 +236,31 @@ export const storeUser = mutation({
                 email: args.email,
                 name: args.name,
                 imageUrl: args.imageUrl,
-                discordId: args.discordId, // ここでDiscord IDを更新
+                discordId: args.discordId, // Update Discord ID
                 updatedAt: Date.now(),
             });
             return user._id;
         }
 
+        // 2. Check by Email (Fix for migration/linking)
+        const existingByEmail = await ctx.db
+            .query("users")
+            .withIndex("by_email", (q) => q.eq("email", args.email))
+            .first();
+
+        if (existingByEmail) {
+            console.log(`[storeUser] Found existing user by email ${args.email}. Linking to Clerk ID ${args.clerkId}`);
+            await ctx.db.patch(existingByEmail._id, {
+                clerkId: args.clerkId, // Link Clerk ID
+                name: args.name,
+                imageUrl: args.imageUrl,
+                discordId: args.discordId,
+                updatedAt: Date.now(),
+            });
+            return existingByEmail._id;
+        }
+
+        // 3. Create New User
         const userId = await ctx.db.insert("users", {
             clerkId: args.clerkId,
             email: args.email,

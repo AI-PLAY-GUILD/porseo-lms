@@ -141,3 +141,18 @@ export const setStripeCustomerId = internalMutation({
         });
     },
 });
+
+export const updateUserStripeInfo = internalMutation({
+    args: {
+        userId: v.id("users"),
+        stripeCustomerId: v.string(),
+        subscriptionStatus: v.string(),
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.userId, {
+            stripeCustomerId: args.stripeCustomerId,
+            subscriptionStatus: args.subscriptionStatus,
+            updatedAt: Date.now(),
+        });
+    },
+});

@@ -142,9 +142,22 @@ export const linkStripeCustomerByEmail = action({
 
         const customerId = customers.data[0].id;
 
-        await ctx.runMutation(internal.internal.setStripeCustomerId, {
+        // Fetch active subscriptions to sync status
+        const subscriptions = await stripe.subscriptions.list({
+            customer: customerId,
+            status: 'active',
+            limit: 1,
+        });
+
+        let subscriptionStatus = 'inactive';
+        if (subscriptions.data.length > 0) {
+            subscriptionStatus = 'active';
+        }
+
+        await ctx.runMutation(internal.internal.updateUserStripeInfo, {
             userId: user._id,
             stripeCustomerId: customerId,
+            subscriptionStatus: subscriptionStatus,
         });
 
         return { success: true, message: "Stripeアカウントの連携が完了しました。" };
