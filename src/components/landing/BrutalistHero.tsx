@@ -74,11 +74,14 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
             </main>
 
             {/* Scroll Indicator */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-slate-400 dark:text-white/50">
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-white">
                 <span className="text-[10px] uppercase tracking-[0.2em]">Scroll</span>
-                <div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-slate-400 dark:via-white/50 to-transparent"></div>
+                <div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-white to-transparent"></div>
                 <ChevronDown className="w-6 h-6 animate-bounce duration-[3000ms]" />
             </div>
+
+            {/* Bottom Gradient for Natural Transition */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-[#f6f6f8] dark:to-[#101622] z-10 pointer-events-none"></div>
         </section>
     );
 }

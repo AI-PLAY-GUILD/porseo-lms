@@ -21,7 +21,7 @@ import { BrutalistHackathon } from "@/components/landing/BrutalistHackathon";
 export default function Home() {
     const { isSignedIn, user, isLoaded } = useUser();
     const userData = useQuery(api.users.getUser);
-    const storeUser = useMutation(api.users.storeUser);
+    const syncCurrentUser = useMutation(api.users.syncCurrentUser);
 
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [isSynced, setIsSynced] = useState(false);
@@ -37,12 +37,8 @@ export default function Home() {
                 );
                 const discordId = discordAccount?.providerUserId;
 
-                // Store User with Discord ID
-                await storeUser({
-                    clerkId: user.id,
-                    email: user.primaryEmailAddress?.emailAddress || "",
-                    name: user.fullName || user.username || "Unknown",
-                    imageUrl: user.imageUrl,
+                // Sync User with Discord ID
+                await syncCurrentUser({
                     discordId: discordId,
                 });
 
@@ -67,7 +63,7 @@ export default function Home() {
         };
 
         sync();
-    }, [isLoaded, isSignedIn, user, isSynced, storeUser]);
+    }, [isLoaded, isSignedIn, user, isSynced, syncCurrentUser]);
 
     const handleCheckout = async () => {
         setCheckoutLoading(true);

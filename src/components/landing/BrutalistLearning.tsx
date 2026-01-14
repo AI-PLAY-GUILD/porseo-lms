@@ -121,6 +121,9 @@ export function BrutalistLearning() {
 
                 </div>
             </div>
+
+            {/* Bottom Gradient for Natural Transition */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-primary z-10 pointer-events-none"></div>
         </section>
     );
 }

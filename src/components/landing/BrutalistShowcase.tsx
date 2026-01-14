@@ -160,6 +160,8 @@ export function BrutalistShowcase() {
                     </div>
                 </div>
             </div>
+            {/* Bottom Gradient for Natural Transition */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-[#f6f6f8] dark:to-[#101622] z-10 pointer-events-none"></div>
         </section>
     );
 }
