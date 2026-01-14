@@ -61,7 +61,7 @@ export default function DashboardPage() {
       if (stats === null && isUserLoaded && user && !isSyncing) {
         setIsSyncing(true);
         try {
-          await syncUser();
+          await syncUser({});
         } catch (error) {
           console.error("Failed to sync user:", error);
         } finally {

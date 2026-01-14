@@ -27,7 +27,7 @@ export default function UserSync() {
             }
 
             // 1. 基本情報を同期
-            await syncUser();
+            await syncUser({});
 
             // 認証が完了していない場合は、認証が必要なアクションをスキップ
             if (!isAuthenticated) return;
