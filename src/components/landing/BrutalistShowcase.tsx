@@ -35,20 +35,21 @@ export function BrutalistShowcase() {
     };
 
     return (
-        <section className="py-16 bg-pop-yellow border-b-4 border-black relative overflow-hidden">
+        <section className="py-24 bg-background relative overflow-hidden">
             {/* Background pattern */}
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(#000 2px, transparent 2px)", backgroundSize: "30px 30px" }}></div>
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[100px] -z-10"></div>
+            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[100px] -z-10"></div>
 
             <div className="container mx-auto px-4 relative z-10">
                 <div className="flex flex-col lg:flex-row gap-12 items-center">
 
                     {/* Left Column: Text Content */}
                     <div className="lg:w-1/3 text-left">
-                        <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-black uppercase tracking-tighter mb-6 leading-tight">
+                        <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-foreground tracking-tight mb-6 leading-tight">
                             HANDS-ON <br />
-                            <span className="text-white text-stroke-2">SHOWCASE</span>
+                            <span className="text-gradient">SHOWCASE</span>
                         </h2>
-                        <p className="text-lg sm:text-xl font-bold text-black mb-6">
+                        <p className="text-lg sm:text-xl font-medium text-muted-foreground mb-8 leading-relaxed">
                             過去のハンズオン動画が見放題！<br />
                             見ながらすぐに実践して、AIを遊び倒そう！
                         </p>
@@ -59,7 +60,8 @@ export function BrutalistShowcase() {
                                 onClick={prevPage}
                                 disabled={totalPages <= 1}
                                 size="icon"
-                                className="w-14 h-14 rounded-full bg-white text-black border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all disabled:opacity-50"
+                                variant="outline"
+                                className="w-14 h-14 rounded-full border-border hover:bg-secondary hover:text-primary transition-all disabled:opacity-50"
                             >
                                 <ArrowLeft className="w-6 h-6" />
                             </Button>
@@ -67,14 +69,15 @@ export function BrutalistShowcase() {
                                 onClick={nextPage}
                                 disabled={totalPages <= 1}
                                 size="icon"
-                                className="w-14 h-14 rounded-full bg-black text-white border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all disabled:opacity-50"
+                                variant="gradient"
+                                className="w-14 h-14 rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all disabled:opacity-50"
                             >
                                 <ArrowRight className="w-6 h-6" />
                             </Button>
                         </div>
                     </div>
 
-                    {/* Right Column: Corkboard Carousel */}
+                    {/* Right Column: Carousel */}
                     <div className="lg:w-2/3 w-full">
                         <div
                             className="flex transition-transform duration-500 ease-in-out pointer-events-none"
@@ -83,9 +86,9 @@ export function BrutalistShowcase() {
                             {isLoading ? (
                                 // Loading Skeletons (Single Page)
                                 <div className="w-full flex-shrink-0 pointer-events-auto">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-8 p-8 pb-16 min-h-[400px]">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4">
                                         {Array.from({ length: 4 }).map((_, i) => (
-                                            <div key={i} className="w-full aspect-video bg-white border-4 border-black rounded-xl brutal-shadow animate-pulse transform rotate-1"></div>
+                                            <div key={i} className="w-full aspect-video bg-muted rounded-2xl animate-pulse"></div>
                                         ))}
                                     </div>
                                 </div>
@@ -95,49 +98,38 @@ export function BrutalistShowcase() {
                                         key={pageIndex}
                                         className={`w-full flex-shrink-0 transition-opacity duration-300 ${pageIndex === currentPage ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                                     >
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-8 p-8 pb-16 min-h-[400px]">
-                                            {pageVideos.map((video, index) => {
-                                                // Random rotation for corkboard effect
-                                                // Use global index to keep rotation consistent across pages
-                                                const globalIndex = pageIndex * itemsPerPage + index;
-                                                const rotations = ['rotate-1', '-rotate-1', 'rotate-2', '-rotate-2'];
-                                                const rotation = rotations[globalIndex % rotations.length];
-
-                                                return (
-                                                    <div
-                                                        key={video._id}
-                                                        className={`w-full group relative transform ${rotation} hover:z-50 hover-shake transition-all duration-300`}
-                                                        style={{ transformOrigin: '50% -4px' }}
-                                                    >
-                                                        {/* Pin element */}
-                                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-red-500 border-2 border-black z-20 shadow-sm"></div>
-
-                                                        <div className="bg-black rounded-xl border-4 border-black overflow-hidden aspect-video relative brutal-shadow group-hover:shadow-none transition-all duration-200">
-                                                            <img
-                                                                src={video.thumbnailUrl || `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=400&height=225&fit_mode=smart`}
-                                                                alt={video.title}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        </div>
-
-                                                        {/* Title tooltip on hover - Full width, no truncate */}
-                                                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 translate-y-full w-[150%] opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-30 flex justify-center">
-                                                            <h3 className="font-black text-sm bg-white border-2 border-black px-4 py-2 shadow-[4px_4px_0px_0px_#000000] text-black text-center leading-tight whitespace-normal break-words">
-                                                                {video.title}
-                                                            </h3>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4">
+                                            {pageVideos.map((video) => (
+                                                <div
+                                                    key={video._id}
+                                                    className="group relative rounded-2xl overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-white"
+                                                >
+                                                    <div className="aspect-video relative overflow-hidden">
+                                                        <img
+                                                            src={video.thumbnailUrl || `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=400&height=225&fit_mode=smart`}
+                                                            alt={video.title}
+                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                            <PlayCircle className="w-12 h-12 text-white drop-shadow-lg" />
                                                         </div>
                                                     </div>
-                                                );
-                                            })}
+                                                    <div className="p-4">
+                                                        <h3 className="font-bold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                                                            {video.title}
+                                                        </h3>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 ))
                             ) : (
                                 // Empty state
                                 <div className="w-full flex-shrink-0">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 p-8 pb-16 min-h-[400px]">
-                                        <div className="col-span-2 flex items-center justify-center h-64 border-4 border-black bg-white brutal-shadow rounded-xl transform -rotate-1">
-                                            <p className="font-bold text-xl">COMING SOON...</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 p-8 min-h-[400px]">
+                                        <div className="col-span-2 flex items-center justify-center h-64 bg-muted/30 rounded-2xl border border-dashed border-muted-foreground/20">
+                                            <p className="font-medium text-muted-foreground">COMING SOON...</p>
                                         </div>
                                     </div>
                                 </div>
@@ -150,7 +142,8 @@ export function BrutalistShowcase() {
                                 onClick={prevPage}
                                 disabled={totalPages <= 1}
                                 size="icon"
-                                className="w-12 h-12 rounded-full bg-white text-black border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all disabled:opacity-50"
+                                variant="outline"
+                                className="w-12 h-12 rounded-full border-border hover:bg-secondary hover:text-primary transition-all disabled:opacity-50"
                             >
                                 <ArrowLeft className="w-5 h-5" />
                             </Button>
@@ -158,7 +151,8 @@ export function BrutalistShowcase() {
                                 onClick={nextPage}
                                 disabled={totalPages <= 1}
                                 size="icon"
-                                className="w-12 h-12 rounded-full bg-black text-white border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all disabled:opacity-50"
+                                variant="gradient"
+                                className="w-12 h-12 rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all disabled:opacity-50"
                             >
                                 <ArrowRight className="w-5 h-5" />
                             </Button>

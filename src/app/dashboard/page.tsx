@@ -48,7 +48,7 @@ export default function DashboardPage() {
   const chartConfig = {
     hours: {
       label: "学習時間 (時間)",
-      color: "var(--color-pop-purple)",
+      color: "hsl(var(--primary))",
     },
   };
 
@@ -84,7 +84,7 @@ export default function DashboardPage() {
 
   if (!isMounted) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-cream">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <BrutalistLoader />
       </div>
     );
@@ -93,16 +93,16 @@ export default function DashboardPage() {
   // statsがnullの場合は未ログインかユーザーが存在しない（通常はmiddlewareで弾かれるが念のため）
   if (stats === null) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-cream flex-col">
+      <div className="flex items-center justify-center min-h-screen bg-background flex-col">
         <BrutalistLoader />
-        <p className="mt-4 font-bold text-gray-500 animate-pulse">ユーザー情報を同期中...</p>
+        <p className="mt-4 font-bold text-muted-foreground animate-pulse">ユーザー情報を同期中...</p>
       </div>
     );
   }
 
   if (videos === undefined || stats === undefined) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-cream">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <BrutalistLoader />
       </div>
     );
@@ -112,26 +112,26 @@ export default function DashboardPage() {
     <SidebarProvider>
       {stats && <PaymentFailureDialog subscriptionStatus={stats.subscriptionStatus} />}
       <AppSidebar user={{ name: stats.userName, email: stats.userEmail, avatar: stats.userAvatar }} />
-      <SidebarInset className="bg-cream">
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 w-full bg-cream px-4">
+      <SidebarInset className="bg-background">
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 w-full bg-background px-4 border-b border-border/50">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="hover:bg-pop-yellow border-2 border-black rounded-md transition-colors" />
-            <Separator orientation="vertical" className="mr-2 h-4 bg-black" />
+            <SidebarTrigger className="hover:bg-secondary/50 rounded-md transition-colors" />
+            <Separator orientation="vertical" className="mr-2 h-4 bg-border" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="#" className="font-bold text-gray-600 hover:text-black">学習プラットフォーム</BreadcrumbLink>
+                  <BreadcrumbLink href="#" className="font-medium text-muted-foreground hover:text-foreground">学習プラットフォーム</BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator className="text-black" />
+                <BreadcrumbSeparator className="text-muted-foreground" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="font-black text-black">ダッシュボード</BreadcrumbPage>
+                  <BreadcrumbPage className="font-bold text-foreground">ダッシュボード</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
           <div className="ml-auto">
             <SignOutButton>
-              <Button variant="outline" size="sm" className="font-bold border-2 border-black bg-white hover:bg-gray-100 brutal-shadow-sm">
+              <Button variant="outline" size="sm" className="font-medium border border-border/50 bg-background hover:bg-secondary/50 shadow-sm">
                 <LogOut className="mr-2 h-4 w-4" />
                 ログアウト
               </Button>
@@ -140,65 +140,65 @@ export default function DashboardPage() {
         </header>
         <div className="flex flex-1 flex-col gap-6 p-6 pt-6">
           <div className="flex items-center justify-between space-y-2">
-            <h2 className="text-4xl font-black tracking-tight text-black">ダッシュボード</h2>
+            <h2 className="text-3xl font-extrabold tracking-tight text-foreground">ダッシュボード</h2>
             <div className="flex items-center space-x-2">
-              <Button asChild className="bg-pop-green text-black border-2 border-black brutal-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none font-bold rounded-lg">
+              <Button asChild variant="gradient" className="font-bold rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all">
                 <Link href="/videos">学習を始める</Link>
               </Button>
             </div>
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="bg-transparent gap-2 p-0 h-auto">
-              <TabsTrigger value="overview" className="data-[state=active]:bg-black data-[state=active]:text-white data-[state=active]:brutal-shadow-sm border-2 border-black bg-white text-black font-bold rounded-lg px-4 py-2 h-auto transition-all">概要</TabsTrigger>
-              <TabsTrigger value="analytics" disabled className="border-2 border-gray-300 bg-gray-100 text-gray-400 font-bold rounded-lg px-4 py-2 h-auto cursor-not-allowed opacity-50">分析</TabsTrigger>
-              <TabsTrigger value="reports" disabled className="border-2 border-gray-300 bg-gray-100 text-gray-400 font-bold rounded-lg px-4 py-2 h-auto cursor-not-allowed opacity-50">レポート</TabsTrigger>
+            <TabsList className="bg-secondary/30 gap-1 p-1 h-auto rounded-full">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-full px-4 py-2 h-auto transition-all font-medium">概要</TabsTrigger>
+              <TabsTrigger value="analytics" disabled className="rounded-full px-4 py-2 h-auto cursor-not-allowed opacity-50 font-medium">分析</TabsTrigger>
+              <TabsTrigger value="reports" disabled className="rounded-full px-4 py-2 h-auto cursor-not-allowed opacity-50 font-medium">レポート</TabsTrigger>
             </TabsList>
             <TabsContent value="overview" className="space-y-6">
               {/* Stats Cards */}
               <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-pop-yellow/20 border-b-2 border-black">
-                    <CardTitle className="text-sm font-black text-black uppercase tracking-wider">総学習時間</CardTitle>
-                    <Clock className="h-5 w-5 text-black" />
+                <Card className="bg-white border border-border/50 shadow-soft rounded-2xl overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary/10 border-b border-border/50">
+                    <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider">総学習時間</CardTitle>
+                    <Clock className="h-5 w-5 text-primary" />
                   </CardHeader>
                   <CardContent className="pt-4">
-                    <div className="text-3xl font-black text-black">
-                      {Math.floor(stats.totalMinutes / 60)}<span className="text-lg font-bold text-gray-600 ml-1">時間</span> {stats.totalMinutes % 60}<span className="text-lg font-bold text-gray-600 ml-1">分</span>
+                    <div className="text-3xl font-extrabold text-foreground">
+                      {Math.floor(stats.totalMinutes / 60)}<span className="text-lg font-medium text-muted-foreground ml-1">時間</span> {stats.totalMinutes % 60}<span className="text-lg font-medium text-muted-foreground ml-1">分</span>
                     </div>
-                    <p className="text-xs font-bold text-gray-500 mt-1">継続は力なり！</p>
+                    <p className="text-xs font-medium text-muted-foreground mt-1">継続は力なり！</p>
                   </CardContent>
                 </Card>
-                <Card className="bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-pop-green/20 border-b-2 border-black">
-                    <CardTitle className="text-sm font-black text-black uppercase tracking-wider">完了した動画</CardTitle>
-                    <BookOpen className="h-5 w-5 text-black" />
+                <Card className="bg-white border border-border/50 shadow-soft rounded-2xl overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary/10 border-b border-border/50">
+                    <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider">完了した動画</CardTitle>
+                    <BookOpen className="h-5 w-5 text-accent" />
                   </CardHeader>
                   <CardContent className="pt-4">
-                    <div className="text-3xl font-black text-black">{stats.completedCount}<span className="text-lg font-bold text-gray-600 ml-1">本</span></div>
-                    <p className="text-xs font-bold text-gray-500 mt-1">
+                    <div className="text-3xl font-extrabold text-foreground">{stats.completedCount}<span className="text-lg font-medium text-muted-foreground ml-1">本</span></div>
+                    <p className="text-xs font-medium text-muted-foreground mt-1">
                       {videos.length > 0 ? `全コンテンツの ${Math.round((stats.completedCount / videos.length) * 100)}%` : "0%"}
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-pop-purple/20 border-b-2 border-black">
-                    <CardTitle className="text-sm font-black text-black uppercase tracking-wider">現在のランク</CardTitle>
-                    <Trophy className="h-5 w-5 text-black" />
+                <Card className="bg-white border border-border/50 shadow-soft rounded-2xl overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary/10 border-b border-border/50">
+                    <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider">現在のランク</CardTitle>
+                    <Trophy className="h-5 w-5 text-yellow-500" />
                   </CardHeader>
                   <CardContent className="pt-4">
-                    <div className="text-3xl font-black text-black">{stats.rank}</div>
-                    <p className="text-xs font-bold text-gray-500 mt-1">次のランクまであと{stats.itemsToNext}本</p>
+                    <div className="text-3xl font-extrabold text-foreground">{stats.rank}</div>
+                    <p className="text-xs font-medium text-muted-foreground mt-1">次のランクまであと{stats.itemsToNext}本</p>
                   </CardContent>
                 </Card>
-                <Card className="bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-pop-red/20 border-b-2 border-black">
-                    <CardTitle className="text-sm font-black text-black uppercase tracking-wider">連続学習記録</CardTitle>
-                    <Activity className="h-5 w-5 text-black" />
+                <Card className="bg-white border border-border/50 shadow-soft rounded-2xl overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary/10 border-b border-border/50">
+                    <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider">連続学習記録</CardTitle>
+                    <Activity className="h-5 w-5 text-green-500" />
                   </CardHeader>
                   <CardContent className="pt-4">
-                    <div className="text-3xl font-black text-black">{stats.streakDays}</div>
-                    <p className="text-xs font-bold text-gray-500 mt-1">日連続</p>
+                    <div className="text-3xl font-extrabold text-foreground">{stats.streakDays}</div>
+                    <p className="text-xs font-medium text-muted-foreground mt-1">日連続</p>
                   </CardContent>
                 </Card>
               </div>
@@ -207,36 +207,36 @@ export default function DashboardPage() {
 
               <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
                 {/* Chart Section */}
-                <Card className="col-span-1 md:col-span-2 lg:col-span-4 bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
-                  <CardHeader className="border-b-2 border-black bg-gray-50">
-                    <CardTitle className="font-black text-xl">学習の推移</CardTitle>
-                    <CardDescription className="font-bold text-gray-500">過去7日間の学習時間</CardDescription>
+                <Card className="col-span-1 md:col-span-2 lg:col-span-4 bg-white border border-border/50 shadow-soft rounded-2xl overflow-hidden">
+                  <CardHeader className="border-b border-border/50 bg-secondary/5">
+                    <CardTitle className="font-bold text-xl text-foreground">学習の推移</CardTitle>
+                    <CardDescription className="font-medium text-muted-foreground">過去7日間の学習時間</CardDescription>
                   </CardHeader>
                   <CardContent className="pl-2 pt-6">
                     <ChartContainer config={chartConfig} className="h-[300px] w-full">
                       <BarChart data={stats.chartData}>
-                        <XAxis dataKey="name" stroke="#000" fontSize={12} tickLine={false} axisLine={false} className="font-bold" />
-                        <YAxis stroke="#000" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}時間`} className="font-bold" />
-                        <ChartTooltip content={<ChartTooltipContent className="bg-white border-2 border-black brutal-shadow-sm font-bold" />} />
-                        <Bar dataKey="hours" fill="var(--color-pop-purple)" radius={[4, 4, 0, 0]} stroke="#000" strokeWidth={2} />
+                        <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} className="font-medium" />
+                        <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}時間`} className="font-medium" />
+                        <ChartTooltip content={<ChartTooltipContent className="bg-white border border-border/50 shadow-lg font-medium rounded-lg" />} />
+                        <Bar dataKey="hours" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ChartContainer>
                   </CardContent>
                 </Card>
 
                 {/* In-Progress Videos Section */}
-                <Card className="col-span-1 md:col-span-2 lg:col-span-3 bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
-                  <CardHeader className="border-b-2 border-black bg-gray-50">
-                    <CardTitle className="font-black text-xl">学習中のコンテンツ</CardTitle>
-                    <CardDescription className="font-bold text-gray-500">前回の続きから始めましょう</CardDescription>
+                <Card className="col-span-1 md:col-span-2 lg:col-span-3 bg-white border border-border/50 shadow-soft rounded-2xl overflow-hidden">
+                  <CardHeader className="border-b border-border/50 bg-secondary/5">
+                    <CardTitle className="font-bold text-xl text-foreground">学習中のコンテンツ</CardTitle>
+                    <CardDescription className="font-medium text-muted-foreground">前回の続きから始めましょう</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
                     <div className="space-y-4">
                       {stats.inProgressVideos && stats.inProgressVideos.length > 0 ? (
                         stats.inProgressVideos.slice(0, 3).map((video) => (
-                          <Link href={`/videos/${video._id}`} key={video._id} className="flex flex-col gap-2 group hover:bg-pop-yellow/10 p-2 rounded-lg transition-colors border-2 border-transparent hover:border-black hover:brutal-shadow-sm">
+                          <Link href={`/videos/${video._id}`} key={video._id} className="flex flex-col gap-2 group hover:bg-secondary/30 p-2 rounded-xl transition-colors border border-transparent hover:border-border/50">
                             <div className="flex items-center gap-4">
-                              <div className="relative h-16 w-28 overflow-hidden rounded-md bg-muted shrink-0 border-2 border-black">
+                              <div className="relative h-16 w-28 overflow-hidden rounded-lg bg-muted shrink-0 border border-border/50 shadow-sm">
                                 <img
                                   src={video.thumbnailUrl || `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=200&height=112&fit_mode=smart`}
                                   alt={video.title}
@@ -247,10 +247,10 @@ export default function DashboardPage() {
                                 </div>
                               </div>
                               <div className="flex-1 space-y-1 min-w-0">
-                                <p className="text-sm font-black leading-none line-clamp-1 group-hover:text-pop-purple transition-colors" title={video.title}>
+                                <p className="text-sm font-bold leading-none line-clamp-1 group-hover:text-primary transition-colors" title={video.title}>
                                   {video.title}
                                 </p>
-                                <div className="flex items-center text-xs font-bold text-gray-500">
+                                <div className="flex items-center text-xs font-medium text-muted-foreground">
                                   <Clock className="mr-1 h-3 w-3" />
                                   <span suppressHydrationWarning>
                                     {new Date(video.lastWatchedAt).toLocaleDateString("ja-JP")}
@@ -259,18 +259,18 @@ export default function DashboardPage() {
                               </div>
                             </div>
                             <div className="w-full pl-1 pr-1">
-                              <div className="flex justify-between text-xs font-bold text-gray-500 mb-1">
+                              <div className="flex justify-between text-xs font-medium text-muted-foreground mb-1">
                                 <span>進捗</span>
                                 <span>{video.progress}%</span>
                               </div>
-                              <Progress value={video.progress} className="h-2 border border-black bg-gray-200 [&>div]:bg-pop-green" />
+                              <Progress value={video.progress} className="h-1.5 bg-secondary [&>div]:bg-primary rounded-full" />
                             </div>
                           </Link>
                         ))
                       ) : (
-                        <div className="text-center py-8 text-gray-500">
-                          <p className="text-sm font-bold">学習中の動画はありません</p>
-                          <Button variant="link" asChild className="mt-2 font-black text-black hover:text-pop-purple">
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p className="text-sm font-medium">学習中の動画はありません</p>
+                          <Button variant="link" asChild className="mt-2 font-bold text-primary hover:text-primary/80">
                             <Link href="/videos">動画一覧を見る</Link>
                           </Button>
                         </div>
@@ -281,7 +281,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="mt-8 flex justify-center">
-                <Button asChild size="lg" className="bg-white text-black border-2 border-black brutal-shadow font-bold hover:bg-gray-100 hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
+                <Button asChild size="lg" variant="outline" className="bg-white text-foreground border border-border/50 shadow-sm font-bold hover:bg-secondary/50 hover:scale-105 transition-all rounded-full px-8">
                   <Link href="/videos">全ての動画を見る</Link>
                 </Button>
               </div>
