@@ -127,6 +127,10 @@ export const linkStripeCustomerByEmail = action({
             throw new Error("User not found");
         }
 
+        if (args.email !== user.email) {
+            throw new Error("Cannot link an email different from your account email.");
+        }
+
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
             apiVersion: "2025-12-15.clover",
         });

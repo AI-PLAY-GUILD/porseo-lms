@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 
 export const createVideo = mutation({
     args: {
@@ -119,8 +119,22 @@ export const getPublishedVideos = query({
         return await Promise.all(videos.map(async (video) => {
             const thumbnailUrl = await resolveThumbnail(video.customThumbnailStorageId);
 
+            // Check Access
+            const hasAccess = (() => {
+                if (user?.isAdmin) return true;
+                if (!video.requiredRoles || video.requiredRoles.length === 0) return true;
+                if (!user) return false;
+                return video.requiredRoles.some(role => user.discordRoles.includes(role));
+            })();
+
+            const sanitizedVideo = { ...video };
+            if (!hasAccess) {
+                delete (sanitizedVideo as any).muxPlaybackId;
+                delete (sanitizedVideo as any).muxAssetId;
+            }
+
             return {
-                ...video,
+                ...sanitizedVideo,
                 userProgress: progressMap.get(video._id) || null,
                 thumbnailUrl
             };
@@ -133,6 +147,28 @@ export const getById = query({
     handler: async (ctx, args) => {
         const video = await ctx.db.get(args.videoId);
         if (!video) return null;
+
+        // --- Security Check ---
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return null; // Require login
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+            .first();
+
+        if (!user) return null;
+
+        if (!user.isAdmin) {
+            // Check roles
+            if (video.requiredRoles && video.requiredRoles.length > 0) {
+                const hasRequiredRole = video.requiredRoles.some(role =>
+                    user.discordRoles.includes(role)
+                );
+                if (!hasRequiredRole) return null; // Access denied
+            }
+        }
+        // ---------------------
 
         let thumbnailUrl = null;
         if (video.customThumbnailStorageId) {
@@ -195,7 +231,7 @@ export const updateVideo = mutation({
     },
 });
 
-export const updateVideoAiMetadata = mutation({
+export const updateVideoAiMetadata = internalMutation({
     args: {
         videoId: v.id("videos"),
         summary: v.string(),
@@ -209,9 +245,7 @@ export const updateVideoAiMetadata = mutation({
     },
     handler: async (ctx, args) => {
         // 内部呼び出し用（Actionから呼ばれる）
-        // 本来はinternalMutationにすべきだが、簡略化のため通常のmutationで実装し、
-        // 必要なら認証チェックを入れる（今回はActionからの呼び出しを信頼）
-
+        // internalMutationに変更済み
         await ctx.db.patch(args.videoId, {
             summary: args.summary,
             chapters: args.chapters,

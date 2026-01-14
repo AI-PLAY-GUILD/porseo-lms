@@ -81,8 +81,20 @@ export const updateDiscordRoles = mutation({
     args: {
         clerkId: v.string(),
         discordRoles: v.array(v.string()),
+        secret: v.optional(v.string()), // Added secret for webhook/admin script access
     },
     handler: async (ctx, args) => {
+        // Security Check: Require Secret or Admin
+        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+            const identity = await ctx.auth.getUserIdentity();
+            if (!identity) throw new Error("Unauthorized");
+            const adminUser = await ctx.db
+                .query("users")
+                .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+                .first();
+            if (!adminUser?.isAdmin) throw new Error("Unauthorized: Admin access required");
+        }
+
         const user = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
@@ -138,8 +150,30 @@ export const getUserByClerkId = async (ctx: any, clerkId: string) => {
 
 // 1. Stripe Customer IDからユーザーを取得
 export const getUserByStripeCustomerId = query({
-    args: { stripeCustomerId: v.string() },
+    args: {
+        stripeCustomerId: v.string(),
+        secret: v.optional(v.string()), // Optional to allow internal calls if needed, but we enforce check
+    },
     handler: async (ctx, args) => {
+        // Require secret for public access via client (webhook)
+        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+            // If no secret, check for admin auth (optional, but safer to just require secret for this specific query)
+            const identity = await ctx.auth.getUserIdentity();
+            if (!identity) {
+                // Fail silently or throw? Throwing is better for security.
+                throw new Error("Unauthorized");
+            }
+            // If logged in, check if admin? Or if it's the user themselves?
+            // For now, let's strictly require the secret or Admin.
+            const user = await ctx.db
+                .query("users")
+                .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+                .first();
+            if (!user?.isAdmin) {
+                throw new Error("Unauthorized");
+            }
+        }
+
         return await ctx.db
             .query("users")
             .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
@@ -155,8 +189,13 @@ export const updateSubscriptionStatus = mutation({
         subscriptionStatus: v.string(),
         subscriptionName: v.optional(v.string()),
         roleId: v.optional(v.string()),
+        secret: v.string(), // Added secret
     },
     handler: async (ctx, args) => {
+        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+
         const user = await ctx.db
             .query("users")
             .withIndex("by_discord_id", (q) => q.eq("discordId", args.discordId))
@@ -196,8 +235,13 @@ export const updateSubscriptionStatusByCustomerId = mutation({
     args: {
         stripeCustomerId: v.string(),
         subscriptionStatus: v.string(),
+        secret: v.string(), // Added secret
     },
     handler: async (ctx, args) => {
+        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+
         const user = await ctx.db
             .query("users")
             .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
@@ -223,8 +267,13 @@ export const storeUser = mutation({
         name: v.string(),
         imageUrl: v.optional(v.string()),
         discordId: v.optional(v.string()),
+        secret: v.string(), // Added secret
     },
     handler: async (ctx, args) => {
+        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+
         // 1. Check by Clerk ID
         const user = await ctx.db
             .query("users")
@@ -302,8 +351,10 @@ export const getAllUsers = query({
 });
 
 export const syncCurrentUser = mutation({
-    args: {},
-    handler: async (ctx) => {
+    args: {
+        discordId: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
             throw new Error("Called syncCurrentUser without authentication");
@@ -320,8 +371,13 @@ export const syncCurrentUser = mutation({
             .first();
 
         if (user) {
-            // User already exists, update if needed (optional, but good for consistency)
-            // For now, we just return the ID as the goal is to ensure existence
+            // Update Discord ID if provided and different
+            if (args.discordId && user.discordId !== args.discordId) {
+                await ctx.db.patch(user._id, {
+                    discordId: args.discordId,
+                    updatedAt: Date.now(),
+                });
+            }
             return user._id;
         }
 
@@ -336,6 +392,7 @@ export const syncCurrentUser = mutation({
                     clerkId: clerkId,
                     name: name,
                     imageUrl: imageUrl,
+                    discordId: args.discordId || existingByEmail.discordId, // Update Discord ID if provided
                     updatedAt: Date.now(),
                 });
                 return existingByEmail._id;
@@ -348,6 +405,7 @@ export const syncCurrentUser = mutation({
             email: email || "",
             name: name,
             imageUrl: imageUrl,
+            discordId: args.discordId,
             discordRoles: [],
             isAdmin: false, // Default to false
             createdAt: Date.now(),

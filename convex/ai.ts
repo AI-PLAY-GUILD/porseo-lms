@@ -2,7 +2,7 @@
 
 import { action } from "./_generated/server";
 import { v } from "convex/values";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { GoogleGenAI } from "@google/genai";
 // Muxは使っていないため削除
 
@@ -14,6 +14,14 @@ export const generateVideoMetadata = action({
     },
     handler: async (ctx, args) => {
         try {
+            // --- Security Check ---
+            const identity = await ctx.auth.getUserIdentity();
+            if (!identity) throw new Error("Unauthorized");
+
+            const user = await ctx.runQuery(api.users.getUserByClerkIdQuery, { clerkId: identity.subject });
+            if (!user?.isAdmin) throw new Error("Admin access required");
+            // ---------------------
+
             console.log("Generating metadata for video:", args.videoId);
 
             const apiKey = process.env.GEMINI_API_KEY;
@@ -127,7 +135,7 @@ ${subtitleText}
             }
 
             // 4. DB更新
-            await ctx.runMutation(api.videos.updateVideoAiMetadata, {
+            await ctx.runMutation(internal.videos.updateVideoAiMetadata, {
                 videoId: args.videoId,
                 summary: aiData.summary,
                 chapters: aiData.chapters,

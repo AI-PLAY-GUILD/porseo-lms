@@ -1,11 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Menu, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { LiquidBackground } from "../liquid-background";
 
 interface BrutalistHeroProps {
     isSignedIn: boolean;
@@ -28,66 +29,55 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
     }, { scope: containerRef });
 
     return (
-        <section ref={containerRef} className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 pt-32 pb-32 text-center z-10 overflow-hidden bg-background">
-            {/* Background Elements */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-primary/20 rounded-full blur-[120px] -z-10 animate-pulse-glow"></div>
-            <div className="absolute bottom-0 right-0 w-[800px] h-[600px] bg-accent/10 rounded-full blur-[100px] -z-10"></div>
-
-            {/* Floating Shapes */}
-            <div className="absolute top-20 left-10 w-24 h-24 bg-gradient-to-br from-primary to-accent rounded-full blur-xl opacity-60 animate-float hidden md:block"></div>
-            <div className="absolute bottom-40 right-10 w-32 h-32 bg-gradient-to-tr from-accent to-primary rounded-full blur-xl opacity-60 animate-float hidden md:block" style={{ animationDelay: '2s' }}></div>
-
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 backdrop-blur-md border border-white/20 shadow-sm text-primary font-bold mb-8 animate-float">
-                <Sparkles className="w-4 h-4 text-accent fill-accent" />
-                <span className="text-sm tracking-wide uppercase">For The Players</span>
+        <section ref={containerRef} className="relative w-full h-screen flex flex-col overflow-hidden bg-[#f6f6f8] dark:bg-[#101622] font-sans">
+            {/* Animated Liquid Background */}
+            <div className="absolute inset-0 z-0 overflow-hidden">
+                <LiquidBackground />
+                {/* Overlay Texture */}
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay pointer-events-none"></div>
             </div>
 
-            <h1 ref={titleRef} className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-extrabold tracking-tight mb-8 text-foreground leading-[1.1]">
-                PLAY WITH <span className="text-gradient">AI</span>,
-                <br />
-                SHAPE THE <span className="text-gradient-reverse">FUTURE</span>
-            </h1>
+            {/* Hero Content */}
+            <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 text-center pb-20">
+                <div className="max-w-4xl flex flex-col items-center gap-6 md:gap-8">
+                    {/* Headline with Liquid/Distorted Aesthetic */}
+                    <h1 ref={titleRef} className="text-6xl md:text-8xl lg:text-9xl font-thin tracking-tighter leading-[0.9] drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-br from-[#135bec] via-[#44ddff] to-[#135bec] dark:from-white dark:via-[#a5c3ff] dark:to-[#135bec] animate-gradient-x bg-[length:200%_auto]">
+                        AI PLAY GUILD
+                    </h1>
 
-            <p className="text-lg md:text-2xl text-muted-foreground font-medium max-w-2xl mb-12 leading-relaxed">
-                AI PLAY GUILDはAIで遊びながらその楽しさに熱狂し、<br />
-                まだ見ぬ未来を創り出すコミュニティです。
-            </p>
+                    {/* Sub-headline */}
+                    <p className="text-slate-600 dark:text-blue-100/80 text-sm md:text-lg font-normal tracking-wide max-w-lg mx-auto leading-relaxed">
+                        昨日より、AIに没頭できるコミュニティ
+                    </p>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto px-4 sm:px-0">
-                {isSignedIn ? (
-                    <Button asChild size="lg" variant="gradient" className="h-14 sm:h-16 w-full sm:w-auto px-8 sm:px-12 text-lg sm:text-xl font-bold rounded-full">
-                        <Link href="/dashboard">
-                            GO TO DASHBOARD <ArrowRight className="ml-2 w-5 sm:w-6 h-5 sm:h-6" />
-                        </Link>
-                    </Button>
-                ) : (
-                    <>
-                        <Button asChild size="lg" variant="gradient" className="h-14 sm:h-16 w-full sm:w-auto px-8 sm:px-12 text-lg sm:text-xl font-bold rounded-full">
+                    {/* CTA Button */}
+                    <div className="mt-8">
+                        {isSignedIn ? (
+                            <Link href="/dashboard">
+                                <button className="group relative overflow-hidden bg-white/10 backdrop-blur-md border border-white/20 dark:border-white/10 px-8 py-4 rounded-lg flex items-center gap-3 text-[#135bec] dark:text-white font-bold tracking-wide uppercase text-sm md:text-base hover:bg-[#135bec]/10 dark:hover:bg-[#135bec]/30 hover:border-[#135bec]/50 hover:shadow-[0_0_30px_rgba(19,91,236,0.3)] transition-all duration-300">
+                                    <span className="relative z-10">Go to Dashboard</span>
+                                    <ArrowRight className="w-5 h-5 relative z-10" />
+                                    <div className="absolute inset-0 bg-gradient-to-r from-[#135bec]/0 via-[#135bec]/10 to-[#135bec]/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </button>
+                            </Link>
+                        ) : (
                             <Link href="/join">
-                                今すぐ参加
+                                <button className="group relative overflow-hidden bg-white/10 backdrop-blur-md border border-white/20 dark:border-white/10 px-8 py-4 rounded-lg flex items-center gap-3 text-[#135bec] dark:text-white font-bold tracking-wide uppercase text-sm md:text-base hover:bg-[#135bec]/10 dark:hover:bg-[#135bec]/30 hover:border-[#135bec]/50 hover:shadow-[0_0_30px_rgba(19,91,236,0.3)] transition-all duration-300">
+                                    <span className="relative z-10">Start Journey</span>
+                                    <ArrowRight className="w-5 h-5 relative z-10" />
+                                    <div className="absolute inset-0 bg-gradient-to-r from-[#135bec]/0 via-[#135bec]/10 to-[#135bec]/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </button>
                             </Link>
-                        </Button>
-                        <Button asChild variant="outline" size="lg" className="h-14 sm:h-16 w-full sm:w-auto px-8 sm:px-12 text-lg sm:text-xl font-bold rounded-full border-2 hover:bg-secondary/50">
-                            <Link href="#features">
-                                もっと詳しく
-                            </Link>
-                        </Button>
-                    </>
-                )}
-            </div>
-
-            {/* Marquee - Modernized */}
-            <div className="absolute bottom-0 left-0 w-full bg-white/5 backdrop-blur-sm border-t border-white/10 py-4 overflow-hidden whitespace-nowrap">
-                <div className="animate-scroll inline-block">
-                    <span className="text-xl font-bold mx-12 text-muted-foreground/50">🚀 LATEST AI NEWS</span>
-                    <span className="text-xl font-bold mx-12 text-muted-foreground/50">💻 LEARNING DASHBOARD</span>
-                    <span className="text-xl font-bold mx-12 text-muted-foreground/50">🤝 ACTIVE COMMUNITY</span>
-                    <span className="text-xl font-bold mx-12 text-muted-foreground/50">🛠 HANDS-ON</span>
-                    <span className="text-xl font-bold mx-12 text-muted-foreground/50">🚀 LATEST AI NEWS</span>
-                    <span className="text-xl font-bold mx-12 text-muted-foreground/50">💻 LEARNING DASHBOARD</span>
-                    <span className="text-xl font-bold mx-12 text-muted-foreground/50">🤝 ACTIVE COMMUNITY</span>
-                    <span className="text-xl font-bold mx-12 text-muted-foreground/50">🛠 HANDS-ON</span>
+                        )}
+                    </div>
                 </div>
+            </main>
+
+            {/* Scroll Indicator */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-slate-400 dark:text-white/50">
+                <span className="text-[10px] uppercase tracking-[0.2em]">Scroll</span>
+                <div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-slate-400 dark:via-white/50 to-transparent"></div>
+                <ChevronDown className="w-6 h-6 animate-bounce duration-[3000ms]" />
             </div>
         </section>
     );
