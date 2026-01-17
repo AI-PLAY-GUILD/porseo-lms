@@ -385,7 +385,7 @@ export const syncCurrentUser = mutation({
         if (email) {
             const existingByEmail = await ctx.db
                 .query("users")
-                .filter((q) => q.eq(q.field("email"), email))
+                .withIndex("by_email", (q) => q.eq("email", email))
                 .first();
             if (existingByEmail) {
                 await ctx.db.patch(existingByEmail._id, {

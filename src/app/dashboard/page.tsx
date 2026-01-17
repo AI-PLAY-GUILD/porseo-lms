@@ -31,7 +31,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 interface Video {
   _id: Id<"videos">;
   title: string;
-  thumbnailUrl?: string;
+  thumbnailUrl?: string | null;
   muxPlaybackId?: string;
   duration?: number;
 }
@@ -50,7 +50,7 @@ interface DailyLog {
 
 export default function DashboardPage() {
   const userData = useQuery(api.users.getUser);
-  const videos = useQuery(api.videos.getVideos);
+  const videos = useQuery(api.videos.getPublishedVideos);
   const progress = useQuery(api.videoProgress.getUserProgress);
   const dailyLogs = useQuery(api.videoProgress.getDailyLearningLogs);
 
