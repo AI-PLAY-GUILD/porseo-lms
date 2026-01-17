@@ -2,14 +2,22 @@
 
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { useState } from "react";
-import { ArrowLeft, ArrowRight, PlayCircle } from "lucide-react";
+import { useState, useRef } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ParticleBackground } from "./particle-background";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export function BrutalistShowcase() {
     const videos = useQuery(api.videos.getPublishedVideos);
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 4;
+    const containerRef = useRef<HTMLDivElement>(null);
+    const titleRef = useRef<HTMLDivElement>(null);
 
     // Mock data for initial render or if no videos (to show the design)
     const isLoading = videos === undefined;
@@ -34,23 +42,45 @@ export function BrutalistShowcase() {
         setCurrentPage((prev) => (prev - 1 + (totalPages || 1)) % (totalPages || 1));
     };
 
+    useGSAP(() => {
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: containerRef.current,
+                start: "top 70%",
+                end: "bottom bottom",
+                toggleActions: "play none none reverse",
+            }
+        });
+
+        tl.fromTo(titleRef.current,
+            { y: 50, opacity: 0 },
+            { y: 0, opacity: 1, duration: 1, ease: "power3.out" }
+        );
+
+    }, { scope: containerRef });
+
     return (
-        <section className="py-24 bg-background relative overflow-hidden">
+        <section ref={containerRef} className="py-12 md:py-24 relative overflow-hidden bg-white">
+            <div className="absolute inset-0 z-0 opacity-50 pointer-events-none">
+                <ParticleBackground />
+            </div>
             {/* Background pattern */}
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[100px] -z-10"></div>
-            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[100px] -z-10"></div>
+            <div className="absolute top-0 right-0 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-blue-50 rounded-full blur-[100px] -z-10"></div>
+            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-indigo-50 rounded-full blur-[100px] -z-10"></div>
 
             <div className="container mx-auto px-4 relative z-10">
-                <div className="flex flex-col lg:flex-row gap-12 items-center">
+                <div className="flex flex-col lg:flex-row gap-8 md:gap-12 items-center">
 
                     {/* Left Column: Text Content */}
-                    <div className="lg:w-1/3 text-left">
-                        <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-foreground tracking-tight mb-6 leading-tight">
-                            HANDS-ON <br />
-                            <span className="text-gradient">SHOWCASE</span>
+                    <div ref={titleRef} className="lg:w-1/3 text-left">
+                        <h2 className="text-3xl sm:text-5xl md:text-6xl font-thin text-foreground tracking-tighter mb-6 leading-tight">
+                            豊富な<br />
+                            <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                                アーカイブ
+                            </span>
                         </h2>
-                        <p className="text-lg sm:text-xl font-medium text-muted-foreground mb-8 leading-relaxed">
-                            過去のハンズオン動画が見放題！<br />
+                        <p className="text-lg sm:text-xl font-light text-muted-foreground mb-8 leading-relaxed">
+                            ４０種類以上のアーカイブ動画が見放題！<br />
                             見ながらすぐに実践して、AIを遊び倒そう！
                         </p>
 
@@ -61,7 +91,7 @@ export function BrutalistShowcase() {
                                 disabled={totalPages <= 1}
                                 size="icon"
                                 variant="outline"
-                                className="w-14 h-14 rounded-full border-border hover:bg-secondary hover:text-primary transition-all disabled:opacity-50"
+                                className="w-14 h-14 rounded-full border border-blue-200/20 bg-blue-500/5 text-blue-600 hover:bg-blue-500/10 backdrop-blur-md transition-all duration-300 disabled:opacity-50 disabled:hover:bg-transparent"
                             >
                                 <ArrowLeft className="w-6 h-6" />
                             </Button>
@@ -69,8 +99,8 @@ export function BrutalistShowcase() {
                                 onClick={nextPage}
                                 disabled={totalPages <= 1}
                                 size="icon"
-                                variant="gradient"
-                                className="w-14 h-14 rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all disabled:opacity-50"
+                                variant="default"
+                                className="w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-blue-600/10 text-blue-600 hover:bg-blue-600/20 border border-blue-200/20 backdrop-blur-md hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                             >
                                 <ArrowRight className="w-6 h-6" />
                             </Button>
@@ -102,7 +132,7 @@ export function BrutalistShowcase() {
                                             {pageVideos.map((video) => (
                                                 <div
                                                     key={video._id}
-                                                    className="group relative rounded-2xl overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-white"
+                                                    className="group relative rounded-2xl overflow-hidden shadow-sm border border-border/50 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
                                                 >
                                                     <div className="aspect-video relative overflow-hidden">
                                                         <img
@@ -110,9 +140,6 @@ export function BrutalistShowcase() {
                                                             alt={video.title}
                                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                                         />
-                                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                                            <PlayCircle className="w-12 h-12 text-white drop-shadow-lg" />
-                                                        </div>
                                                     </div>
                                                     <div className="p-4">
                                                         <h3 className="font-bold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
@@ -143,7 +170,7 @@ export function BrutalistShowcase() {
                                 disabled={totalPages <= 1}
                                 size="icon"
                                 variant="outline"
-                                className="w-12 h-12 rounded-full border-border hover:bg-secondary hover:text-primary transition-all disabled:opacity-50"
+                                className="w-12 h-12 rounded-full border border-blue-200/20 bg-blue-500/5 text-blue-600 hover:bg-blue-500/10 backdrop-blur-md transition-all duration-300 disabled:opacity-50"
                             >
                                 <ArrowLeft className="w-5 h-5" />
                             </Button>
@@ -151,8 +178,8 @@ export function BrutalistShowcase() {
                                 onClick={nextPage}
                                 disabled={totalPages <= 1}
                                 size="icon"
-                                variant="gradient"
-                                className="w-12 h-12 rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all disabled:opacity-50"
+                                variant="default"
+                                className="w-12 h-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-blue-600/10 text-blue-600 hover:bg-blue-600/20 border border-blue-200/20 backdrop-blur-md hover:scale-105 disabled:opacity-50"
                             >
                                 <ArrowRight className="w-5 h-5" />
                             </Button>
@@ -161,7 +188,7 @@ export function BrutalistShowcase() {
                 </div>
             </div>
             {/* Bottom Gradient for Natural Transition */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-[#f6f6f8] dark:to-[#101622] z-10 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-white z-10 pointer-events-none"></div>
         </section>
     );
 }

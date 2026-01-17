@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { StripeLinkModal } from "@/components/stripe-link-modal";
 import { BrutalistHeader } from "@/components/landing/BrutalistHeader";
 import { BrutalistHero } from "@/components/landing/BrutalistHero";
-import { BrutalistFeatures } from "@/components/landing/BrutalistFeatures";
+import { BrutalistAbout } from "@/components/landing/BrutalistAbout";
 import { BrutalistShowcase } from "@/components/landing/BrutalistShowcase";
 import { BrutalistTeam } from "@/components/landing/BrutalistTeam";
 import { BrutalistPricing } from "@/components/landing/BrutalistPricing";
@@ -114,7 +114,7 @@ export default function Home() {
                     checkoutLoading={checkoutLoading}
                 />
 
-                <BrutalistFeatures />
+                <BrutalistAbout />
 
                 <BrutalistShowcase />
 

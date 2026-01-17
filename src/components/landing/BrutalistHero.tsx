@@ -47,7 +47,7 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
 
                     {/* Sub-headline */}
                     <p className="text-slate-600 dark:text-blue-100/80 text-sm md:text-lg font-normal tracking-wide max-w-lg mx-auto leading-relaxed">
-                        昨日より、AIに没頭できるコミュニティ
+                        昨日より、AIで遊びたくなるコミュニティ
                     </p>
 
                     {/* CTA Button */}

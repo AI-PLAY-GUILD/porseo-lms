@@ -3,30 +3,66 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BarChart3, Target, Trophy, Zap } from "lucide-react";
 import Link from "next/link";
+import { useRef } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ParticleBackground } from "./particle-background";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export function BrutalistLearning() {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const textRef = useRef<HTMLDivElement>(null);
+    const visualRef = useRef<HTMLDivElement>(null);
+
+    useGSAP(() => {
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: containerRef.current,
+                start: "top 70%",
+                end: "bottom bottom",
+                toggleActions: "play none none reverse",
+            }
+        });
+
+        tl.fromTo(textRef.current,
+            { x: -50, opacity: 0 },
+            { x: 0, opacity: 1, duration: 1, ease: "power3.out" }
+        );
+
+        tl.fromTo(visualRef.current,
+            { x: 50, opacity: 0 },
+            { x: 0, opacity: 1, duration: 1, ease: "power3.out" },
+            "-=0.8"
+        );
+
+    }, { scope: containerRef });
+
     return (
-        <section className="py-24 bg-white relative overflow-hidden">
+        <section ref={containerRef} className="py-12 md:py-24 relative overflow-hidden bg-white">
+            <div className="absolute inset-0 z-0 opacity-50 pointer-events-none">
+                <ParticleBackground />
+            </div>
             {/* Background Pattern */}
-            <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] -z-10"></div>
-            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[100px] -z-10"></div>
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] md:w-[800px] md:h-[800px] bg-purple-50 rounded-full blur-[120px] -z-10"></div>
+            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-blue-50 rounded-full blur-[100px] -z-10"></div>
 
             <div className="container mx-auto px-4 relative z-10">
-                <div className="flex flex-col lg:flex-row items-center gap-16">
+                <div className="flex flex-col lg:flex-row items-center gap-10 md:gap-16">
 
                     {/* Text Content */}
-                    <div className="lg:w-1/2 text-left">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 backdrop-blur-sm border border-border text-foreground text-sm font-bold tracking-wide uppercase mb-6">
-                            <Zap className="w-4 h-4 text-primary" />
-                            LMSプラットフォーム
-                        </div>
+                    <div ref={textRef} className="lg:w-1/2 text-left">
 
-                        <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-foreground tracking-tight mb-6 leading-tight">
+
+                        <h2 className="text-3xl sm:text-5xl md:text-6xl font-thin text-foreground tracking-tighter mb-6 leading-tight">
                             あなた専用の <br />
-                            <span className="text-gradient">ダッシュボード</span>
+                            <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+                                学習ダッシュボード
+                            </span>
                         </h2>
 
-                        <p className="text-lg sm:text-xl font-medium text-muted-foreground mb-8 leading-relaxed">
+                        <p className="text-lg sm:text-xl font-light text-muted-foreground mb-8 leading-relaxed">
                             自分専用のダッシュボードで、学習の進捗を可視化。<br />
                             ランクアップシステムで、モチベーションを維持。
                         </p>
@@ -61,21 +97,22 @@ export function BrutalistLearning() {
                             </div>
                         </div>
 
-                        <Button asChild size="lg" variant="default" className="h-14 sm:h-16 px-10 text-lg sm:text-xl font-bold rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40">
+                        <Button asChild size="lg" variant="default" className="h-14 sm:h-16 px-10 text-lg sm:text-xl group relative overflow-hidden rounded-full font-bold bg-white/10 backdrop-blur-md border border-white/20 text-[#135bec] tracking-wide uppercase transition-all duration-300 hover:bg-[#135bec]/10 hover:border-[#135bec]/50 hover:shadow-[0_0_30px_rgba(19,91,236,0.3)]">
                             <Link href="/join">
-                                今すぐ参加 <ArrowRight className="ml-2 w-6 h-6" />
+                                <span className="relative z-10 flex items-center">今すぐ参加 <ArrowRight className="ml-2 w-6 h-6" /></span>
+                                <div className="absolute inset-0 bg-gradient-to-r from-[#135bec]/0 via-[#135bec]/10 to-[#135bec]/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                             </Link>
                         </Button>
                     </div>
 
                     {/* Visual Content (Mockup) */}
-                    <div className="lg:w-1/2 w-full relative">
+                    <div ref={visualRef} className="lg:w-1/2 w-full relative">
                         {/* Decorative elements behind */}
-                        <div className="absolute top-10 -right-10 w-64 h-64 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-3xl -z-10"></div>
-                        <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl -z-10"></div>
+                        <div className="absolute top-10 -right-10 w-64 h-64 bg-purple-100 rounded-full blur-3xl -z-10"></div>
+                        <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-blue-100 rounded-full blur-3xl -z-10"></div>
 
                         {/* Dashboard Mockup Card */}
-                        <div className="relative bg-white/80 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-soft transform rotate-2 hover:rotate-0 transition-transform duration-500">
+                        <div className="relative bg-white/80 backdrop-blur-md border border-border/50 rounded-3xl p-4 md:p-8 shadow-xl transform rotate-2 hover:rotate-0 transition-transform duration-500 scale-90 md:scale-100 origin-center">
                             <div className="flex items-center justify-between mb-8 border-b border-border/50 pb-4">
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 rounded-full bg-red-400"></div>
@@ -102,7 +139,7 @@ export function BrutalistLearning() {
                                 </div>
                                 <div className="flex items-end justify-between h-24 gap-2">
                                     {[40, 70, 45, 90, 60, 80, 50].map((h, i) => (
-                                        <div key={i} className="w-full bg-gradient-to-t from-primary/80 to-accent/80 rounded-t-md opacity-80 hover:opacity-100 transition-opacity" style={{ height: `${h}%` }}></div>
+                                        <div key={i} className="w-full bg-gradient-to-t from-purple-500 to-pink-500 rounded-t-md opacity-80 hover:opacity-100 transition-opacity" style={{ height: `${h}%` }}></div>
                                     ))}
                                 </div>
                             </div>
@@ -123,7 +160,7 @@ export function BrutalistLearning() {
             </div>
 
             {/* Bottom Gradient for Natural Transition */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-primary z-10 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-white z-10 pointer-events-none"></div>
         </section>
     );
 }

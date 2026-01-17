@@ -7,6 +7,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { HelpCircle } from "lucide-react";
+import { ParticleBackground } from "./particle-background";
 
 export function BrutalistFAQ() {
     const faqs = [
@@ -29,7 +30,10 @@ export function BrutalistFAQ() {
     ];
 
     return (
-        <section id="faq" className="py-24 relative overflow-hidden bg-[#f6f6f8] dark:bg-[#101622]">
+        <section id="faq" className="py-24 relative overflow-hidden bg-white">
+            <div className="absolute inset-0 z-0 opacity-50 pointer-events-none">
+                <ParticleBackground />
+            </div>
             {/* Background decoration */}
             <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 -z-10 pointer-events-none"></div>
             <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px] -z-10 pointer-events-none"></div>

@@ -66,8 +66,11 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                                     <Link href="/admin">管理画面</Link>
                                 </Button>
                             )}
-                            <Button asChild className="rounded-full font-normal bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
-                                <Link href="/dashboard">ダッシュボード</Link>
+                            <Button asChild className="group relative overflow-hidden rounded-full font-bold bg-white/10 backdrop-blur-md border border-white/20 text-[#135bec] tracking-wide uppercase transition-all duration-300 hover:bg-[#135bec]/10 hover:border-[#135bec]/50 hover:shadow-[0_0_30px_rgba(19,91,236,0.3)]">
+                                <Link href="/dashboard">
+                                    <span className="relative z-10">ダッシュボード</span>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-[#135bec]/0 via-[#135bec]/10 to-[#135bec]/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </Link>
                             </Button>
                         </div>
                     ) : (
@@ -77,8 +80,11 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                                     ログイン
                                 </Button>
                             </SignInButton>
-                            <Button asChild className="rounded-full font-normal bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
-                                <Link href="/join">今すぐ参加</Link>
+                            <Button asChild className="group relative overflow-hidden rounded-full font-bold bg-white/10 backdrop-blur-md border border-white/20 text-[#135bec] tracking-wide uppercase transition-all duration-300 hover:bg-[#135bec]/10 hover:border-[#135bec]/50 hover:shadow-[0_0_30px_rgba(19,91,236,0.3)]">
+                                <Link href="/join">
+                                    <span className="relative z-10">今すぐ参加</span>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-[#135bec]/0 via-[#135bec]/10 to-[#135bec]/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </Link>
                             </Button>
                         </div>
                     )}
@@ -111,8 +117,11 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                                                 <Link href="/admin">管理画面</Link>
                                             </Button>
                                         )}
-                                        <Button asChild className="w-full rounded-full h-12 font-normal bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
-                                            <Link href="/dashboard">ダッシュボード</Link>
+                                        <Button asChild className="w-full h-12 group relative overflow-hidden rounded-full font-bold bg-white/10 backdrop-blur-md border border-white/20 text-[#135bec] tracking-wide uppercase transition-all duration-300 hover:bg-[#135bec]/10 hover:border-[#135bec]/50 hover:shadow-[0_0_30px_rgba(19,91,236,0.3)]">
+                                            <Link href="/dashboard">
+                                                <span className="relative z-10">ダッシュボード</span>
+                                                <div className="absolute inset-0 bg-gradient-to-r from-[#135bec]/0 via-[#135bec]/10 to-[#135bec]/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                            </Link>
                                         </Button>
                                     </div>
                                 ) : (
@@ -122,8 +131,11 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                                                 ログイン
                                             </Button>
                                         </SignInButton>
-                                        <Button asChild className="w-full rounded-full h-12 font-normal bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
-                                            <Link href="/join">今すぐ参加</Link>
+                                        <Button asChild className="w-full h-12 group relative overflow-hidden rounded-full font-bold bg-white/10 backdrop-blur-md border border-white/20 text-[#135bec] tracking-wide uppercase transition-all duration-300 hover:bg-[#135bec]/10 hover:border-[#135bec]/50 hover:shadow-[0_0_30px_rgba(19,91,236,0.3)]">
+                                            <Link href="/join">
+                                                <span className="relative z-10">今すぐ参加</span>
+                                                <div className="absolute inset-0 bg-gradient-to-r from-[#135bec]/0 via-[#135bec]/10 to-[#135bec]/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                            </Link>
                                         </Button>
                                     </div>
                                 )}

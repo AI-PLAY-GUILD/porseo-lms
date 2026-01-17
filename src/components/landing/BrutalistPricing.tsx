@@ -1,5 +1,6 @@
 "use client";
 
+import { ParticleBackground } from "./particle-background";
 import { Button } from "@/components/ui/button";
 import { Check, Star } from "lucide-react";
 import Link from "next/link";
@@ -19,14 +20,17 @@ export function BrutalistPricing({ handleCheckout, checkoutLoading }: BrutalistP
     ];
 
     return (
-        <section id="pricing" className="py-24 relative overflow-hidden bg-[#f6f6f8] dark:bg-[#101622]">
+        <section id="pricing" className="py-32 relative overflow-hidden bg-white">
+            <div className="absolute inset-0 z-0 opacity-50 pointer-events-none">
+                <ParticleBackground />
+            </div>
             {/* Background decoration */}
             <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
 
             <div className="container mx-auto px-4 relative z-10">
-                <div className="max-w-4xl mx-auto">
-                    <div className="glass-panel rounded-3xl p-8 md:p-16 text-center relative overflow-hidden">
+                <div className="max-w-3xl mx-auto">
+                    <div className="glass-panel rounded-3xl p-8 md:p-12 text-center relative overflow-hidden">
 
                         {/* Gradient Border Effect */}
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent opacity-50"></div>
