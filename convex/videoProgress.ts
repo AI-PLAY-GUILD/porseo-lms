@@ -83,6 +83,27 @@ export const getUserProgress = query({
         return await ctx.db
             .query("videoProgress")
             .withIndex("by_user_id", (q) => q.eq("userId", user._id))
+            .collect();
+    },
+});
+
+export const getDailyLearningLogs = query({
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return [];
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+            .first();
+
+        if (!user) return [];
+
+        return await ctx.db
+            .query("dailyLearningLogs")
+            .withIndex("by_user", (q) => q.eq("userId", user._id))
+            .order("desc")
+            .take(30);
     },
 });
 
