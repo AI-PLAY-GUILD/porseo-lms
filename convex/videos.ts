@@ -72,7 +72,7 @@ export const getPublishedVideos = query({
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
 
-        // 1. Get all published videos
+        // 1. Get all published videos (Strictly Published Only)
         const videos = await ctx.db
             .query("videos")
             .filter((q) => q.eq(q.field("isPublished"), true))

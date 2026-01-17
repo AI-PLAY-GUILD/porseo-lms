@@ -20,7 +20,7 @@ import {
 const chartConfig = {
   hours: {
     label: "学習時間",
-    color: "hsl(var(--chart-1))",
+    color: "var(--color-primary)",
   },
 } satisfies ChartConfig
 
@@ -30,7 +30,7 @@ interface ChartAreaInteractiveProps {
 
 export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
   return (
-    <Card className="@container/card">
+    <Card className="@container/card glass-panel shadow-soft border-white/20">
       <CardHeader>
         <CardTitle>学習の推移</CardTitle>
         <CardDescription>

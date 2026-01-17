@@ -70,14 +70,21 @@ export const getProgress = query({
 
 export const getUserProgress = query({
     handler: async (ctx) => {
+        console.log("DEBUG: getUserProgress START");
+        let identity;
         try {
-            console.log("DEBUG: getUserProgress START");
-            const identity = await ctx.auth.getUserIdentity();
-            if (!identity) {
-                console.log("DEBUG: No identity");
-                return [];
-            }
+            identity = await ctx.auth.getUserIdentity();
+        } catch (e) {
+            console.error("DEBUG: Auth failed:", e);
+            return [];
+        }
 
+        if (!identity) {
+            console.log("DEBUG: No identity");
+            return [];
+        }
+
+        try {
             const user = await ctx.db
                 .query("users")
                 .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -96,8 +103,8 @@ export const getUserProgress = query({
             console.log(`DEBUG: Found ${progress.length} progress records`);
             return progress;
         } catch (e) {
-            console.error("DEBUG: ERROR in getUserProgress:", e);
-            return []; // Fallback to empty array to prevent client crash
+            console.error("DEBUG: Database query failed:", e);
+            return [];
         }
     },
 });
@@ -162,6 +169,3 @@ export const logLearningTime = mutation({
         }
     },
 });
-
-
-
