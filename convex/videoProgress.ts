@@ -70,20 +70,35 @@ export const getProgress = query({
 
 export const getUserProgress = query({
     handler: async (ctx) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return [];
+        try {
+            console.log("DEBUG: getUserProgress START");
+            const identity = await ctx.auth.getUserIdentity();
+            if (!identity) {
+                console.log("DEBUG: No identity");
+                return [];
+            }
 
-        const user = await ctx.db
-            .query("users")
-            .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-            .first();
+            const user = await ctx.db
+                .query("users")
+                .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+                .first();
 
-        if (!user) return [];
+            if (!user) {
+                console.log("DEBUG: User not found");
+                return [];
+            }
 
-        return await ctx.db
-            .query("videoProgress")
-            .withIndex("by_user_id", (q) => q.eq("userId", user._id))
-            .collect();
+            const progress = await ctx.db
+                .query("videoProgress")
+                .withIndex("by_user_id", (q) => q.eq("userId", user._id))
+                .collect();
+
+            console.log(`DEBUG: Found ${progress.length} progress records`);
+            return progress;
+        } catch (e) {
+            console.error("DEBUG: ERROR in getUserProgress:", e);
+            return []; // Fallback to empty array to prevent client crash
+        }
     },
 });
 
