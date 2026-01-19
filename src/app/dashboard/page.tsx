@@ -56,7 +56,7 @@ export default function DashboardPage() {
 
   if (userData === undefined || videos === undefined || progress === undefined || dailyLogs === undefined) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-cream">
         <BrutalistLoader />
       </div>
     );
@@ -149,26 +149,26 @@ export default function DashboardPage() {
       }
     >
       <AppSidebar user={{ name: userData.name, email: userData.email, avatar: userData.imageUrl }} />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+      <SidebarInset className="bg-cream">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b-2 border-black transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4 bg-cream">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
+            <SidebarTrigger className="-ml-1 hover:bg-pop-yellow border-2 border-black rounded-md transition-colors text-black" />
+            <Separator orientation="vertical" className="mr-2 h-4 bg-black" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard">ホーム</BreadcrumbLink>
+                  <BreadcrumbLink href="/dashboard" className="font-bold text-gray-600 hover:text-black">ホーム</BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
+                <BreadcrumbSeparator className="text-black" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>ダッシュボード</BreadcrumbPage>
+                  <BreadcrumbPage className="font-black text-black">ダッシュボード</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
           <div className="ml-auto">
-            <SignOutButton>
-              <Button variant="outline" size="sm" className="font-bold border-2 border-black bg-white hover:bg-gray-100 brutal-shadow-sm">
+            <SignOutButton redirectUrl="/">
+              <Button variant="outline" size="sm" className="font-bold border-2 border-black bg-white hover:bg-gray-100 brutal-shadow-sm text-black">
                 <LogOut className="mr-2 h-4 w-4" />
                 ログアウト
               </Button>
@@ -182,18 +182,18 @@ export default function DashboardPage() {
               <div className="col-span-1 lg:col-span-4">
                 <ChartAreaInteractive data={chartData} />
               </div>
-              <Card className="col-span-1 lg:col-span-3">
+              <Card className="col-span-1 lg:col-span-3 border-4 border-black bg-white brutal-shadow rounded-xl">
                 <CardHeader>
-                  <CardTitle>学習中のコンテンツ</CardTitle>
-                  <CardDescription>前回の続きから始めましょう</CardDescription>
+                  <CardTitle className="text-2xl font-black text-black">学習中のコンテンツ</CardTitle>
+                  <CardDescription className="font-bold text-gray-500">前回の続きから始めましょう</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {inProgressVideos.length > 0 ? (
                       inProgressVideos.slice(0, 3).map((video: any) => (
-                        <Link href={`/videos/${video._id}`} key={video._id} className="flex flex-col gap-2 group hover:bg-muted/50 p-2 rounded-xl transition-colors border border-transparent hover:border-border">
+                        <Link href={`/videos/${video._id}`} key={video._id} className="flex flex-col gap-2 group hover:bg-pop-yellow/10 p-2 rounded-xl transition-colors border-2 border-transparent hover:border-black">
                           <div className="flex items-center gap-4">
-                            <div className="relative h-16 w-28 overflow-hidden rounded-lg bg-muted shrink-0 border shadow-sm">
+                            <div className="relative h-16 w-28 overflow-hidden rounded-lg bg-muted shrink-0 border-2 border-black shadow-sm">
                               <img
                                 src={video.thumbnailUrl || `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=200&height=112&fit_mode=smart`}
                                 alt={video.title}
@@ -204,10 +204,10 @@ export default function DashboardPage() {
                               </div>
                             </div>
                             <div className="flex-1 space-y-1 min-w-0">
-                              <p className="text-sm font-medium leading-none line-clamp-1 group-hover:text-primary transition-colors" title={video.title}>
+                              <p className="text-sm font-black leading-none line-clamp-1 group-hover:text-pop-purple transition-colors text-black" title={video.title}>
                                 {video.title}
                               </p>
-                              <div className="flex items-center text-xs text-muted-foreground">
+                              <div className="flex items-center text-xs font-bold text-gray-500">
                                 <Clock className="mr-1 h-3 w-3" />
                                 <span suppressHydrationWarning>
                                   {new Date(video.lastWatchedAt).toLocaleDateString("ja-JP")}
@@ -216,18 +216,18 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <div className="w-full pl-1 pr-1">
-                            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                            <div className="flex justify-between text-xs font-bold text-gray-500 mb-1">
                               <span>進捗</span>
                               <span>{video.progress}%</span>
                             </div>
-                            <Progress value={video.progress} className="h-1.5" />
+                            <Progress value={video.progress} className="h-2 border border-black bg-gray-200 [&>div]:bg-pop-green" />
                           </div>
                         </Link>
                       ))
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
-                        <p className="text-sm">学習中の動画はありません</p>
-                        <Button variant="link" asChild className="mt-2 font-normal text-primary">
+                        <p className="text-sm font-bold">学習中の動画はありません</p>
+                        <Button variant="link" asChild className="mt-2 font-black text-pop-purple underline decoration-2">
                           <Link href="/videos">動画一覧を見る</Link>
                         </Button>
                       </div>
