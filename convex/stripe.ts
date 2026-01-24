@@ -1,13 +1,13 @@
 "use node";
 
-import { action } from "./_generated/server";
+import { action, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal, api } from "./_generated/api";
 import Stripe from "stripe";
 
 export const createCustomer = action({
     args: {},
-    handler: async (ctx): Promise<{ customerId: string; discordRoles: string[] }> => {
+    handler: async (ctx): Promise<{ customerId: string }> => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
             throw new Error("Unauthenticated");
@@ -51,6 +51,12 @@ export const createCustomer = action({
                             const discordData = await discordResponse.json();
                             discordRoles = discordData.roles as string[];
                             console.log(`[Stripe+Discord] Fetched ${discordRoles.length} roles`);
+
+                            // Sync roles internally
+                            await ctx.runMutation(internal.discord.updateDiscordRoles, {
+                                clerkId: identity.subject,
+                                discordRoles: discordRoles,
+                            });
                         } else {
                             console.error("[Stripe+Discord] Discord API failed:", await discordResponse.text());
                         }
@@ -107,7 +113,7 @@ export const createCustomer = action({
             });
         }
 
-        return { customerId, discordRoles };
+        return { customerId };
     },
 });
 
@@ -168,80 +174,72 @@ export const linkStripeCustomerByEmail = action({
     },
 });
 
-export const getDiscordRolesV2 = action({
-    args: {},
-    handler: async (ctx) => {
-        try {
-            console.log("[Discord API (in stripe.ts)] Starting getDiscordRoles...");
-            const identity = await ctx.auth.getUserIdentity();
-            if (!identity) {
-                throw new Error("Unauthenticated");
-            }
+    },
+});
 
-            const clerkSecretKey = process.env.CLERK_SECRET_KEY;
-            if (!clerkSecretKey) {
-                throw new Error("Missing CLERK_SECRET_KEY env variable");
-            }
+// 2. Discord IDを使ってサブスクリプション状態を更新（決済成功時）
+export const updateSubscriptionStatus = mutation({
+    args: {
+        discordId: v.string(),
+        stripeCustomerId: v.optional(v.string()), // Optional for manual/role-based sync
+        subscriptionStatus: v.string(),
+        subscriptionName: v.optional(v.string()),
+        roleId: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_discord_id", (q) => q.eq("discordId", args.discordId))
+            .first();
 
-            const guildId = process.env.NEXT_PUBLIC_DISCORD_GUILD_ID;
-            if (!guildId) {
-                throw new Error("Missing NEXT_PUBLIC_DISCORD_GUILD_ID env variable");
-            }
-
-            // 1. Clerk API: Get Discord Access Token
-            const clerkResponse = await fetch(
-                `https://api.clerk.com/v1/users/${identity.subject}/oauth_access_tokens/oauth_discord`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${clerkSecretKey}`,
-                    },
-                }
-            );
-
-            if (!clerkResponse.ok) {
-                const errorText = await clerkResponse.text();
-                console.error("Clerk API Error:", errorText);
-                return [];
-            }
-
-            const clerkData = await clerkResponse.json();
-            if (!clerkData.length || !clerkData[0].token) {
-                console.log("No Discord token found in Clerk response");
-                return [];
-            }
-
-            const accessToken = clerkData[0].token;
-
-            // 2. Discord API: Get Current User Guild Member
-            const discordResponse = await fetch(
-                `https://discord.com/api/users/@me/guilds/${guildId}/member`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                    },
-                }
-            );
-
-            // Rate Limit Logging
-            const limit = discordResponse.headers.get("x-ratelimit-limit");
-            const remaining = discordResponse.headers.get("x-ratelimit-remaining");
-            const reset = discordResponse.headers.get("x-ratelimit-reset");
-            console.log(`[Discord API] Rate Limit: ${remaining}/${limit} (Reset: ${reset})`);
-
-            if (!discordResponse.ok) {
-                if (discordResponse.status === 404) {
-                    return [];
-                }
-                const errorText = await discordResponse.text();
-                console.error("Discord API Error:", errorText);
-                return [];
-            }
-
-            const discordData = await discordResponse.json();
-            return discordData.roles as string[];
-        } catch (error) {
-            console.error("[Discord API] Critical Error:", error);
-            throw error; // Rethrow to ensure client sees it
+        if (!user) {
+            throw new Error(`User with Discord ID ${args.discordId} not found`);
         }
+
+        // ロールIDがあれば、既存のリストに追加する（重複チェック付き）
+        let newRoles = user.discordRoles || [];
+        if (args.roleId && !newRoles.includes(args.roleId)) {
+            newRoles = [...newRoles, args.roleId];
+        }
+
+        const patchData: any = {
+            subscriptionStatus: args.subscriptionStatus,
+            discordRoles: newRoles,
+            updatedAt: Date.now(),
+        };
+
+        if (args.subscriptionName) {
+            patchData.subscriptionName = args.subscriptionName;
+        }
+
+        if (args.stripeCustomerId) {
+            patchData.stripeCustomerId = args.stripeCustomerId;
+        }
+
+
+        await ctx.db.patch(user._id, patchData);
+    },
+});
+
+// 3. Stripe Customer IDを使ってサブスクリプション状態を更新（キャンセル/失敗時）
+export const updateSubscriptionStatusByCustomerId = mutation({
+    args: {
+        stripeCustomerId: v.string(),
+        subscriptionStatus: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
+            .first();
+
+        if (!user) {
+            console.warn(`User with Stripe Customer ID ${args.stripeCustomerId} not found`);
+            return;
+        }
+
+        await ctx.db.patch(user._id, {
+            subscriptionStatus: args.subscriptionStatus,
+        });
     },
 });

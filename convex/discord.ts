@@ -1,6 +1,6 @@
 "use node";
 
-import { action } from "./_generated/server";
+import { action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const getDiscordRolesV2 = action({
@@ -78,5 +78,27 @@ export const getDiscordRolesV2 = action({
             console.error("[Discord API] Critical Error:", error);
             throw error; // Rethrow to ensure client sees it
         }
+    },
+});
+
+export const updateDiscordRoles = internalMutation({
+    args: {
+        clerkId: v.string(),
+        discordRoles: v.array(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+            .first();
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        await ctx.db.patch(user._id, {
+            discordRoles: args.discordRoles,
+            updatedAt: Date.now(),
+        });
     },
 });

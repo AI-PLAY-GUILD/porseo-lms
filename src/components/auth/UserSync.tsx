@@ -8,7 +8,6 @@ import { useEffect } from "react";
 export default function UserSync() {
     const { user, isLoaded } = useUser();
     const syncUser = useMutation(api.users.syncCurrentUser);
-    const updateDiscordRoles = useMutation(api.users.updateDiscordRoles);
     const createCustomer = useAction(api.stripe.createCustomer);
 
     const { isAuthenticated } = useConvexAuth();
@@ -34,24 +33,15 @@ export default function UserSync() {
 
             try {
                 // 2. Stripe Customer作成 & Discordロール取得 (相乗り作戦)
-                // createCustomerが { customerId, discordRoles } を返すように変更済み
-                const result = await createCustomer({});
-                const { discordRoles } = result;
-
-                // 3. DBにロールを保存
-                if (discordRoles && discordRoles.length > 0) {
-                    await updateDiscordRoles({
-                        clerkId: user.id,
-                        discordRoles: discordRoles,
-                    });
-                }
+                // createCustomer内でinternal mutationを使ってロールを同期するように変更済み
+                await createCustomer({});
             } catch (error) {
                 console.error("Failed to sync external services:", error);
             }
         };
 
         sync();
-    }, [isLoaded, user, isAuthenticated, syncUser, createCustomer, updateDiscordRoles, getToken]);
+    }, [isLoaded, user, isAuthenticated, syncUser, createCustomer, getToken]);
 
     return null;
 }
