@@ -264,7 +264,7 @@ export const storeUser = mutation({
     },
     handler: async (ctx, args) => {
         let clerkId = args.clerkId;
-        let email = args.email;
+        let email = args.email || "";
 
         if (args.secret === process.env.CLERK_WEBHOOK_SECRET) {
             if (!clerkId) throw new Error("clerkId is required when using secret");
