@@ -174,8 +174,7 @@ export const linkStripeCustomerByEmail = action({
     },
 });
 
-    },
-});
+
 
 // 2. Discord IDを使ってサブスクリプション状態を更新（決済成功時）
 export const updateSubscriptionStatus = mutation({
