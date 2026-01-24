@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { heroContent } from "@/config/landing-content";
 
 interface BrutalistHeroProps {
     isSignedIn: boolean;
@@ -15,79 +16,101 @@ interface BrutalistHeroProps {
 
 export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: BrutalistHeroProps) {
     const containerRef = useRef<HTMLDivElement>(null);
-    const titleRef = useRef<HTMLHeadingElement>(null);
 
     useGSAP(() => {
-        gsap.from(titleRef.current, {
-            y: 100,
+        // Fade in title and buttons
+        gsap.from(".hero-content", {
+            y: 30,
             opacity: 0,
-            duration: 1,
-            ease: "elastic.out(1, 0.5)",
+            duration: 1.2,
+            stagger: 0.2,
+            ease: "power2.out",
             delay: 0.2
+        });
+
+        // Slow rotation for aurora blobs
+        gsap.to(".aurora-blob", {
+            rotation: 360,
+            duration: 25,
+            repeat: -1,
+            ease: "none",
+            transformOrigin: "center center"
         });
     }, { scope: containerRef });
 
     return (
-        <section ref={containerRef} className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 pt-40 pb-40 text-center z-10 bg-cream overflow-hidden border-b-4 border-black">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '30px 30px' }}></div>
+        <section ref={containerRef} className="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden bg-white text-slate-900">
 
-            {/* Floating Shapes */}
-            <div className="absolute top-20 left-10 w-24 h-24 bg-pop-yellow rounded-full border-4 border-black brutal-shadow animate-blob animation-delay-2000 hidden md:block"></div>
-            <div className="absolute bottom-40 right-10 w-32 h-32 bg-pop-purple rounded-none rotate-12 border-4 border-black brutal-shadow animate-blob hidden md:block"></div>
-            <div className="absolute top-40 right-20 w-16 h-16 bg-pop-red rounded-full border-4 border-black brutal-shadow animate-blob animation-delay-4000 hidden md:block"></div>
+            {/* Aurora Background Effects (Light Mode) */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="aurora-blob absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-blue-200 rounded-full mix-blend-multiply filter blur-[80px] opacity-40 animate-pulse"></div>
+                <div className="aurora-blob absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] bg-purple-200 rounded-full mix-blend-multiply filter blur-[80px] opacity-40 animation-delay-2000"></div>
+                <div className="aurora-blob absolute bottom-[-10%] left-[20%] w-[50vw] h-[50vw] bg-teal-200 rounded-full mix-blend-multiply filter blur-[80px] opacity-30 animation-delay-4000"></div>
 
-            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white border-2 border-black brutal-shadow-sm text-black font-bold mb-8 transform -rotate-2 hover:rotate-0 transition-transform cursor-default">
-                <Sparkles className="w-5 h-5 text-pop-yellow fill-pop-yellow" />
-                <span className="font-heading tracking-wide">For The Players</span>
+                {/* Grid Overlay */}
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-30"></div>
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
             </div>
 
-            <h1 ref={titleRef} className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tight mb-8 text-black leading-[0.9]">
-                PLAY WITH <span className="text-pop-red text-stroke-2 text-transparent">AI</span>,
-                <br />
-                SHAPE THE <span className="bg-pop-yellow px-2 border-4 border-black transform inline-block -rotate-2">FUTURE</span>
-            </h1>
+            <div className="container relative z-10 px-4 pt-20 text-center">
 
-            <p className="text-lg md:text-2xl text-black font-bold max-w-2xl mb-12 leading-relaxed bg-white/50 backdrop-blur-sm p-4 rounded-xl border-2 border-black brutal-shadow-sm transform rotate-1">
-                AI PLAY GUILDはAIで遊びながらその楽しさに熱狂し、<br />
-                まだ見ぬ未来を創り出すコミュニティです。
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto px-4 sm:px-0">
-                {isSignedIn ? (
-                    <Button asChild size="lg" className="h-14 sm:h-16 w-full sm:w-auto px-6 sm:px-10 text-lg sm:text-xl font-black rounded-xl bg-pop-green text-black border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
-                        <Link href="/dashboard">
-                            GO TO DASHBOARD <ArrowRight className="ml-2 w-5 sm:w-6 h-5 sm:h-6" />
-                        </Link>
-                    </Button>
-                ) : (
-                    <>
-                        <Button asChild size="lg" className="h-14 sm:h-16 w-full sm:w-auto px-6 sm:px-10 text-lg sm:text-xl font-black rounded-xl bg-pop-red text-white border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
-                            <Link href="/join">
-                                今すぐ参加
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline" size="lg" className="h-14 sm:h-16 w-full sm:w-auto px-6 sm:px-10 text-lg sm:text-xl font-black rounded-xl bg-white text-black border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
-                            <Link href="#features">
-                                もっと詳しく
-                            </Link>
-                        </Button>
-                    </>
-                )}
-            </div>
-
-            {/* Marquee */}
-            <div className="absolute bottom-0 left-0 w-full bg-pop-yellow border-t-4 border-black py-3 overflow-hidden whitespace-nowrap">
-                <div className="animate-scroll inline-block">
-                    <span className="text-2xl font-black mx-8">🚀 LATEST AI NEWS</span>
-                    <span className="text-2xl font-black mx-8">💻 LEARNING DASHBOARD</span>
-                    <span className="text-2xl font-black mx-8">🤝 ACTIVE COMMUNITY</span>
-                    <span className="text-2xl font-black mx-8">🛠 HANDS-ON</span>
-                    <span className="text-2xl font-black mx-8">🚀 LATEST AI NEWS</span>
-                    <span className="text-2xl font-black mx-8">💻 LEARNING DASHBOARD</span>
-                    <span className="text-2xl font-black mx-8">🤝 ACTIVE COMMUNITY</span>
-                    <span className="text-2xl font-black mx-8">🛠 HANDS-ON</span>
+                {/* Badge */}
+                <div className="hero-content inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-100 bg-blue-50/50 backdrop-blur-md text-sm font-bold text-blue-600 mb-8 mx-auto shadow-sm">
+                    <Sparkles className="w-4 h-4 fill-blue-600" />
+                    <span className="tracking-wide font-[family-name:var(--font-jp)]">The Next Gen Community</span>
                 </div>
+
+                {/* H1 */}
+                <h1 className="hero-content max-w-5xl mx-auto text-5xl sm:text-7xl md:text-8xl font-black tracking-tight mb-8 leading-tight font-[family-name:var(--font-jp)]">
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-300% animate-gradient">
+                        {heroContent.title.en}
+                    </span>
+                    <span className="block text-2xl sm:text-3xl md:text-4xl font-bold text-slate-500 mt-6 tracking-wide">
+                        {heroContent.title.ja}
+                    </span>
+                </h1>
+
+                {/* Buttons */}
+                <div className="hero-content flex flex-col sm:flex-row items-center justify-center gap-4 mb-24">
+                    {isSignedIn ? (
+                        <Button asChild size="lg" className="h-14 px-10 rounded-full bg-slate-900 text-white font-bold hover:bg-slate-800 hover:scale-105 transition-all shadow-lg shadow-slate-200/50">
+                            <Link href="/dashboard">
+                                Go To Dashboard <ArrowRight className="ml-2 w-5 h-5" />
+                            </Link>
+                        </Button>
+                    ) : (
+                        <>
+                            <Button asChild size="lg" className="h-14 px-10 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-500 hover:shadow-[0_0_30px_-5px_rgba(37,99,235,0.4)] transition-all border-0 shadow-lg shadow-blue-200">
+                                <Link href="/join">
+                                    {heroContent.buttons.primary}
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" size="lg" className="h-14 px-10 rounded-full text-slate-600 hover:text-slate-900 hover:bg-white border border-slate-200 bg-white/50 backdrop-blur-sm transition-all shadow-sm">
+                                <Link href="#features">
+                                    {heroContent.buttons.secondary}
+                                </Link>
+                            </Button>
+                        </>
+                    )}
+                </div>
+
+                {/* Moving Gallery (Glassmorphism Light) */}
+                <div className="hero-content w-full max-w-6xl mx-auto border border-white/40 bg-white/30 backdrop-blur-md rounded-2xl overflow-hidden py-10 shadow-xl shadow-blue-100/20 ring-1 ring-white/60">
+                    <div className="animate-scroll inline-flex items-center gap-20 min-w-full">
+                        {[...heroContent.gallery, ...heroContent.gallery, ...heroContent.gallery].map((item, i) => (
+                            <div key={i} className="flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity cursor-default group grayscale hover:grayscale-0">
+                                <div
+                                    className="w-3 h-3 rounded-full"
+                                    style={{ backgroundColor: item.color }}
+                                ></div>
+                                <span className="text-xl font-bold text-slate-600 group-hover:text-slate-900 tracking-wider">
+                                    {item.name}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
             </div>
         </section>
     );

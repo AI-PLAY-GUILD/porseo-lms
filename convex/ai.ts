@@ -1,8 +1,8 @@
 "use node";
 
-import { action } from "./_generated/server";
+import { ActionCtx, action } from "./_generated/server";
 import { v } from "convex/values";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { GoogleGenAI } from "@google/genai";
 // Muxは使っていないため削除
 
@@ -13,6 +13,21 @@ export const generateVideoMetadata = action({
         transcription: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        // --- Security Check Start ---
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Unauthorized: Authentication required");
+        }
+
+        const user = await ctx.runQuery(api.users.getUserByClerkIdQuery, {
+            clerkId: identity.subject,
+        });
+
+        if (!user || !user.isAdmin) {
+            throw new Error("Unauthorized: Admin access required");
+        }
+        // --- Security Check End ---
+
         try {
             console.log("Generating metadata for video:", args.videoId);
 
@@ -127,7 +142,7 @@ ${subtitleText}
             }
 
             // 4. DB更新
-            await ctx.runMutation(api.videos.updateVideoAiMetadata, {
+            await ctx.runMutation(internal.videos.updateVideoAiMetadata, {
                 videoId: args.videoId,
                 summary: aiData.summary,
                 chapters: aiData.chapters,

@@ -83,6 +83,17 @@ export const updateDiscordRoles = mutation({
         discordRoles: v.array(v.string()),
     },
     handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            // サーバーサイドからの同期の場合はSecretが必要かもしれないが、
+            // UserSync.tsx（クライアント）から呼ばれる場合はこのチェックで十分。
+            // もしWebhookからも呼ばれるなら分岐が必要だが、今回はクライアント用としてAuthチェックを入れる。
+            throw new Error("Unauthorized");
+        }
+        if (identity.subject !== args.clerkId) {
+            throw new Error("Unauthorized: You can only update your own roles");
+        }
+
         const user = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
@@ -155,8 +166,14 @@ export const updateSubscriptionStatus = mutation({
         subscriptionStatus: v.string(),
         subscriptionName: v.optional(v.string()),
         roleId: v.optional(v.string()),
+        secret: v.string(), // Added for security
     },
     handler: async (ctx, args) => {
+        // Verify secret (using CLERK_WEBHOOK_SECRET as a shared secret for now)
+        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+
         const user = await ctx.db
             .query("users")
             .withIndex("by_discord_id", (q) => q.eq("discordId", args.discordId))
@@ -196,8 +213,14 @@ export const updateSubscriptionStatusByCustomerId = mutation({
     args: {
         stripeCustomerId: v.string(),
         subscriptionStatus: v.string(),
+        secret: v.string(), // Added for security
     },
     handler: async (ctx, args) => {
+        // Verify secret
+        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+
         const user = await ctx.db
             .query("users")
             .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
@@ -225,6 +248,14 @@ export const storeUser = mutation({
         discordId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Unauthorized");
+        }
+        if (identity.subject !== args.clerkId) {
+            throw new Error("Unauthorized: You can only update your own profile");
+        }
+
         // 1. Check by Clerk ID
         const user = await ctx.db
             .query("users")

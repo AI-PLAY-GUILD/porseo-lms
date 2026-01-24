@@ -23,96 +23,19 @@ export function StripeLinkModal() {
     const [open, setOpen] = useState(false);
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
-    const linkStripeCustomer = useAction(api.stripe.linkStripeCustomerByEmail);
+    // const linkStripeCustomer = useAction(api.stripe.linkStripeCustomerByEmail); // Removed for security
     const convex = useConvex();
     const { openSignIn } = useClerk();
     const { user } = useUser();
     const router = useRouter();
 
     useEffect(() => {
-        const checkPendingLink = async () => {
-            if (user && typeof window !== "undefined") {
-                const pendingEmail = sessionStorage.getItem("pending_stripe_link_email");
-                if (pendingEmail) {
-                    setLoading(true);
-                    try {
-                        // 少し待ってから実行（ユーザー情報の同期待ちなど）
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-
-                        const result = await linkStripeCustomer({ email: pendingEmail });
-                        if (result.success) {
-                            toast.success(result.message);
-                            sessionStorage.removeItem("pending_stripe_link_email");
-                            router.push("/dashboard");
-                        } else {
-                            toast.error(result.message);
-                            // 失敗してもセッションストレージはクリアする（ループ防止）
-                            sessionStorage.removeItem("pending_stripe_link_email");
-                        }
-                    } catch (error) {
-                        console.error("Failed to auto-link:", error);
-                        toast.error("連携に失敗しました。");
-                        sessionStorage.removeItem("pending_stripe_link_email");
-                    } finally {
-                        setLoading(false);
-                    }
-                }
-            }
-        };
-
-        checkPendingLink();
-    }, [user, linkStripeCustomer]);
+        // Feature disabled
+    }, []);
 
     const handleLink = async () => {
-        console.log("[StripeLinkModal] handleLink started", { email, user });
-        if (!email) {
-            toast.error("メールアドレスを入力してください。");
-            return;
-        }
-
-        setLoading(true);
-        try {
-            // 1. ログイン済みの場合：そのまま連携処理
-            if (user) {
-                console.log("[StripeLinkModal] User is logged in, linking...");
-                const result = await linkStripeCustomer({ email });
-                console.log("[StripeLinkModal] Link result:", result);
-                if (result.success) {
-                    toast.success(result.message);
-                    setOpen(false);
-                    router.push("/dashboard");
-                } else {
-                    toast.error(result.message);
-                    toast.error("連携に失敗しました。Shun PORSEO運営にDiscordで連絡してください。");
-                }
-                return;
-            }
-
-            // 2. 未ログインの場合：メールアドレスの存在確認 -> ログイン誘導
-            console.log("[StripeLinkModal] User is not logged in, checking email existence...");
-            const exists = await convex.query(api.users.checkUserByEmail, { email });
-            console.log("[StripeLinkModal] Email exists:", exists);
-
-            if (exists) {
-                // メールアドレスが存在する場合、セッションストレージに保存してログインへ
-                sessionStorage.setItem("pending_stripe_link_email", email);
-                toast.info("アカウントが見つかりました。Discordでログインしてください。");
-
-                console.log("[StripeLinkModal] Opening Clerk SignIn modal...");
-                openSignIn({
-                    forceRedirectUrl: "/join",
-                });
-            } else {
-                console.log("[StripeLinkModal] Email not found");
-                toast.error("入力されたメールアドレスのアカウントが見つかりません。");
-            }
-
-        } catch (error) {
-            console.error("Failed to process link request:", error);
-            toast.error("エラーが発生しました。");
-        } finally {
-            setLoading(false);
-        }
+        toast.error("現在、セキュリティ強化のため自動連携機能を停止しています。連携希望の方はDiscordで運営にお問い合わせください。");
+        setOpen(false);
     };
 
     return (
@@ -126,29 +49,14 @@ export function StripeLinkModal() {
                 <DialogHeader>
                     <DialogTitle>既存アカウントの連携</DialogTitle>
                     <DialogDescription className="text-gray-400">
-                        Stripeで決済済みのメールアドレスを入力してください。
+                        現在、セキュリティ強化のため自動連携機能を停止しています。
                         <br />
-                        アカウント確認後、Discordログインへ移動します。
+                        お手数ですが、Discordにて運営までお問い合わせください。
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="email" className="text-right">
-                            Email
-                        </Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="stripe@example.com"
-                            className="col-span-3 bg-white/5 border-white/10 text-white"
-                        />
-                    </div>
-                </div>
                 <DialogFooter>
-                    <Button onClick={handleLink} disabled={loading} className="bg-blue-600 hover:bg-blue-500 text-white">
-                        {loading ? "処理中..." : (user ? "連携する" : "確認してログイン")}
+                    <Button onClick={() => setOpen(false)} className="bg-gray-600 hover:bg-gray-500 text-white">
+                        閉じる
                     </Button>
                 </DialogFooter>
             </DialogContent>

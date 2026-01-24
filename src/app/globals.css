@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@200;300;400;500;600;700;800;900&family=Zen+Kaku+Gothic+New:wght@300;400;500;700;900&display=swap');
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
@@ -49,6 +49,7 @@
     /* Neo-Pop Brutalism Theme */
     --font-heading: 'Fredoka', sans-serif;
     --font-body: 'Nunito', sans-serif;
+    --font-jp: 'Zen Kaku Gothic New', sans-serif;
 
     --color-cream: #FFFDF5;
     --color-pop-red: #FF5757;
@@ -138,6 +139,25 @@
 
     .text-stroke-2 {
         -webkit-text-stroke: 2px #000;
+    }
+
+    .animate-gradient {
+        background-size: 300%;
+        animation: gradient 8s ease infinite;
+    }
+
+    @keyframes gradient {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        50% {
+            background-position: 100% 50%;
+        }
+
+        100% {
+            background-position: 0% 50%;
+        }
     }
 }
 

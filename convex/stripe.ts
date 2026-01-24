@@ -111,58 +111,8 @@ export const createCustomer = action({
     },
 });
 
-export const linkStripeCustomerByEmail = action({
-    args: { email: v.string() },
-    handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) {
-            throw new Error("Unauthenticated");
-        }
-
-        const user = await ctx.runQuery(api.users.getUserByClerkIdQuery, {
-            clerkId: identity.subject,
-        });
-
-        if (!user) {
-            throw new Error("User not found");
-        }
-
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-            apiVersion: "2025-12-15.clover",
-        });
-
-        const customers = await stripe.customers.list({
-            email: args.email,
-            limit: 1,
-        });
-
-        if (customers.data.length === 0) {
-            return { success: false, message: "入力されたメールアドレスのStripe顧客が見つかりませんでした。" };
-        }
-
-        const customerId = customers.data[0].id;
-
-        // Fetch active subscriptions to sync status
-        const subscriptions = await stripe.subscriptions.list({
-            customer: customerId,
-            status: 'active',
-            limit: 1,
-        });
-
-        let subscriptionStatus = 'inactive';
-        if (subscriptions.data.length > 0) {
-            subscriptionStatus = 'active';
-        }
-
-        await ctx.runMutation(internal.internal.updateUserStripeInfo, {
-            userId: user._id,
-            stripeCustomerId: customerId,
-            subscriptionStatus: subscriptionStatus,
-        });
-
-        return { success: true, message: "Stripeアカウントの連携が完了しました。" };
-    },
-});
+// linkStripeCustomerByEmail has been removed due to security risks (CWE-285). 
+// See security_diagnosis_report.md for details.
 
 export const getDiscordRolesV2 = action({
     args: {},
