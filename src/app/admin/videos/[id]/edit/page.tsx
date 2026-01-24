@@ -8,9 +8,6 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 
 import { BrutalistLoader } from "@/components/ui/brutalist-loader";
-import { ChapterList } from "@/components/admin/ChapterList";
-import { ThumbnailUploader } from "@/components/admin/ThumbnailUploader";
-import { MuxSettings } from "@/components/admin/MuxSettings";
 
 export default function EditVideoPage() {
     const params = useParams();
@@ -178,32 +175,79 @@ export default function EditVideoPage() {
                     </p>
                 </div>
 
-                <MuxSettings
-                    muxAssetId={muxAssetId}
-                    muxPlaybackId={muxPlaybackId}
-                    onAssetIdChange={setMuxAssetId}
-                    onPlaybackIdChange={setMuxPlaybackId}
-                />
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
+                    <h3 className="font-bold text-yellow-600 dark:text-yellow-500 mb-2 text-sm">Mux設定（上級者向け）</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                        動画が再生できない場合やAI分析が失敗する場合は、ここのIDが間違っている可能性があります。<br />
+                        Muxダッシュボードで &quot;Asset ID&quot; と &quot;Playback ID&quot; を確認してください。
+                    </p>
 
-                <ThumbnailUploader
-                    customThumbnailUrl={customThumbnailUrl}
-                    onUpload={async (file) => {
-                        try {
-                            const postUrl = await generateUploadUrl();
-                            const result = await fetch(postUrl, {
-                                method: "POST",
-                                headers: { "Content-Type": file.type },
-                                body: file,
-                            });
-                            const { storageId } = await result.json();
-                            setCustomThumbnailStorageId(storageId);
-                            alert("画像をアップロードしました（保存ボタンを押すと反映されます）");
-                        } catch (error) {
-                            console.error(error);
-                            alert("アップロードに失敗しました");
-                        }
-                    }}
-                />
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium mb-1">Mux Asset ID</label>
+                        <input
+                            type="text"
+                            value={muxAssetId}
+                            onChange={(e) => setMuxAssetId(e.target.value)}
+                            className="w-full p-2 border rounded bg-white dark:bg-gray-900 font-mono text-sm"
+                            placeholder="Mux Asset ID"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Mux Playback ID</label>
+                        <input
+                            type="text"
+                            value={muxPlaybackId}
+                            onChange={(e) => setMuxPlaybackId(e.target.value)}
+                            className="w-full p-2 border rounded bg-white dark:bg-gray-900 font-mono text-sm"
+                            placeholder="Mux Playback ID"
+                        />
+                    </div>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
+                    <h3 className="font-bold mb-2 text-sm">カスタムサムネイル</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                        Muxのデフォルトサムネイルの代わりに表示する画像をアップロードできます。
+                    </p>
+
+                    {customThumbnailUrl && (
+                        <div className="mb-4">
+                            <p className="text-xs text-gray-500 mb-1">現在のサムネイル:</p>
+                            <img src={customThumbnailUrl} alt="Thumbnail" className="w-64 h-auto rounded border" />
+                        </div>
+                    )}
+
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+
+                            try {
+                                const postUrl = await generateUploadUrl();
+                                const result = await fetch(postUrl, {
+                                    method: "POST",
+                                    headers: { "Content-Type": file.type },
+                                    body: file,
+                                });
+                                const { storageId } = await result.json();
+                                setCustomThumbnailStorageId(storageId);
+                                alert("画像をアップロードしました（保存ボタンを押すと反映されます）");
+                            } catch (error) {
+                                console.error(error);
+                                alert("アップロードに失敗しました");
+                            }
+                        }}
+                        className="block w-full text-sm text-gray-500
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-full file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-blue-50 file:text-blue-700
+                            hover:file:bg-blue-100"
+                    />
+                </div>
 
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
                     <h3 className="font-bold mb-2 text-sm">タグ設定</h3>
@@ -272,10 +316,73 @@ export default function EditVideoPage() {
                     </div>
 
                     <div>
-                        <ChapterList
-                            chapters={chapters}
-                            onChange={setChapters}
-                        />
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="block text-sm font-medium">チャプター</label>
+                            <button
+                                type="button"
+                                onClick={() => setChapters([...chapters, { title: "", startTime: 0, description: "" }])}
+                                className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded hover:bg-gray-300"
+                            >
+                                + 追加
+                            </button>
+                        </div>
+                        <div className="space-y-3">
+                            {chapters.map((chapter, index) => (
+                                <div key={index} className="flex gap-2 items-start bg-gray-50 dark:bg-gray-900 p-3 rounded border dark:border-gray-700">
+                                    <div className="w-20">
+                                        <label className="text-xs text-gray-500 block">開始(秒)</label>
+                                        <input
+                                            type="number"
+                                            value={chapter.startTime}
+                                            onChange={(e) => {
+                                                const newChapters = [...chapters];
+                                                newChapters[index].startTime = Number(e.target.value);
+                                                setChapters(newChapters);
+                                            }}
+                                            className="w-full p-1 border rounded text-sm"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="text-xs text-gray-500 block">タイトル</label>
+                                        <input
+                                            type="text"
+                                            value={chapter.title}
+                                            onChange={(e) => {
+                                                const newChapters = [...chapters];
+                                                newChapters[index].title = e.target.value;
+                                                setChapters(newChapters);
+                                            }}
+                                            className="w-full p-1 border rounded text-sm mb-1"
+                                            placeholder="タイトル"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={chapter.description || ""}
+                                            onChange={(e) => {
+                                                const newChapters = [...chapters];
+                                                newChapters[index].description = e.target.value;
+                                                setChapters(newChapters);
+                                            }}
+                                            className="w-full p-1 border rounded text-xs text-gray-500"
+                                            placeholder="説明（任意）"
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newChapters = chapters.filter((_, i) => i !== index);
+                                            setChapters(newChapters);
+                                        }}
+                                        className="text-red-500 hover:text-red-700 p-1"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+                            {chapters.length === 0 && (
+                                <p className="text-sm text-gray-400 text-center py-4">チャプターがありません</p>
+                            )}
+                        </div>
                     </div>
                 </div>
 

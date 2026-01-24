@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { StripeLinkModal } from "@/components/stripe-link-modal";
 import { BrutalistHeader } from "@/components/landing/BrutalistHeader";
 import { BrutalistHero } from "@/components/landing/BrutalistHero";
-import { BrutalistAbout } from "@/components/landing/BrutalistAbout";
+import { BrutalistFeatures } from "@/components/landing/BrutalistFeatures";
 import { BrutalistShowcase } from "@/components/landing/BrutalistShowcase";
 import { BrutalistTeam } from "@/components/landing/BrutalistTeam";
 import { BrutalistPricing } from "@/components/landing/BrutalistPricing";
@@ -21,7 +21,7 @@ import { BrutalistHackathon } from "@/components/landing/BrutalistHackathon";
 export default function Home() {
     const { isSignedIn, user, isLoaded } = useUser();
     const userData = useQuery(api.users.getUser);
-    const syncCurrentUser = useMutation(api.users.syncCurrentUser);
+    const storeUser = useMutation(api.users.storeUser);
 
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [isSynced, setIsSynced] = useState(false);
@@ -37,8 +37,12 @@ export default function Home() {
                 );
                 const discordId = discordAccount?.providerUserId;
 
-                // Sync User with Discord ID
-                await syncCurrentUser({
+                // Store User with Discord ID
+                await storeUser({
+                    clerkId: user.id,
+                    email: user.primaryEmailAddress?.emailAddress || "",
+                    name: user.fullName || user.username || "Unknown",
+                    imageUrl: user.imageUrl,
                     discordId: discordId,
                 });
 
@@ -63,7 +67,7 @@ export default function Home() {
         };
 
         sync();
-    }, [isLoaded, isSignedIn, user, isSynced, syncCurrentUser]);
+    }, [isLoaded, isSignedIn, user, isSynced, storeUser]);
 
     const handleCheckout = async () => {
         setCheckoutLoading(true);
@@ -114,7 +118,7 @@ export default function Home() {
                     checkoutLoading={checkoutLoading}
                 />
 
-                <BrutalistAbout />
+                <BrutalistFeatures />
 
                 <BrutalistShowcase />
 

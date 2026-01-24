@@ -1,12 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Menu, ChevronDown } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { LiquidBackground } from "../liquid-background";
 
 interface BrutalistHeroProps {
     isSignedIn: boolean;
@@ -20,68 +19,76 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
 
     useGSAP(() => {
         gsap.from(titleRef.current, {
-            y: 50,
+            y: 100,
             opacity: 0,
-            duration: 1.2,
-            ease: "power3.out",
+            duration: 1,
+            ease: "elastic.out(1, 0.5)",
             delay: 0.2
         });
     }, { scope: containerRef });
 
     return (
-        <section ref={containerRef} className="relative w-full h-screen flex flex-col overflow-hidden bg-[#f6f6f8] dark:bg-[#101622] font-sans">
-            {/* Animated Liquid Background */}
-            <div className="absolute inset-0 z-0 overflow-hidden">
-                <LiquidBackground />
-                {/* Overlay Texture */}
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay pointer-events-none"></div>
+        <section ref={containerRef} className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 pt-40 pb-40 text-center z-10 bg-cream overflow-hidden border-b-4 border-black">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '30px 30px' }}></div>
+
+            {/* Floating Shapes */}
+            <div className="absolute top-20 left-10 w-24 h-24 bg-pop-yellow rounded-full border-4 border-black brutal-shadow animate-blob animation-delay-2000 hidden md:block"></div>
+            <div className="absolute bottom-40 right-10 w-32 h-32 bg-pop-purple rounded-none rotate-12 border-4 border-black brutal-shadow animate-blob hidden md:block"></div>
+            <div className="absolute top-40 right-20 w-16 h-16 bg-pop-red rounded-full border-4 border-black brutal-shadow animate-blob animation-delay-4000 hidden md:block"></div>
+
+            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white border-2 border-black brutal-shadow-sm text-black font-bold mb-8 transform -rotate-2 hover:rotate-0 transition-transform cursor-default">
+                <Sparkles className="w-5 h-5 text-pop-yellow fill-pop-yellow" />
+                <span className="font-heading tracking-wide">For The Players</span>
             </div>
 
-            {/* Hero Content */}
-            <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 text-center pb-20">
-                <div className="max-w-4xl flex flex-col items-center gap-6 md:gap-8">
-                    {/* Headline with Liquid/Distorted Aesthetic */}
-                    <h1 ref={titleRef} className="text-6xl md:text-8xl lg:text-9xl font-thin tracking-tighter leading-[0.9] drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-br from-[#135bec] via-[#44ddff] to-[#135bec] dark:from-white dark:via-[#a5c3ff] dark:to-[#135bec] animate-gradient-x bg-[length:200%_auto]">
-                        AI PLAY GUILD
-                    </h1>
+            <h1 ref={titleRef} className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tight mb-8 text-black leading-[0.9]">
+                PLAY WITH <span className="text-pop-red text-stroke-2 text-transparent">AI</span>,
+                <br />
+                SHAPE THE <span className="bg-pop-yellow px-2 border-4 border-black transform inline-block -rotate-2">FUTURE</span>
+            </h1>
 
-                    {/* Sub-headline */}
-                    <p className="text-slate-600 dark:text-blue-100/80 text-sm md:text-lg font-normal tracking-wide max-w-lg mx-auto leading-relaxed">
-                        昨日より、AIで遊びたくなるコミュニティ
-                    </p>
+            <p className="text-lg md:text-2xl text-black font-bold max-w-2xl mb-12 leading-relaxed bg-white/50 backdrop-blur-sm p-4 rounded-xl border-2 border-black brutal-shadow-sm transform rotate-1">
+                AI PLAY GUILDはAIで遊びながらその楽しさに熱狂し、<br />
+                まだ見ぬ未来を創り出すコミュニティです。
+            </p>
 
-                    {/* CTA Button */}
-                    <div className="mt-8">
-                        {isSignedIn ? (
-                            <Link href="/dashboard">
-                                <button className="group relative overflow-hidden bg-white/10 backdrop-blur-md border border-white/20 dark:border-white/10 px-8 py-4 rounded-lg flex items-center gap-3 text-[#135bec] dark:text-white font-bold tracking-wide uppercase text-sm md:text-base hover:bg-[#135bec]/10 dark:hover:bg-[#135bec]/30 hover:border-[#135bec]/50 hover:shadow-[0_0_30px_rgba(19,91,236,0.3)] transition-all duration-300">
-                                    <span className="relative z-10">Go to Dashboard</span>
-                                    <ArrowRight className="w-5 h-5 relative z-10" />
-                                    <div className="absolute inset-0 bg-gradient-to-r from-[#135bec]/0 via-[#135bec]/10 to-[#135bec]/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                </button>
-                            </Link>
-                        ) : (
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto px-4 sm:px-0">
+                {isSignedIn ? (
+                    <Button asChild size="lg" className="h-14 sm:h-16 w-full sm:w-auto px-6 sm:px-10 text-lg sm:text-xl font-black rounded-xl bg-pop-green text-black border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
+                        <Link href="/dashboard">
+                            GO TO DASHBOARD <ArrowRight className="ml-2 w-5 sm:w-6 h-5 sm:h-6" />
+                        </Link>
+                    </Button>
+                ) : (
+                    <>
+                        <Button asChild size="lg" className="h-14 sm:h-16 w-full sm:w-auto px-6 sm:px-10 text-lg sm:text-xl font-black rounded-xl bg-pop-red text-white border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
                             <Link href="/join">
-                                <button className="group relative overflow-hidden bg-white/10 backdrop-blur-md border border-white/20 dark:border-white/10 px-8 py-4 rounded-lg flex items-center gap-3 text-[#135bec] dark:text-white font-bold tracking-wide uppercase text-sm md:text-base hover:bg-[#135bec]/10 dark:hover:bg-[#135bec]/30 hover:border-[#135bec]/50 hover:shadow-[0_0_30px_rgba(19,91,236,0.3)] transition-all duration-300">
-                                    <span className="relative z-10">Start Journey</span>
-                                    <ArrowRight className="w-5 h-5 relative z-10" />
-                                    <div className="absolute inset-0 bg-gradient-to-r from-[#135bec]/0 via-[#135bec]/10 to-[#135bec]/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                </button>
+                                今すぐ参加
                             </Link>
-                        )}
-                    </div>
-                </div>
-            </main>
-
-            {/* Scroll Indicator */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-white">
-                <span className="text-[10px] uppercase tracking-[0.2em]">Scroll</span>
-                <div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-white to-transparent"></div>
-                <ChevronDown className="w-6 h-6 animate-bounce duration-[3000ms]" />
+                        </Button>
+                        <Button asChild variant="outline" size="lg" className="h-14 sm:h-16 w-full sm:w-auto px-6 sm:px-10 text-lg sm:text-xl font-black rounded-xl bg-white text-black border-4 border-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
+                            <Link href="#features">
+                                もっと詳しく
+                            </Link>
+                        </Button>
+                    </>
+                )}
             </div>
 
-            {/* Bottom Gradient for Natural Transition */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-[#f6f6f8] dark:to-[#101622] z-10 pointer-events-none"></div>
+            {/* Marquee */}
+            <div className="absolute bottom-0 left-0 w-full bg-pop-yellow border-t-4 border-black py-3 overflow-hidden whitespace-nowrap">
+                <div className="animate-scroll inline-block">
+                    <span className="text-2xl font-black mx-8">🚀 LATEST AI NEWS</span>
+                    <span className="text-2xl font-black mx-8">💻 LEARNING DASHBOARD</span>
+                    <span className="text-2xl font-black mx-8">🤝 ACTIVE COMMUNITY</span>
+                    <span className="text-2xl font-black mx-8">🛠 HANDS-ON</span>
+                    <span className="text-2xl font-black mx-8">🚀 LATEST AI NEWS</span>
+                    <span className="text-2xl font-black mx-8">💻 LEARNING DASHBOARD</span>
+                    <span className="text-2xl font-black mx-8">🤝 ACTIVE COMMUNITY</span>
+                    <span className="text-2xl font-black mx-8">🛠 HANDS-ON</span>
+                </div>
+            </div>
         </section>
     );
 }

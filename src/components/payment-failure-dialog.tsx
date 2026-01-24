@@ -50,21 +50,21 @@ export function PaymentFailureDialog({ subscriptionStatus }: PaymentFailureDialo
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-[425px] glass-panel border-white/10 shadow-xl rounded-2xl">
+            <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <div className="flex items-center gap-2 text-destructive">
                         <AlertCircle className="h-6 w-6" />
-                        <DialogTitle className="font-light text-lg">お支払いの問題が発生しました</DialogTitle>
+                        <DialogTitle>お支払いの問題が発生しました</DialogTitle>
                     </div>
-                    <DialogDescription className="pt-2 font-thin text-muted-foreground">
+                    <DialogDescription className="pt-2">
                         サブスクリプションの更新に失敗しました。サービスを継続して利用するには、お支払い情報を更新してください。
                     </DialogDescription>
                 </DialogHeader>
-                <DialogFooter className="sm:justify-start mt-4">
+                <DialogFooter className="sm:justify-start">
                     <Button
                         variant="destructive"
                         onClick={handleUpdatePayment}
-                        className="w-full sm:w-auto rounded-full font-light shadow-lg shadow-destructive/20"
+                        className="w-full sm:w-auto"
                         disabled={loading}
                     >
                         {loading ? "読み込み中..." : "お支払い情報を更新する"}

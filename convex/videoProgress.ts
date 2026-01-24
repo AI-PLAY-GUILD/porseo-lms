@@ -70,47 +70,6 @@ export const getProgress = query({
 
 export const getUserProgress = query({
     handler: async (ctx) => {
-        console.log("DEBUG: getUserProgress START");
-        let identity;
-        try {
-            identity = await ctx.auth.getUserIdentity();
-        } catch (e) {
-            console.error("DEBUG: Auth failed:", e);
-            return [];
-        }
-
-        if (!identity) {
-            console.log("DEBUG: No identity");
-            return [];
-        }
-
-        try {
-            const user = await ctx.db
-                .query("users")
-                .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-                .first();
-
-            if (!user) {
-                console.log("DEBUG: User not found");
-                return [];
-            }
-
-            const progress = await ctx.db
-                .query("videoProgress")
-                .withIndex("by_user_id", (q) => q.eq("userId", user._id))
-                .collect();
-
-            console.log(`DEBUG: Found ${progress.length} progress records`);
-            return progress;
-        } catch (e) {
-            console.error("DEBUG: Database query failed:", e);
-            return [];
-        }
-    },
-});
-
-export const getDailyLearningLogs = query({
-    handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return [];
 
@@ -122,10 +81,8 @@ export const getDailyLearningLogs = query({
         if (!user) return [];
 
         return await ctx.db
-            .query("dailyLearningLogs")
-            .withIndex("by_user", (q) => q.eq("userId", user._id))
-            .order("desc")
-            .take(30);
+            .query("videoProgress")
+            .withIndex("by_user_id", (q) => q.eq("userId", user._id))
     },
 });
 
@@ -169,3 +126,6 @@ export const logLearningTime = mutation({
         }
     },
 });
+
+
+

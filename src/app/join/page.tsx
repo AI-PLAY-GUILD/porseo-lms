@@ -14,7 +14,7 @@ import { StripeLinkModal } from "@/components/stripe-link-modal";
 export default function JoinPage() {
     const { isSignedIn, user, isLoaded } = useUser();
     const userData = useQuery(api.users.getUser);
-    const syncCurrentUser = useMutation(api.users.syncCurrentUser);
+    const storeUser = useMutation(api.users.storeUser);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
@@ -25,15 +25,15 @@ export default function JoinPage() {
 
     // GSAP Animation
     useGSAP(() => {
-        const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+        const tl = gsap.timeline({ defaults: { ease: "elastic.out(1, 0.5)" } });
         tl.fromTo(titleRef.current,
-            { y: 30, opacity: 0 },
+            { y: -50, opacity: 0 },
             { y: 0, opacity: 1, duration: 1, delay: 0.2 }
         )
             .fromTo(cardRef.current,
-                { y: 30, opacity: 0, scale: 0.95 },
+                { y: 50, opacity: 0, scale: 0.9 },
                 { y: 0, opacity: 1, scale: 1, duration: 1 },
-                "-=0.6"
+                "-=0.8"
             );
     }, { scope: containerRef });
 
@@ -48,8 +48,12 @@ export default function JoinPage() {
                 );
                 const discordId = discordAccount?.providerUserId;
 
-                // Sync User with Discord ID
-                await syncCurrentUser({
+                // Store User with Discord ID
+                await storeUser({
+                    clerkId: user.id,
+                    email: user.primaryEmailAddress?.emailAddress || "",
+                    name: user.fullName || user.username || "Unknown",
+                    imageUrl: user.imageUrl,
                     discordId: discordId,
                 });
 
@@ -74,7 +78,7 @@ export default function JoinPage() {
         };
 
         sync();
-    }, [isLoaded, isSignedIn, user, isSynced, syncCurrentUser]);
+    }, [isLoaded, isSignedIn, user, isSynced, storeUser]);
 
     const handleCheckout = async () => {
         setCheckoutLoading(true);
@@ -115,21 +119,22 @@ export default function JoinPage() {
     const isMember = userData?.subscriptionStatus === 'active';
 
     return (
-        <div ref={containerRef} className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden font-body text-foreground bg-[#f6f6f8] dark:bg-[#101622]">
+        <div ref={containerRef} className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden font-body text-black bg-cream">
             {/* Background Pattern */}
-            <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2"></div>
-                <div className="absolute bottom-0 right-0 w-[800px] h-[800px] bg-accent/5 rounded-full blur-[120px] translate-x-1/2 translate-y-1/2"></div>
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
-            </div>
+            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '30px 30px' }}></div>
+
+            {/* Floating Shapes */}
+            <div className="absolute top-20 left-10 w-24 h-24 bg-pop-yellow rounded-full border-4 border-black brutal-shadow animate-blob animation-delay-2000 hidden md:block"></div>
+            <div className="absolute bottom-40 right-10 w-32 h-32 bg-pop-purple rounded-none rotate-12 border-4 border-black brutal-shadow animate-blob hidden md:block"></div>
+            <div className="absolute top-40 right-20 w-16 h-16 bg-pop-red rounded-full border-4 border-black brutal-shadow animate-blob animation-delay-4000 hidden md:block"></div>
 
             <main className="z-10 flex flex-col items-center gap-8 p-8 sm:p-20 w-full max-w-4xl">
-                <div className="flex flex-col items-center gap-4 text-center">
+                <div className="flex flex-col items-center gap-2 text-center">
                     <h1 ref={titleRef} className="flex flex-col items-center gap-2 opacity-0">
-                        <span className="text-sm font-light text-primary tracking-widest uppercase bg-primary/5 px-4 py-1 rounded-full border border-primary/10 backdrop-blur-sm">
+                        <span className="text-xl sm:text-2xl font-black text-black tracking-[0.2em] uppercase bg-pop-yellow px-4 border-2 border-black transform -rotate-2 brutal-shadow-sm">
                             AI Play Guild
                         </span>
-                        <span className="text-4xl sm:text-6xl md:text-7xl font-thin tracking-tighter text-foreground mt-4">
+                        <span className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter text-black mt-4">
                             {isSignedIn ? "PLAYGROUND AREA" : "CHOOSE YOUR PLAN"}
                         </span>
                     </h1>
@@ -137,19 +142,19 @@ export default function JoinPage() {
 
                 <div ref={cardRef} className="flex flex-col items-center gap-6 mt-10 w-full max-w-md opacity-0">
                     {isSignedIn ? (
-                        <div className="flex flex-col items-center gap-6 w-full glass-panel p-8 rounded-3xl relative">
+                        <div className="flex flex-col items-center gap-6 w-full bg-white border-4 border-black p-8 rounded-3xl brutal-shadow-lg relative">
                             <div className="text-center space-y-2">
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">WELCOME BACK</p>
-                                <p className="text-2xl font-thin text-foreground">{userData?.name} さん</p>
+                                <p className="text-sm font-black text-pop-purple uppercase tracking-wider">WELCOME BACK</p>
+                                <p className="text-2xl font-black text-black">{userData?.name} さん</p>
                             </div>
 
                             <div className="flex flex-col gap-4 w-full">
                                 {isMember ? (
-                                    <Button asChild size="lg" className="w-full h-14 text-lg font-light rounded-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 hover:border-white/30 hover:shadow-[0_0_30px_rgba(19,91,236,0.3)] transition-all duration-300 text-foreground">
+                                    <Button asChild size="lg" className="w-full h-16 text-lg font-black bg-pop-green text-black border-4 border-black hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-200 rounded-xl brutal-shadow">
                                         <Link href="/dashboard" className="flex items-center justify-center gap-2">
-                                            <LayoutDashboard className="w-5 h-5" />
+                                            <LayoutDashboard className="w-6 h-6" />
                                             学習を再開する
-                                            <ArrowRight className="w-5 h-5 ml-1" />
+                                            <ArrowRight className="w-6 h-6 ml-1" />
                                         </Link>
                                     </Button>
                                 ) : (
@@ -158,11 +163,11 @@ export default function JoinPage() {
                                             onClick={handleCheckout}
                                             disabled={checkoutLoading}
                                             size="lg"
-                                            className="w-full h-14 text-lg font-light rounded-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 hover:border-white/30 hover:shadow-[0_0_30px_rgba(19,91,236,0.3)] transition-all duration-300 text-foreground"
+                                            className="w-full h-16 text-lg font-black bg-pop-purple text-white border-4 border-black hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-200 rounded-xl brutal-shadow"
                                         >
                                             {checkoutLoading ? "Loading..." : (
                                                 <span className="flex items-center justify-center gap-2">
-                                                    <CreditCard className="w-5 h-5" />
+                                                    <CreditCard className="w-6 h-6" />
                                                     今すぐ参加する
                                                 </span>
                                             )}
@@ -174,16 +179,16 @@ export default function JoinPage() {
                                 )}
 
                                 {userData?.isAdmin && (
-                                    <Button asChild variant="outline" size="lg" className="w-full h-12 text-base font-light border border-white/10 bg-white/5 text-foreground hover:bg-white/10 transition-all duration-200 rounded-full shadow-sm backdrop-blur-sm">
+                                    <Button asChild variant="outline" size="lg" className="w-full h-14 text-base font-bold border-4 border-black bg-white text-black hover:bg-gray-100 transition-all duration-200 rounded-xl brutal-shadow-sm">
                                         <Link href="/admin" className="flex items-center justify-center gap-2">
-                                            <ShieldCheck className="w-4 h-4" />
+                                            <ShieldCheck className="w-5 h-5" />
                                             管理者ダッシュボード
                                         </Link>
                                     </Button>
                                 )}
 
                                 <SignOutButton>
-                                    <Button variant="ghost" className="w-full text-sm font-light text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-full">
+                                    <Button variant="ghost" className="w-full text-sm font-bold text-gray-500 hover:text-black hover:bg-black/5">
                                         別のアカウントでログイン
                                     </Button>
                                 </SignOutButton>
@@ -191,26 +196,26 @@ export default function JoinPage() {
                         </div>
                     ) : (
                         <>
-                            <div className="flex flex-col items-center gap-8 w-full glass-panel p-10 rounded-[32px] relative overflow-hidden group hover:bg-white/20 transition-all duration-500">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full blur-3xl -mr-16 -mt-16 z-0 pointer-events-none"></div>
+                            <div className="flex flex-col items-center gap-8 w-full bg-white border-4 border-black p-10 rounded-[40px] brutal-shadow-lg relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-pop-yellow rounded-full border-4 border-black -mr-16 -mt-16 z-0"></div>
 
                                 <div className="space-y-6 text-center relative z-10 w-full">
-                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-foreground text-xs font-light tracking-widest uppercase shadow-sm">
-                                        <Sparkles className="w-3 h-3 text-primary" />
+                                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pop-red border-2 border-black text-white text-xs font-black tracking-widest uppercase transform rotate-2 brutal-shadow-sm">
+                                        <Sparkles className="w-3 h-3" />
                                         Premium Plan
                                     </div>
 
                                     <div>
-                                        <div className="flex items-baseline justify-center gap-1 text-foreground">
-                                            <span className="text-5xl sm:text-6xl font-thin tracking-tighter">¥4,000</span>
-                                            <span className="text-xl text-muted-foreground font-light">/ month</span>
+                                        <div className="flex items-baseline justify-center gap-1 text-black">
+                                            <span className="text-5xl sm:text-6xl font-black tracking-tighter">¥4,000</span>
+                                            <span className="text-xl text-gray-500 font-bold">/ month</span>
                                         </div>
-                                        <p className="text-primary text-sm mt-3 font-light bg-primary/5 inline-block px-3 py-1 rounded-full border border-primary/10">
+                                        <p className="text-black text-sm mt-2 font-bold bg-pop-green/20 inline-block px-2 py-1 rounded-md border-2 border-transparent">
                                             Unlock Full Access to AI Community
                                         </p>
                                     </div>
 
-                                    <div className="w-full h-px bg-white/10" />
+                                    <div className="w-full h-1 bg-black rounded-full" />
 
                                     <div className="space-y-4 text-left">
                                         {[
@@ -220,9 +225,9 @@ export default function JoinPage() {
                                             "ハッカソンへの参加・フィードバック",
                                             "メンバー限定のソースコード共有"
                                         ].map((feature, i) => (
-                                            <div key={i} className="flex items-center gap-3 text-base font-light text-foreground/80">
-                                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary border border-primary/20">
-                                                    <Check className="w-3 h-3" />
+                                            <div key={i} className="flex items-center gap-3 text-base font-bold text-black">
+                                                <div className="w-6 h-6 rounded-full bg-pop-green border-2 border-black flex items-center justify-center flex-shrink-0">
+                                                    <Check className="w-4 h-4 text-black" />
                                                 </div>
                                                 {feature}
                                             </div>
@@ -231,7 +236,7 @@ export default function JoinPage() {
                                 </div>
 
                                 <SignInButton mode="modal">
-                                    <Button size="lg" className="w-full h-16 text-xl font-light rounded-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 hover:border-white/30 hover:shadow-[0_0_30px_rgba(19,91,236,0.3)] transition-all duration-300 relative z-10 mt-4 text-foreground">
+                                    <Button size="lg" className="w-full h-20 text-xl font-black bg-pop-purple text-white border-4 border-black hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-200 rounded-2xl relative z-10 brutal-shadow mt-4 animate-brutal-pulse hover:animate-none">
                                         <span className="flex items-center gap-2">
                                             今すぐ参加する
                                             <ArrowRight className="w-6 h-6" />
@@ -239,14 +244,14 @@ export default function JoinPage() {
                                     </Button>
                                 </SignInButton>
 
-                                <p className="text-[10px] font-light text-muted-foreground text-center relative z-10 uppercase tracking-wide">
+                                <p className="text-[10px] font-bold text-gray-400 text-center relative z-10 uppercase tracking-wide">
                                     Secure payment via Stripe. Cancel anytime.
                                 </p>
                             </div>
 
-                            <Button asChild variant="link" className="text-muted-foreground font-light hover:text-primary transition-colors">
+                            <Button asChild variant="link" className="text-black font-bold hover:text-pop-red transition-colors">
                                 <Link href="/">
-                                    <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+                                    <ArrowRight className="w-5 h-5 mr-2 rotate-180" />
                                     BACK TO HOME
                                 </Link>
                             </Button>
@@ -255,7 +260,7 @@ export default function JoinPage() {
                 </div>
             </main >
 
-            <footer className="absolute bottom-6 text-[10px] font-light text-muted-foreground z-10 uppercase tracking-widest">
+            <footer className="absolute bottom-6 text-[10px] font-black text-black z-10 uppercase tracking-widest">
                 © 2025 PORSEO AI Community Platform
             </footer>
         </div >

@@ -16,6 +16,7 @@ import type * as discord from "../discord.js";
 import type * as internal_ from "../internal.js";
 import type * as migration_action from "../migration_action.js";
 import type * as migrations from "../migrations.js";
+import type * as rag from "../rag.js";
 import type * as ragDb from "../ragDb.js";
 import type * as stripe from "../stripe.js";
 import type * as tags from "../tags.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   internal: typeof internal_;
   migration_action: typeof migration_action;
   migrations: typeof migrations;
+  rag: typeof rag;
   ragDb: typeof ragDb;
   stripe: typeof stripe;
   tags: typeof tags;

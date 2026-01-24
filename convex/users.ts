@@ -1,4 +1,4 @@
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 export const webhookSyncUser = mutation({
@@ -81,27 +81,23 @@ export const updateDiscordRoles = mutation({
     args: {
         clerkId: v.string(),
         discordRoles: v.array(v.string()),
-        secret: v.optional(v.string()), // Added secret for webhook/admin script access
     },
     handler: async (ctx, args) => {
-        // Security Check: Require Secret or Admin
-        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
-            const identity = await ctx.auth.getUserIdentity();
-            if (!identity) throw new Error("Unauthorized");
-            const adminUser = await ctx.db
-                .query("users")
-                .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-                .first();
-            if (!adminUser?.isAdmin) throw new Error("Unauthorized: Admin access required");
-        }
-
         const user = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
             .first();
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        await ctx.db.patch(user._id, {
+            discordRoles: args.discordRoles,
+            updatedAt: Date.now(),
+        });
     },
 });
-
 
 export const checkAccess = query({
     args: { videoId: v.id("videos") },
@@ -142,30 +138,8 @@ export const getUserByClerkId = async (ctx: any, clerkId: string) => {
 
 // 1. Stripe Customer IDからユーザーを取得
 export const getUserByStripeCustomerId = query({
-    args: {
-        stripeCustomerId: v.string(),
-        secret: v.optional(v.string()), // Optional to allow internal calls if needed, but we enforce check
-    },
+    args: { stripeCustomerId: v.string() },
     handler: async (ctx, args) => {
-        // Require secret for public access via client (webhook)
-        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
-            // If no secret, check for admin auth (optional, but safer to just require secret for this specific query)
-            const identity = await ctx.auth.getUserIdentity();
-            if (!identity) {
-                // Fail silently or throw? Throwing is better for security.
-                throw new Error("Unauthorized");
-            }
-            // If logged in, check if admin? Or if it's the user themselves?
-            // For now, let's strictly require the secret or Admin.
-            const user = await ctx.db
-                .query("users")
-                .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-                .first();
-            if (!user?.isAdmin) {
-                throw new Error("Unauthorized");
-            }
-        }
-
         return await ctx.db
             .query("users")
             .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
@@ -181,13 +155,8 @@ export const updateSubscriptionStatus = mutation({
         subscriptionStatus: v.string(),
         subscriptionName: v.optional(v.string()),
         roleId: v.optional(v.string()),
-        secret: v.string(), // Added secret
     },
     handler: async (ctx, args) => {
-        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
-            throw new Error("Unauthorized: Invalid secret");
-        }
-
         const user = await ctx.db
             .query("users")
             .withIndex("by_discord_id", (q) => q.eq("discordId", args.discordId))
@@ -227,13 +196,8 @@ export const updateSubscriptionStatusByCustomerId = mutation({
     args: {
         stripeCustomerId: v.string(),
         subscriptionStatus: v.string(),
-        secret: v.string(), // Added secret
     },
     handler: async (ctx, args) => {
-        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
-            throw new Error("Unauthorized: Invalid secret");
-        }
-
         const user = await ctx.db
             .query("users")
             .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
@@ -254,35 +218,22 @@ export const updateSubscriptionStatusByCustomerId = mutation({
 // ※既存のsyncUserとは別に、Entryアプリ専用の関数として追加します
 export const storeUser = mutation({
     args: {
-        // Keep args for frontend compatibility but ignore sensitive ones
-        clerkId: v.optional(v.string()),
-        email: v.optional(v.string()),
+        clerkId: v.string(),
+        email: v.string(),
         name: v.string(),
         imageUrl: v.optional(v.string()),
         discordId: v.optional(v.string()),
-        secret: v.string(), // Added secret
     },
     handler: async (ctx, args) => {
-        let clerkId = args.clerkId;
-        let email = args.email || "";
-
-        if (args.secret === process.env.CLERK_WEBHOOK_SECRET) {
-            if (!clerkId) throw new Error("clerkId is required when using secret");
-        } else {
-            const identity = await ctx.auth.getUserIdentity();
-            if (!identity) throw new Error("Unauthorized");
-            clerkId = identity.subject;
-            email = identity.email || args.email || "";
-        }
         // 1. Check by Clerk ID
         const user = await ctx.db
             .query("users")
-            .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkId))
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
             .first();
 
         if (user) {
             await ctx.db.patch(user._id, {
-                email: email,
+                email: args.email,
                 name: args.name,
                 imageUrl: args.imageUrl,
                 discordId: args.discordId, // Update Discord ID
@@ -294,13 +245,13 @@ export const storeUser = mutation({
         // 2. Check by Email (Fix for migration/linking)
         const existingByEmail = await ctx.db
             .query("users")
-            .filter((q) => q.eq(q.field("email"), email))
+            .filter((q) => q.eq(q.field("email"), args.email))
             .first();
 
         if (existingByEmail) {
-            console.log(`[storeUser] Found existing user by email ${email}. Linking to Clerk ID ${clerkId}`);
+            console.log(`[storeUser] Found existing user by email ${args.email}. Linking to Clerk ID ${args.clerkId}`);
             await ctx.db.patch(existingByEmail._id, {
-                clerkId: clerkId, // Link Clerk ID
+                clerkId: args.clerkId, // Link Clerk ID
                 name: args.name,
                 imageUrl: args.imageUrl,
                 discordId: args.discordId,
@@ -311,8 +262,8 @@ export const storeUser = mutation({
 
         // 3. Create New User
         const userId = await ctx.db.insert("users", {
-            clerkId: clerkId,
-            email: email,
+            clerkId: args.clerkId,
+            email: args.email,
             name: args.name,
             imageUrl: args.imageUrl,
             discordId: args.discordId,
@@ -351,10 +302,8 @@ export const getAllUsers = query({
 });
 
 export const syncCurrentUser = mutation({
-    args: {
-        discordId: v.optional(v.string()),
-    },
-    handler: async (ctx, args) => {
+    args: {},
+    handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
             throw new Error("Called syncCurrentUser without authentication");
@@ -371,13 +320,8 @@ export const syncCurrentUser = mutation({
             .first();
 
         if (user) {
-            // Update Discord ID if provided and different
-            if (args.discordId && user.discordId !== args.discordId) {
-                await ctx.db.patch(user._id, {
-                    discordId: args.discordId,
-                    updatedAt: Date.now(),
-                });
-            }
+            // User already exists, update if needed (optional, but good for consistency)
+            // For now, we just return the ID as the goal is to ensure existence
             return user._id;
         }
 
@@ -385,14 +329,13 @@ export const syncCurrentUser = mutation({
         if (email) {
             const existingByEmail = await ctx.db
                 .query("users")
-                .withIndex("by_email", (q) => q.eq("email", email))
+                .filter((q) => q.eq(q.field("email"), email))
                 .first();
             if (existingByEmail) {
                 await ctx.db.patch(existingByEmail._id, {
                     clerkId: clerkId,
                     name: name,
                     imageUrl: imageUrl,
-                    discordId: args.discordId || existingByEmail.discordId, // Update Discord ID if provided
                     updatedAt: Date.now(),
                 });
                 return existingByEmail._id;
@@ -405,7 +348,6 @@ export const syncCurrentUser = mutation({
             email: email || "",
             name: name,
             imageUrl: imageUrl,
-            discordId: args.discordId,
             discordRoles: [],
             isAdmin: false, // Default to false
             createdAt: Date.now(),

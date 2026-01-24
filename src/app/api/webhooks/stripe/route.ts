@@ -92,7 +92,6 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         subscriptionStatus: 'active',
         subscriptionName: subscriptionName,
         roleId: roleId, // Pass the role ID to Convex
-        secret: process.env.CLERK_WEBHOOK_SECRET,
     });
 
 
@@ -115,7 +114,6 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     await convex.mutation("users:updateSubscriptionStatusByCustomerId" as any, {
         stripeCustomerId: customerId,
         subscriptionStatus: 'past_due',
-        secret: process.env.CLERK_WEBHOOK_SECRET,
     });
 
     // Action: Notify User (Optional - Log for now)
@@ -134,7 +132,6 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     await convex.mutation("users:updateSubscriptionStatusByCustomerId" as any, {
         stripeCustomerId: customerId,
         subscriptionStatus: 'canceled',
-        secret: process.env.CLERK_WEBHOOK_SECRET,
     });
 
     // Action: Remove Discord Role
@@ -156,8 +153,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
     try {
         const user = await convex.query("users:getUserByStripeCustomerId" as any, {
-            stripeCustomerId: customerId,
-            secret: process.env.CLERK_WEBHOOK_SECRET,
+            stripeCustomerId: customerId
         });
 
         if (user && user.discordId && discordToken && guildId && roleId) {

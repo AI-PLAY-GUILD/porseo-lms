@@ -7,7 +7,6 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { HelpCircle } from "lucide-react";
-import { ParticleBackground } from "./particle-background";
 
 export function BrutalistFAQ() {
     const faqs = [
@@ -30,37 +29,39 @@ export function BrutalistFAQ() {
     ];
 
     return (
-        <section id="faq" className="py-24 relative overflow-hidden bg-white">
-            <div className="absolute inset-0 z-0 opacity-50 pointer-events-none">
-                <ParticleBackground />
-            </div>
+        <section id="faq" className="py-16 bg-pop-green border-b-4 border-black relative overflow-hidden">
             {/* Background decoration */}
-            <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 -z-10 pointer-events-none"></div>
-            <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '20px 20px' }}></div>
+
+            <div className="absolute -left-10 top-1/2 -translate-y-1/2 w-40 h-40 bg-pop-yellow rounded-full border-4 border-black brutal-shadow animate-blob hidden md:block"></div>
+            <div className="absolute -right-10 bottom-10 w-32 h-32 bg-pop-purple rounded-none rotate-12 border-4 border-black brutal-shadow animate-blob animation-delay-2000 hidden md:block"></div>
 
             <div className="container mx-auto px-4 relative z-10">
                 <div className="max-w-3xl mx-auto">
                     <div className="text-center mb-12">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 text-foreground text-sm font-light tracking-widest uppercase mb-6">
-                            <HelpCircle className="w-4 h-4 text-primary" />
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border-2 border-black text-black text-sm font-black tracking-widest uppercase mb-6 brutal-shadow-sm transform -rotate-2">
+                            <HelpCircle className="w-4 h-4" />
                             Q & A
                         </div>
-                        <h2 className="text-4xl sm:text-6xl md:text-7xl font-thin text-foreground tracking-tighter leading-tight">
+                        <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-black uppercase tracking-tighter leading-tight">
                             Frequently Asked <br />
-                            <span className="text-gradient font-normal">Questions</span>
+                            <span className="text-white text-stroke-2">Questions</span>
                         </h2>
                     </div>
 
-                    <div className="glass-panel rounded-3xl p-6 sm:p-10">
+                    <div className="bg-white border-4 border-black rounded-2xl p-6 sm:p-8 brutal-shadow-lg">
                         <Accordion type="single" collapsible className="w-full space-y-4">
                             {faqs.map((faq, index) => (
-                                <AccordionItem key={index} value={`item-${index}`} className="border-b border-white/10 last:border-0">
-                                    <AccordionTrigger className="text-left text-lg sm:text-xl font-light text-foreground hover:text-primary hover:no-underline py-4 [&[data-state=open]]:text-primary transition-colors">
+                                <AccordionItem key={index} value={`item-${index}`} className="border-b-0">
+                                    <AccordionTrigger className="text-left text-lg sm:text-xl font-black text-black hover:text-pop-purple hover:no-underline py-4 [&[data-state=open]]:text-pop-purple transition-colors">
                                         {faq.question}
                                     </AccordionTrigger>
-                                    <AccordionContent className="text-base sm:text-lg font-thin text-muted-foreground leading-relaxed pb-4">
+                                    <AccordionContent className="text-base sm:text-lg font-bold text-gray-600 leading-relaxed pb-4">
                                         {faq.answer}
                                     </AccordionContent>
+                                    {index < faqs.length - 1 && (
+                                        <div className="h-0.5 w-full bg-gray-200 my-2" />
+                                    )}
                                 </AccordionItem>
                             ))}
                         </Accordion>
