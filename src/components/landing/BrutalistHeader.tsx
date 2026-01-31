@@ -42,7 +42,7 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
         >
             <div className="container mx-auto px-4 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2 group">
-                    <span className="text-2xl font-light text-black tracking-[0.2em] hover:opacity-70 transition-opacity">
+                    <span className="text-2xl font-light text-black tracking-tight hover:opacity-70 transition-opacity">
                         AI PLAY GUILD
                     </span>
                 </Link>
