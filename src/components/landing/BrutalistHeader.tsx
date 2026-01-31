@@ -34,16 +34,15 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
     return (
         <header
             className={cn(
-                "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b-4 border-black",
-                isScrolled ? "bg-cream py-3" : "bg-cream py-5"
+                "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+                isScrolled
+                    ? "bg-cream/80 backdrop-blur-md border-b border-black/5 py-4 shadow-sm"
+                    : "bg-transparent py-6"
             )}
         >
             <div className="container mx-auto px-4 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2 group">
-                    <div className="w-10 h-10 bg-white border-2 border-black flex items-center justify-center text-white font-black text-xl brutal-shadow-sm group-hover:translate-x-1 group-hover:translate-y-1 group-hover:shadow-none transition-all overflow-hidden">
-                        <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
-                    </div>
-                    <span className="text-2xl font-black text-black tracking-tighter">
+                    <span className="text-2xl font-light text-black tracking-[0.2em] hover:opacity-70 transition-opacity">
                         AI PLAY GUILD
                     </span>
                 </Link>
