@@ -2,7 +2,7 @@
 export const heroContent = {
     title: {
         en: "AI PLAY GUILD",
-        ja: "昨日より、AIで遊びたくなるコミュニティ"
+        ja: "AIで、遊び倒せ。"
     },
     buttons: {
         primary: "今すぐ参加する",
