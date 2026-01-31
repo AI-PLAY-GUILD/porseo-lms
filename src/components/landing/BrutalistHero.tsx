@@ -52,16 +52,10 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
             </div>
 
-            <div className="container relative z-10 px-4 pt-20 text-center">
-
-                {/* Badge */}
-                <div className="hero-content inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-100 bg-blue-50/50 backdrop-blur-md text-sm font-bold text-blue-600 mb-8 mx-auto shadow-sm">
-                    <Sparkles className="w-4 h-4 fill-blue-600" />
-                    <span className="tracking-wide font-[family-name:var(--font-jp)]">The Next Gen Community</span>
-                </div>
+            <div className="container relative z-10 px-4 pt-20 text-left">
 
                 {/* H1 */}
-                <h1 className="hero-content max-w-5xl mx-auto text-5xl sm:text-7xl md:text-8xl font-black tracking-tight mb-8 leading-tight font-[family-name:var(--font-jp)]">
+                <h1 className="hero-content max-w-5xl mr-auto text-5xl sm:text-7xl md:text-8xl font-black tracking-tight mb-8 leading-tight font-[family-name:var(--font-jp)]">
                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-300% animate-gradient">
                         {heroContent.title.en}
                     </span>
@@ -71,7 +65,7 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
                 </h1>
 
                 {/* Buttons */}
-                <div className="hero-content flex flex-col sm:flex-row items-center justify-center gap-4 mb-24">
+                <div className="hero-content flex flex-col sm:flex-row items-center justify-start gap-4 mb-24">
                     {isSignedIn ? (
                         <Button asChild size="lg" className="h-14 px-10 rounded-full bg-slate-900 text-white font-bold hover:bg-slate-800 hover:scale-105 transition-all shadow-lg shadow-slate-200/50">
                             <Link href="/dashboard">
