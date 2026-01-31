@@ -55,11 +55,11 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
             <div className="container relative z-10 px-4 pt-20 text-left">
 
                 {/* H1 */}
-                <h1 className="hero-content max-w-5xl mr-auto text-5xl sm:text-7xl md:text-8xl font-black tracking-tight mb-8 leading-tight font-[family-name:var(--font-jp)]">
-                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-300% animate-gradient">
+                <h1 className="hero-content max-w-5xl mr-auto text-5xl sm:text-7xl md:text-8xl font-black tracking-tight mb-8 leading-tight font-[family-name:var(--font-jp)] text-black">
+                    <span>
                         {heroContent.title.en}
                     </span>
-                    <span className="block text-2xl sm:text-3xl md:text-4xl font-bold text-slate-500 mt-6 tracking-wide">
+                    <span className="block text-2xl sm:text-3xl md:text-4xl font-bold text-black mt-6 tracking-wide">
                         {heroContent.title.ja}
                     </span>
                 </h1>
