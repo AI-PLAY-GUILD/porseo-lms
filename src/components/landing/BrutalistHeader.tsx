@@ -36,13 +36,13 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
             className={cn(
                 "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
                 isScrolled
-                    ? "bg-cream/80 backdrop-blur-md border-b border-black/5 py-4 shadow-sm"
+                    ? "bg-white/80 backdrop-blur-md border-b border-slate-200/50 py-4 shadow-sm"
                     : "bg-transparent py-6"
             )}
         >
             <div className="container mx-auto px-4 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2 group">
-                    <span className="text-2xl font-light text-black tracking-tight hover:opacity-70 transition-opacity">
+                    <span className="text-2xl font-light text-slate-900 tracking-tight hover:opacity-70 transition-opacity font-[family-name:var(--font-jp)]">
                         AI PLAY GUILD
                     </span>
                 </Link>
@@ -53,7 +53,7 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                         <Link
                             key={item.name}
                             href={item.href}
-                            className="text-lg font-bold text-black hover:text-pop-purple transition-colors uppercase"
+                            className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors tracking-wide"
                         >
                             {item.name}
                         </Link>
@@ -64,22 +64,22 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                     {isSignedIn ? (
                         <div className="flex gap-3">
                             {isAdmin && (
-                                <Button asChild className="bg-pop-purple text-white border-2 border-black brutal-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none font-bold rounded-lg">
+                                <Button asChild variant="ghost" className="rounded-full font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100">
                                     <Link href="/admin">管理画面</Link>
                                 </Button>
                             )}
-                            <Button asChild className="bg-pop-green text-black border-2 border-black brutal-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none font-bold rounded-lg">
+                            <Button asChild className="rounded-full bg-slate-900 text-white hover:bg-slate-800 shadow-sm font-medium px-6">
                                 <Link href="/dashboard">ダッシュボード</Link>
                             </Button>
                         </div>
                     ) : (
                         <div className="flex gap-3">
                             <SignInButton mode="modal" forceRedirectUrl="/join">
-                                <Button variant="ghost" className="text-black font-bold hover:bg-black/5 hover:text-pop-purple cursor-pointer">
+                                <Button variant="ghost" className="rounded-full font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100">
                                     ログイン
                                 </Button>
                             </SignInButton>
-                            <Button asChild className="bg-black text-white border-2 border-black hover:bg-gray-800 brutal-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none font-bold rounded-lg">
+                            <Button asChild className="rounded-full bg-blue-600 text-white hover:bg-blue-500 shadow-md shadow-blue-200 font-medium px-6 border-0">
                                 <Link href="/join">今すぐ参加</Link>
                             </Button>
                         </div>
@@ -90,41 +90,41 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                 <div className="md:hidden">
                     <Sheet>
                         <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-black border-2 border-black brutal-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none bg-pop-yellow">
+                            <Button variant="ghost" size="icon" className="text-slate-900 hover:bg-slate-100 rounded-full">
                                 <Menu className="w-6 h-6" />
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="right" className="bg-cream border-l-4 border-black text-black">
+                        <SheetContent side="right" className="bg-white/95 backdrop-blur-xl border-l border-slate-100 text-slate-900">
                             <div className="flex flex-col gap-8 mt-10">
                                 {navItems.map((item) => (
                                     <Link
                                         key={item.name}
                                         href={item.href}
-                                        className="text-2xl font-black text-black hover:text-pop-purple uppercase"
+                                        className="text-xl font-medium text-slate-900 hover:text-blue-600"
                                     >
                                         {item.name}
                                     </Link>
                                 ))}
-                                <div className="h-1 bg-black my-2" />
+                                <div className="h-px bg-slate-100 my-2" />
                                 {isSignedIn ? (
                                     <div className="flex flex-col gap-4">
                                         {isAdmin && (
-                                            <Button asChild className="w-full bg-pop-purple text-white border-2 border-black brutal-shadow font-bold h-12">
+                                            <Button asChild variant="ghost" className="w-full justify-start rounded-xl font-medium text-slate-600">
                                                 <Link href="/admin">管理画面</Link>
                                             </Button>
                                         )}
-                                        <Button asChild className="w-full bg-pop-green text-black border-2 border-black brutal-shadow font-bold h-12">
+                                        <Button asChild className="w-full rounded-full bg-slate-900 text-white h-12 font-medium">
                                             <Link href="/dashboard">ダッシュボード</Link>
                                         </Button>
                                     </div>
                                 ) : (
                                     <div className="flex flex-col gap-4">
                                         <SignInButton mode="modal" forceRedirectUrl="/join">
-                                            <Button variant="outline" className="w-full border-2 border-black font-bold h-12 bg-white text-black brutal-shadow cursor-pointer">
+                                            <Button variant="ghost" className="w-full rounded-full font-medium text-slate-600 hover:bg-slate-50 h-12 border border-slate-200">
                                                 ログイン
                                             </Button>
                                         </SignInButton>
-                                        <Button asChild className="w-full bg-black text-white border-2 border-black font-bold h-12 brutal-shadow">
+                                        <Button asChild className="w-full rounded-full bg-blue-600 text-white hover:bg-blue-500 h-12 font-medium shadow-lg shadow-blue-100">
                                             <Link href="/join">今すぐ参加</Link>
                                         </Button>
                                     </div>
