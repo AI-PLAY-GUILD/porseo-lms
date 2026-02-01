@@ -40,9 +40,9 @@ export function LandingHero({ isSignedIn, handleCheckout, checkoutLoading }: Lan
 
     return (
         <section ref={containerRef} className="relative min-h-screen flex flex-col items-center justify-center px-4 pt-20 text-center z-10">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px] -z-10 pointer-events-none mix-blend-screen animate-blob" />
-            <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-violet-500/20 rounded-full blur-[80px] -z-10 pointer-events-none mix-blend-screen animate-blob animation-delay-2000" />
-            <div className="absolute bottom-1/4 right-1/4 w-[450px] h-[450px] bg-fuchsia-500/20 rounded-full blur-[90px] -z-10 pointer-events-none mix-blend-screen animate-blob animation-delay-4000" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px] -z-10 pointer-events-none mix-blend-screen" />
+            <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-violet-500/20 rounded-full blur-[80px] -z-10 pointer-events-none mix-blend-screen" />
+            <div className="absolute bottom-1/4 right-1/4 w-[450px] h-[450px] bg-fuchsia-500/20 rounded-full blur-[90px] -z-10 pointer-events-none mix-blend-screen" />
 
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm text-blue-300 mb-8 backdrop-blur-sm">
                 <Sparkles className="w-4 h-4" />

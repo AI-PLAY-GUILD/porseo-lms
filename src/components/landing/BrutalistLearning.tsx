@@ -1,118 +1,109 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart3, Target, Trophy, Zap } from "lucide-react";
-import Link from "next/link";
+import { WaveButton } from "@/components/ui/wave-button";
+import Image from "next/image";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Check } from "lucide-react";
 
 export function BrutalistLearning() {
+    const features = [
+        "学習進捗の可視化とトラッキング",
+        "毎日の学習継続ランク機能",
+        "獲得スキルと経験値のグラフ化",
+        "コミュニティ内ランキング表示"
+    ];
+
     return (
-        <section className="py-16 bg-white border-b-4 border-black relative overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '20px 20px' }}></div>
-
+        <section className="py-16 md:py-24 bg-white relative overflow-hidden">
+            {/* Background Decoration Image */}
             <div className="container mx-auto px-4 relative z-10">
-                <div className="flex flex-col lg:flex-row items-center gap-16">
+                {/* Background Decoration Image - Container Relative (Right) */}
+                <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[300px] h-[300px] md:w-[500px] md:h-[500px] lg:w-[750px] lg:h-[750px] pointer-events-none z-[-1] translate-x-0 lg:translate-x-10 animate-float animation-delay-1000">
+                    <Image
+                        src="/dashboard-decoration.png"
+                        alt=""
+                        fill
+                        className="object-contain opacity-40 mix-blend-multiply"
+                    />
+                </div>
+                {/* Content aligned to the LEFT, allowing overlap */}
+                <div className="w-full lg:w-2/3 text-left lg:pl-32 relative z-20">
+                    <h2 className="text-3xl sm:text-5xl md:text-7xl font-black text-black tracking-tighter mb-6 leading-tight" style={{ fontFamily: 'var(--font-jp)' }}>
+                        専用の学習ダッシュボード
+                    </h2>
 
-                    {/* Text Content */}
-                    <div className="lg:w-1/2 text-left">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pop-green border-2 border-black text-black text-sm font-black tracking-widest uppercase mb-6 brutal-shadow-sm transform -rotate-2">
-                            <Zap className="w-4 h-4" />
-                            LMSプラットフォーム
-                        </div>
+                    <p className="text-lg sm:text-xl font-bold text-black mb-10 leading-relaxed">
+                        自分専用のダッシュボードで、学習の進捗を可視化。ランクシステムや学習分析機能も搭載されており、モチベーションを維持しながら学習を進められる。
+                    </p>
 
-                        <h2 className="text-4xl sm:text-5xl md:text-7xl font-black text-black uppercase tracking-tighter mb-6 leading-tight">
-                            あなた専用の <br />
-                            <span className="bg-black text-white px-2">ダッシュボード</span>
-                        </h2>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <div>
+                                <WaveButton
+                                    text="機能を見る"
+                                    hoverText="CHECK！"
+                                    className="w-40 h-12 rounded-md border-2 border-black shadow-[4px_4px_0px_0px_#000000]"
+                                />
+                            </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl w-[95vw] bg-white border-4 border-black p-0 overflow-hidden rounded-xl">
+                            <div className="max-h-[85vh] overflow-y-auto">
+                                <div className="p-6 sm:p-10">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-2xl sm:text-4xl font-black mb-6 border-b-4 border-black pb-4 inline-block">
+                                            学習を加速させるダッシュボード機能
+                                        </DialogTitle>
+                                    </DialogHeader>
 
-                        <p className="text-lg sm:text-xl font-bold text-black mb-8 leading-relaxed">
-                            自分専用のダッシュボードで、学習の進捗を可視化。<br />
-                            ランクアップシステムで、モチベーションを維持。
-                        </p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="bg-white border-2 border-black p-6 rounded-lg shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#000000] transition-all">
+                                            <h4 className="font-black text-xl mb-3 flex items-center gap-2">
+                                                <span className="bg-sky-400 text-white w-8 h-8 flex items-center justify-center rounded-full border-2 border-black text-sm">01</span>
+                                                学習ランクシステム
+                                            </h4>
+                                            <p className="font-bold text-gray-600 leading-relaxed">
+                                                動画を完了するたびにランクがアップ。<br />
+                                                完了数に応じてビギナーからプラチナへ、成長を可視化。
+                                            </p>
+                                        </div>
 
-                        <div className="space-y-6 mb-10">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-pop-yellow border-4 border-black flex items-center justify-center flex-shrink-0 brutal-shadow-sm">
-                                    <BarChart3 className="w-6 h-6 text-black" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-black uppercase">学習分析</h3>
-                                    <p className="text-sm font-bold text-gray-600">学習時間をグラフで管理</p>
+                                        <div className="bg-white border-2 border-black p-6 rounded-lg shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#000000] transition-all">
+                                            <h4 className="font-black text-xl mb-3 flex items-center gap-2">
+                                                <span className="bg-pink-400 text-white w-8 h-8 flex items-center justify-center rounded-full border-2 border-black text-sm">02</span>
+                                                学習統計データ
+                                            </h4>
+                                            <p className="font-bold text-gray-600 leading-relaxed">
+                                                総視聴時間や完了した動画数を一目で確認。<br />
+                                                自分の積み上げた成果を数字で実感できる。
+                                            </p>
+                                        </div>
+
+                                        <div className="bg-white border-2 border-black p-6 rounded-lg shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#000000] transition-all">
+                                            <h4 className="font-black text-xl mb-3 flex items-center gap-2">
+                                                <span className="bg-yellow-400 text-white w-8 h-8 flex items-center justify-center rounded-full border-2 border-black text-sm">03</span>
+                                                連続学習ストリーク
+                                            </h4>
+                                            <p className="font-bold text-gray-600 leading-relaxed">
+                                                毎日の学習継続日数を記録。<br />
+                                                途切らせたくない心理を刺激し、日々の学習を習慣化。
+                                            </p>
+                                        </div>
+
+                                        <div className="bg-white border-2 border-black p-6 rounded-lg shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#000000] transition-all">
+                                            <h4 className="font-black text-xl mb-3 flex items-center gap-2">
+                                                <span className="bg-green-400 text-white w-8 h-8 flex items-center justify-center rounded-full border-2 border-black text-sm">04</span>
+                                                週間学習グラフ
+                                            </h4>
+                                            <p className="font-bold text-gray-600 leading-relaxed">
+                                                直近7日間の学習時間をグラフで分析。<br />
+                                                学習ペースを把握し、無理のない計画を立てられる。
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-pop-red border-4 border-black flex items-center justify-center flex-shrink-0 brutal-shadow-sm">
-                                    <Target className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-black uppercase">目標設定</h3>
-                                    <p className="text-sm font-bold text-gray-600">目標を設定して達成率を確認</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-pop-purple border-4 border-black flex items-center justify-center flex-shrink-0 brutal-shadow-sm">
-                                    <Trophy className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-black uppercase">ランクシステム</h3>
-                                    <p className="text-sm font-bold text-gray-600">学習量に応じてランクアップ</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <Button asChild size="lg" className="h-14 sm:h-16 px-8 text-lg sm:text-xl font-black rounded-xl bg-black text-white border-4 border-transparent hover:border-black hover:bg-white hover:text-black brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
-                            <Link href="/join">
-                                今すぐ参加 <ArrowRight className="ml-2 w-6 h-6" />
-                            </Link>
-                        </Button>
-                    </div>
-
-                    {/* Visual Content (Mockup) */}
-                    <div className="lg:w-1/2 w-full relative">
-                        {/* Decorative elements behind */}
-                        <div className="absolute top-10 -right-10 w-40 h-40 bg-pop-green rounded-full border-4 border-black brutal-shadow hidden md:block"></div>
-                        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-pop-yellow rounded-none rotate-12 border-4 border-black brutal-shadow hidden md:block"></div>
-
-                        {/* Dashboard Mockup Card */}
-                        <div className="relative bg-cream border-4 border-black rounded-2xl p-6 brutal-shadow-lg transform rotate-2 hover:rotate-0 transition-transform duration-500">
-                            <div className="flex items-center justify-between mb-6 border-b-2 border-black pb-4">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-red-500 border border-black"></div>
-                                    <div className="w-3 h-3 rounded-full bg-yellow-500 border border-black"></div>
-                                    <div className="w-3 h-3 rounded-full bg-green-500 border border-black"></div>
-                                </div>
-                                <div className="text-xs font-bold text-gray-500 uppercase">マイダッシュボード</div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                <div className="bg-white border-2 border-black rounded-lg p-4 brutal-shadow-sm">
-                                    <div className="text-xs font-bold text-gray-500 mb-1">総学習時間</div>
-                                    <div className="text-3xl font-black text-black">124<span className="text-sm">h</span></div>
-                                </div>
-                                <div className="bg-white border-2 border-black rounded-lg p-4 brutal-shadow-sm">
-                                    <div className="text-xs font-bold text-gray-500 mb-1">連続日数</div>
-                                    <div className="text-3xl font-black text-pop-red">12<span className="text-sm text-black">days</span></div>
-                                </div>
-                            </div>
-
-                            <div className="bg-white border-2 border-black rounded-lg p-4 mb-4 brutal-shadow-sm">
-                                <div className="flex justify-between items-end mb-2">
-                                    <div className="text-sm font-black">週間アクティビティ</div>
-                                </div>
-                                <div className="flex items-end justify-between h-24 gap-2">
-                                    {[40, 70, 45, 90, 60, 80, 50].map((h, i) => (
-                                        <div key={i} className="w-full bg-pop-purple border border-black rounded-t-sm" style={{ height: `${h}%` }}></div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3 bg-black text-white p-3 rounded-lg border-2 border-black">
-                                <Trophy className="w-5 h-5 text-pop-yellow" />
-                                <div className="text-sm font-bold">現在のランク: <span className="text-pop-yellow">AI MASTER</span></div>
-                            </div>
-                        </div>
-                    </div>
-
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </div>
         </section>

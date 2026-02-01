@@ -7,7 +7,9 @@ import { useState, useEffect } from "react";
 import { StripeLinkModal } from "@/components/stripe-link-modal";
 import { BrutalistHeader } from "@/components/landing/BrutalistHeader";
 import { BrutalistHero } from "@/components/landing/BrutalistHero";
-import { BrutalistFeatures } from "@/components/landing/BrutalistFeatures";
+import { CommunityIntro } from "@/components/landing/community-intro";
+import { BrutalistWhy } from "@/components/landing/BrutalistWhy";
+import { BrutalistWhat } from "@/components/landing/BrutalistWhat";
 import { BrutalistShowcase } from "@/components/landing/BrutalistShowcase";
 import { BrutalistTeam } from "@/components/landing/BrutalistTeam";
 import { BrutalistPricing } from "@/components/landing/BrutalistPricing";
@@ -16,6 +18,7 @@ import { BackToTop } from "@/components/landing/back-to-top";
 import { BrutalistLearning } from "@/components/landing/BrutalistLearning";
 import { BrutalistCommunity } from "@/components/landing/BrutalistCommunity";
 import { BrutalistFAQ } from "@/components/landing/BrutalistFAQ";
+
 import { BrutalistHackathon } from "@/components/landing/BrutalistHackathon";
 
 export default function Home() {
@@ -108,7 +111,7 @@ export default function Home() {
     const isMember = userData?.subscriptionStatus === 'active';
 
     return (
-        <div className="min-h-screen bg-cream text-black font-body selection:bg-pop-yellow selection:text-black overflow-x-hidden">
+        <div className="min-h-screen bg-white text-black font-body selection:bg-pop-yellow selection:text-black overflow-x-hidden">
             <BrutalistHeader isSignedIn={isSignedIn ?? false} isMember={isMember ?? false} isAdmin={userData?.isAdmin ?? false} />
 
             <main>
@@ -118,7 +121,11 @@ export default function Home() {
                     checkoutLoading={checkoutLoading}
                 />
 
-                <BrutalistFeatures />
+                <CommunityIntro />
+
+                <BrutalistWhy />
+
+                <BrutalistWhat />
 
                 <BrutalistShowcase />
 

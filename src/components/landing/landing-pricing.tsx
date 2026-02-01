@@ -20,10 +20,10 @@ export function LandingPricing({ handleCheckout, checkoutLoading }: LandingPrici
     ];
 
     return (
-        <section id="pricing" className="py-24 relative z-10">
+        <section id="pricing" className="py-16 md:py-24 relative z-10">
             <div className="container mx-auto px-4">
                 <div className="max-w-4xl mx-auto bg-gradient-to-b from-white/10 to-transparent p-[1px] rounded-[40px]">
-                    <div className="bg-black/80 backdrop-blur-xl rounded-[39px] p-8 md:p-16 text-center border border-white/10 relative overflow-hidden">
+                    <div className="bg-black/80 backdrop-blur-xl rounded-[39px] p-6 md:p-16 text-center border border-white/10 relative overflow-hidden">
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-blue-500/10 to-transparent pointer-events-none" />
 
                         <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 relative z-10">
@@ -34,7 +34,7 @@ export function LandingPricing({ handleCheckout, checkoutLoading }: LandingPrici
                         </p>
 
                         <div className="flex items-baseline justify-center gap-2 mb-12 relative z-10">
-                            <span className="text-6xl font-black text-white">¥980</span>
+                            <span className="text-5xl md:text-6xl font-black text-white">¥980</span>
                             <span className="text-xl text-gray-400">/ month</span>
                         </div>
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { WaveButton } from "@/components/ui/wave-button";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
@@ -79,9 +80,12 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                                     ログイン
                                 </Button>
                             </SignInButton>
-                            <Button asChild className="rounded-full bg-blue-600 text-white hover:bg-blue-500 shadow-md shadow-blue-200 font-medium px-6 border-0">
-                                <Link href="/join">今すぐ参加</Link>
-                            </Button>
+                            <WaveButton
+                                href="/join"
+                                text="今すぐ参加"
+                                hoverText="Start!"
+                                className="w-36 h-12 text-sm rounded-md shadow-md"
+                            />
                         </div>
                     )}
                 </div>

@@ -1,8 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Check, Star } from "lucide-react";
-import Link from "next/link";
+import { WaveButton } from "@/components/ui/wave-button";
+import { Check } from "lucide-react";
 
 interface BrutalistPricingProps {
     handleCheckout: () => void;
@@ -19,48 +18,52 @@ export function BrutalistPricing({ handleCheckout, checkoutLoading }: BrutalistP
     ];
 
     return (
-        <section id="pricing" className="py-24 bg-pop-yellow border-b-4 border-black relative overflow-hidden">
-            {/* Background decoration */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full border-4 border-black -mr-32 -mt-32 opacity-50"></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-pop-red rounded-full border-4 border-black -ml-32 -mb-32 opacity-50"></div>
-
+        <section id="pricing" className="py-24 bg-white relative overflow-hidden">
             <div className="container mx-auto px-4 relative z-10">
-                <div className="max-w-4xl mx-auto">
-                    <div className="bg-white rounded-3xl p-8 md:p-16 text-center border-4 border-black brutal-shadow-lg relative">
+                <div className="max-w-5xl mx-auto">
+                    <div className="bg-white overflow-hidden border-4 border-black relative rounded-lg">
+                        <div className="flex flex-col md:flex-row">
+                            {/* Left Column: Info & Action */}
+                            <div className="p-8 md:p-12 w-full md:w-1/2 flex flex-col justify-center items-start text-left border-b-4 md:border-b-0 md:border-r-4 border-black">
+                                <h2 className="text-3xl sm:text-4xl font-bold text-black mb-4 tracking-tighter" style={{ fontFamily: 'var(--font-jp)' }}>
+                                    メンバーシップ
+                                </h2>
+                                <p className="text-lg font-bold text-gray-600 mb-8">
+                                    一緒にAIで楽しみながら成長しましょう！
+                                </p>
 
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-pop-red text-white px-8 py-2 rounded-full border-4 border-black font-black text-xl transform rotate-2">
-                            JOIN THE COMMUNITY
-                        </div>
 
-                        <h2 className="text-3xl sm:text-5xl md:text-7xl font-black text-black mb-6 uppercase tracking-tighter mt-4">
-                            Membership
-                        </h2>
-                        <p className="text-xl font-bold text-black mb-12">
-                            一緒にAIで楽しみながら成長しましょう！
-                        </p>
-
-                        <div className="flex items-baseline justify-center gap-2 mb-12">
-                            <span className="text-5xl sm:text-7xl md:text-8xl font-black text-black">¥4,000</span>
-                            <span className="text-xl sm:text-2xl font-bold text-black">/ month</span>
-                        </div>
-
-                        <div className="grid md:grid-cols-2 gap-x-12 gap-y-6 text-left max-w-2xl mx-auto mb-12 bg-cream p-8 rounded-xl border-4 border-black">
-                            {benefits.map((benefit, index) => (
-                                <div key={index} className="flex items-center gap-4">
-                                    <div className="w-8 h-8 rounded-full bg-pop-green border-2 border-black flex items-center justify-center flex-shrink-0">
-                                        <Check className="w-5 h-5 text-black" />
-                                    </div>
-                                    <span className="text-black font-bold text-lg">{benefit}</span>
+                                <p className="text-sm font-bold text-gray-500 mb-2">月額プラン</p>
+                                <div className="flex items-baseline gap-2 mb-8">
+                                    <span className="text-5xl sm:text-6xl font-black text-black" style={{ fontFamily: 'Arial, sans-serif' }}>¥4,000</span>
                                 </div>
-                            ))}
-                        </div>
 
-                        <Button asChild size="lg" className="w-full max-w-md h-16 sm:h-20 text-xl sm:text-2xl font-black rounded-xl bg-black text-white hover:bg-pop-purple hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all shadow-[8px_8px_0px_0px_#FF5757] border-4 border-transparent hover:border-black">
-                            <Link href="/join">今すぐ参加 🚀</Link>
-                        </Button>
-                        <p className="mt-6 text-base font-bold text-gray-500">
-                            入退会は自由です。自分のペースで楽しみましょう。
-                        </p>
+                                <WaveButton
+                                    href="/join"
+                                    text="今すぐ参加"
+                                    hoverText="さあ、始めよう！"
+                                    className="w-full md:w-auto h-12 px-8 border-2 border-black"
+                                />
+
+                                <p className="mt-6 text-sm font-bold text-gray-400">
+                                    入退会自由 / 入会金0円
+                                </p>
+                            </div>
+
+                            {/* Right Column: Benefits */}
+                            <div className="p-8 md:p-12 w-full md:w-1/2 flex flex-col justify-center bg-white">
+                                <div className="space-y-6">
+                                    {benefits.map((benefit, index) => (
+                                        <div key={index} className="flex items-start gap-4">
+                                            <div className="mt-1 w-6 h-6 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                                                <Check className="w-4 h-4 text-white" />
+                                            </div>
+                                            <span className="text-black font-bold text-lg leading-tight">{benefit}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

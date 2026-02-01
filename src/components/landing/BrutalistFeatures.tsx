@@ -41,7 +41,7 @@ const features = [
 
 export function BrutalistFeatures() {
     return (
-        <section id="features" className="py-24 bg-white border-b-4 border-black relative">
+        <section id="features" className="py-24 bg-white relative">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-20">
                     <h2 className="text-3xl sm:text-5xl md:text-7xl font-black mb-6 text-black uppercase tracking-tighter">

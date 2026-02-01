@@ -19,7 +19,7 @@ export function BrutalistFAQ() {
             answer: "はい、いつでもダッシュボードから解約可能です。契約期間の縛りはありません。"
         },
         {
-            question: "Discordコミュニティでは何ができますか？",
+            question: <span><span style={{ fontFamily: 'Arial, sans-serif' }}>Discord</span>コミュニティでは何ができますか？</span>,
             answer: "最新のAIニュースの共有、開発に関する質問・相談、そして同じ志を持つメンバー同士の交流が可能です。"
         },
         {
@@ -29,31 +29,20 @@ export function BrutalistFAQ() {
     ];
 
     return (
-        <section id="faq" className="py-16 bg-pop-green border-b-4 border-black relative overflow-hidden">
-            {/* Background decoration */}
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '20px 20px' }}></div>
-
-            <div className="absolute -left-10 top-1/2 -translate-y-1/2 w-40 h-40 bg-pop-yellow rounded-full border-4 border-black brutal-shadow animate-blob hidden md:block"></div>
-            <div className="absolute -right-10 bottom-10 w-32 h-32 bg-pop-purple rounded-none rotate-12 border-4 border-black brutal-shadow animate-blob animation-delay-2000 hidden md:block"></div>
-
+        <section id="faq" className="py-16 md:py-24 bg-white relative overflow-hidden">
             <div className="container mx-auto px-4 relative z-10">
                 <div className="max-w-3xl mx-auto">
                     <div className="text-center mb-12">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border-2 border-black text-black text-sm font-black tracking-widest uppercase mb-6 brutal-shadow-sm transform -rotate-2">
-                            <HelpCircle className="w-4 h-4" />
-                            Q & A
-                        </div>
-                        <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-black uppercase tracking-tighter leading-tight">
-                            Frequently Asked <br />
-                            <span className="text-white text-stroke-2">Questions</span>
+                        <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-black tracking-tighter leading-tight" style={{ fontFamily: 'var(--font-jp)' }}>
+                            よくある質問
                         </h2>
                     </div>
 
-                    <div className="bg-white border-4 border-black rounded-2xl p-6 sm:p-8 brutal-shadow-lg">
+                    <div className="bg-white border-4 border-black p-6 sm:p-8 rounded-lg">
                         <Accordion type="single" collapsible className="w-full space-y-4">
                             {faqs.map((faq, index) => (
                                 <AccordionItem key={index} value={`item-${index}`} className="border-b-0">
-                                    <AccordionTrigger className="text-left text-lg sm:text-xl font-black text-black hover:text-pop-purple hover:no-underline py-4 [&[data-state=open]]:text-pop-purple transition-colors">
+                                    <AccordionTrigger className="text-left text-lg sm:text-xl font-black text-black hover:opacity-70 hover:no-underline py-4 transition-opacity">
                                         {faq.question}
                                     </AccordionTrigger>
                                     <AccordionContent className="text-base sm:text-lg font-bold text-gray-600 leading-relaxed pb-4">
