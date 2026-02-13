@@ -69,6 +69,6 @@
     "eslint-config-next": "16.0.10",
     "shadcn": "^3.6.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "5.9.3"
   }
 }

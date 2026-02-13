@@ -148,9 +148,15 @@ export const getUserByClerkId = async (ctx: any, clerkId: string) => {
 // ▼▼▼ 以下をファイルの末尾に追加してください ▼▼▼
 
 // 1. Stripe Customer IDからユーザーを取得
+// Security: Admin-only access to prevent unauthorized user lookup
 export const getUserByStripeCustomerId = query({
     args: { stripeCustomerId: v.string() },
     handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+        const currentUser = await getUserByClerkId(ctx, identity.subject);
+        if (!currentUser?.isAdmin) throw new Error("Admin access required");
+
         return await ctx.db
             .query("users")
             .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
@@ -307,9 +313,21 @@ export const storeUser = mutation({
     },
 });
 
+// Security: Requires authentication. Users can only query their own data, admins can query any user.
 export const getUserByClerkIdQuery = query({
     args: { clerkId: v.string() },
     handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+
+        // Allow querying own data or admin access
+        if (identity.subject !== args.clerkId) {
+            const currentUser = await getUserByClerkId(ctx, identity.subject);
+            if (!currentUser?.isAdmin) {
+                throw new Error("Unauthorized: You can only access your own data");
+            }
+        }
+
         return await getUserByClerkId(ctx, args.clerkId);
     },
 });
@@ -389,9 +407,15 @@ export const syncCurrentUser = mutation({
     },
 });
 
+// Security: Admin-only to prevent user enumeration attacks
 export const checkUserByEmail = query({
     args: { email: v.string() },
     handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+        const currentUser = await getUserByClerkId(ctx, identity.subject);
+        if (!currentUser?.isAdmin) throw new Error("Admin access required");
+
         const user = await ctx.db
             .query("users")
             .filter((q) => q.eq(q.field("email"), args.email))

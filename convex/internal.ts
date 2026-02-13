@@ -1,8 +1,8 @@
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
-// 1. Stripe Customer IDからユーザーを取得
-export const getUserByStripeCustomerId = query({
+// 1. Stripe Customer IDからユーザーを取得 (internal only - called from Stripe webhook)
+export const getUserByStripeCustomerId = internalQuery({
     args: { stripeCustomerId: v.string() },
     handler: async (ctx, args) => {
         return await ctx.db
@@ -13,7 +13,8 @@ export const getUserByStripeCustomerId = query({
 });
 
 // 2. Discord IDを使ってサブスクリプション状態を更新（決済成功時）
-export const updateSubscriptionStatus = mutation({
+// Security: Changed to internalMutation - only called from verified Stripe webhook
+export const updateSubscriptionStatus = internalMutation({
     args: {
         discordId: v.string(),
         stripeCustomerId: v.string(),
@@ -37,7 +38,8 @@ export const updateSubscriptionStatus = mutation({
 });
 
 // 3. Stripe Customer IDを使ってサブスクリプション状態を更新（キャンセル/失敗時）
-export const updateSubscriptionStatusByCustomerId = mutation({
+// Security: Changed to internalMutation - only called from verified Stripe webhook
+export const updateSubscriptionStatusByCustomerId = internalMutation({
     args: {
         stripeCustomerId: v.string(),
         subscriptionStatus: v.string(),

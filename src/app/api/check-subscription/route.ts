@@ -60,6 +60,7 @@ export async function POST(req: Request) {
                 discordId: user.discordId,
                 subscriptionStatus: 'active',
                 roleId: roleId,
+                secret: process.env.CLERK_WEBHOOK_SECRET || "",
             });
             console.log(`Updated subscription for user ${user.discordId} based on role`);
             return NextResponse.json({ status: 'active', updated: true });

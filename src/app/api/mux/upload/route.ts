@@ -1,5 +1,7 @@
 import Mux from "@mux/mux-node";
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from '@clerk/nextjs/server';
+import { convex } from '@/lib/convex';
 
 const mux = new Mux({
     tokenId: process.env.MUX_TOKEN_ID,
@@ -9,8 +11,18 @@ const mux = new Mux({
 export async function POST(req: NextRequest) {
     console.log("POST /api/mux/upload called");
     try {
-        // 本来はここで認証と管理者権限チェックが必要
-        // 今回は簡易的に実装し、後ほど強化する
+        // Security: Verify authentication and admin access
+        const { userId } = await auth();
+        if (!userId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const user = await convex.query("users:getUserByClerkIdQuery" as any, { clerkId: userId });
+        if (!user?.isAdmin) {
+            return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+        }
+
+        const allowedOrigin = process.env.NEXT_PUBLIC_BASE_URL || "*";
 
         const uploadSettings = {
             new_asset_settings: {
@@ -22,7 +34,7 @@ export async function POST(req: NextRequest) {
                     },
                 ],
             } as any,
-            cors_origin: "*", // 本番環境では適切なオリジンに制限すべき
+            cors_origin: allowedOrigin,
         };
 
         console.log("Creating upload with settings:", JSON.stringify(uploadSettings, null, 2));
@@ -34,7 +46,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             id: upload.id,
             url: upload.url,
-            uploadUrl: upload.url, // MuxUploaderのバージョンによってはこれを期待する場合がある
+            uploadUrl: upload.url,
         });
     } catch (error) {
         console.error("Error creating upload URL:", error);
@@ -46,12 +58,13 @@ export async function POST(req: NextRequest) {
 }
 
 export async function OPTIONS(req: NextRequest) {
+    const allowedOrigin = process.env.NEXT_PUBLIC_BASE_URL || "*";
     return new NextResponse(null, {
         status: 200,
         headers: {
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": allowedOrigin,
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization, Upchunk-Method", // Upchunk headers
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, Upchunk-Method",
         },
     });
 }
