@@ -85,13 +85,25 @@ export const getPublishedVideos = query({
             return await ctx.storage.getUrl(storageId);
         };
 
-        // 2. If not logged in, return videos without progress but WITH thumbnails
+        // Helper to strip sensitive data from videos the user can't access
+        // Security fix (Issue #14): Hide muxPlaybackId for role-restricted videos
+        const sanitizeVideo = (video: any, hasAccess: boolean) => {
+            if (hasAccess) return video;
+            // Return metadata only, hide playback info
+            const { muxPlaybackId, muxAssetId, transcription, ...safe } = video;
+            return { ...safe, muxPlaybackId: null, muxAssetId: null, isLocked: true };
+        };
+
+        // 2. If not logged in, return videos but hide role-restricted content
         if (!identity) {
-            return await Promise.all(videos.map(async (v) => ({
-                ...v,
-                userProgress: null,
-                thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId)
-            })));
+            return await Promise.all(videos.map(async (v) => {
+                const hasAccess = !v.requiredRoles || v.requiredRoles.length === 0;
+                return {
+                    ...sanitizeVideo(v, hasAccess),
+                    userProgress: null,
+                    thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId)
+                };
+            }));
         }
 
         const user = await ctx.db
@@ -100,11 +112,14 @@ export const getPublishedVideos = query({
             .first();
 
         if (!user) {
-            return await Promise.all(videos.map(async (v) => ({
-                ...v,
-                userProgress: null,
-                thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId)
-            })));
+            return await Promise.all(videos.map(async (v) => {
+                const hasAccess = !v.requiredRoles || v.requiredRoles.length === 0;
+                return {
+                    ...sanitizeVideo(v, hasAccess),
+                    userProgress: null,
+                    thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId)
+                };
+            }));
         }
 
         // 3. Get user's progress for all videos
@@ -115,12 +130,18 @@ export const getPublishedVideos = query({
 
         const progressMap = new Map(progressRecords.map(p => [p.videoId, p]));
 
-        // 4. Merge progress and resolve thumbnail URL
+        // 4. Merge progress, resolve thumbnail, and check role access
         return await Promise.all(videos.map(async (video) => {
             const thumbnailUrl = await resolveThumbnail(video.customThumbnailStorageId);
 
+            // Admin can see everything
+            const isAdmin = user.isAdmin;
+            const hasRequiredRole = !video.requiredRoles || video.requiredRoles.length === 0 ||
+                video.requiredRoles.some((role: string) => user.discordRoles?.includes(role));
+            const hasAccess = isAdmin || hasRequiredRole;
+
             return {
-                ...video,
+                ...sanitizeVideo(video, hasAccess),
                 userProgress: progressMap.get(video._id) || null,
                 thumbnailUrl
             };
@@ -191,6 +212,14 @@ export const generateUploadUrl = mutation({
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Unauthorized");
+
+        // Security: Admin-only (Issue #12)
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+            .first();
+        if (!user?.isAdmin) throw new Error("Admin access required");
+
         return await ctx.storage.generateUploadUrl();
     },
 });

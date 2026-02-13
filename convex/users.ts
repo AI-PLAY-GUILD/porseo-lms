@@ -36,8 +36,7 @@ export const webhookSyncUser = mutation({
 
         const isAdmin = args.clerkId === process.env.ADMIN_CLERK_ID;
 
-        console.log("Syncing user:", args.clerkId);
-        console.log("Is Admin?:", isAdmin);
+        // PII logs removed for security (Issue #20)
 
         if (existing) {
             await ctx.db.patch(existing._id, {
@@ -243,15 +242,14 @@ export const updateSubscriptionStatusByCustomerId = mutation({
     },
 });
 
-// 4. ユーザー情報を保存・更新（Entryアプリ用：Discord IDを含む）
-// ※既存のsyncUserとは別に、Entryアプリ専用の関数として追加します
+// 4. ユーザー情報を保存・更新（Entryアプリ用）
+// Security: discordId removed from client args (Issue #16) - should only be set server-side
 export const storeUser = mutation({
     args: {
         clerkId: v.string(),
         email: v.string(),
         name: v.string(),
         imageUrl: v.optional(v.string()),
-        discordId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -273,7 +271,6 @@ export const storeUser = mutation({
                 email: args.email,
                 name: args.name,
                 imageUrl: args.imageUrl,
-                discordId: args.discordId, // Update Discord ID
                 updatedAt: Date.now(),
             });
             return user._id;
@@ -286,12 +283,11 @@ export const storeUser = mutation({
             .first();
 
         if (existingByEmail) {
-            console.log(`[storeUser] Found existing user by email ${args.email}. Linking to Clerk ID ${args.clerkId}`);
+            // PII log removed (Issue #20)
             await ctx.db.patch(existingByEmail._id, {
                 clerkId: args.clerkId, // Link Clerk ID
                 name: args.name,
                 imageUrl: args.imageUrl,
-                discordId: args.discordId,
                 updatedAt: Date.now(),
             });
             return existingByEmail._id;
@@ -303,7 +299,6 @@ export const storeUser = mutation({
             email: args.email,
             name: args.name,
             imageUrl: args.imageUrl,
-            discordId: args.discordId,
             discordRoles: [],
             isAdmin: false,
             createdAt: Date.now(),

@@ -40,13 +40,12 @@ export default function Home() {
                 );
                 const discordId = discordAccount?.providerUserId;
 
-                // Store User with Discord ID
+                // Store User (discordId removed for security - Issue #16)
                 await storeUser({
                     clerkId: user.id,
                     email: user.primaryEmailAddress?.emailAddress || "",
                     name: user.fullName || user.username || "Unknown",
                     imageUrl: user.imageUrl,
-                    discordId: discordId,
                 });
 
                 // Auto-join Discord Server
