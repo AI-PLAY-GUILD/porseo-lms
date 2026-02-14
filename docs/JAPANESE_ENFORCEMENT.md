@@ -113,9 +113,23 @@ jobs:
 
 ## 🔧 現在の適用範囲
 
-- ✅ **コミットメッセージ**: 日本語強制（Husky + Commitlint）
+- ✅ **コミットメッセージ**: 日本語強制（Husky + Commitlint）- **実装済み** 🎉
 - ❌ **GitHub Issues**: 未実装（任意で英語も可）
 - ❌ **Pull Request**: 未実装（任意で英語も可）
+
+## ✅ 実装確認
+
+以下のコマンドでテスト済み：
+
+```bash
+# ❌ 英語のみ（拒否される）
+echo "feat: add new feature" | npx commitlint
+# → エラー: コミットメッセージは日本語で記述してください
+
+# ✅ 日本語を含む（承認される）
+echo "feat: 新機能を追加" | npx commitlint
+# → エラーなし
+```
 
 ## 🚀 拡張の提案
 
