@@ -21,15 +21,26 @@ export const createVideo = mutation({
 
         if (!user?.isAdmin) throw new Error("Admin access required");
 
-        return await ctx.db.insert("videos", {
+        const videoId = await ctx.db.insert("videos", {
             ...args,
             duration: args.duration ?? 0,
             order: 0,
-            isPublished: false, // デフォルトは非公開
+            isPublished: false,
             uploadedBy: user._id,
             createdAt: Date.now(),
             updatedAt: Date.now(),
         });
+
+        await ctx.db.insert("auditLogs", {
+            userId: user._id,
+            action: "video.create",
+            targetType: "video",
+            targetId: videoId,
+            details: args.title,
+            createdAt: Date.now(),
+        });
+
+        return videoId;
     },
 });
 
@@ -264,6 +275,15 @@ export const updateVideo = mutation({
             ...updates,
             updatedAt: Date.now(),
         });
+
+        await ctx.db.insert("auditLogs", {
+            userId: user._id,
+            action: "video.update",
+            targetType: "video",
+            targetId: videoId,
+            details: Object.keys(updates).join(", "),
+            createdAt: Date.now(),
+        });
     },
 });
 
@@ -303,6 +323,16 @@ export const deleteVideo = mutation({
 
         if (!user?.isAdmin) throw new Error("Admin access required");
 
+        const video = await ctx.db.get(args.videoId);
         await ctx.db.delete(args.videoId);
+
+        await ctx.db.insert("auditLogs", {
+            userId: user._id,
+            action: "video.delete",
+            targetType: "video",
+            targetId: args.videoId,
+            details: video?.title,
+            createdAt: Date.now(),
+        });
     },
 });

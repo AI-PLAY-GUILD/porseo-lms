@@ -43,9 +43,18 @@ export const createTag = mutation({
 
         if (existing) throw new Error("Tag with this name already exists");
 
-        await ctx.db.insert("tags", {
+        const tagId = await ctx.db.insert("tags", {
             name: args.name,
             slug: slug,
+            createdAt: Date.now(),
+        });
+
+        await ctx.db.insert("auditLogs", {
+            userId: user._id,
+            action: "tag.create",
+            targetType: "tag",
+            targetId: tagId,
+            details: args.name,
             createdAt: Date.now(),
         });
     },
@@ -64,6 +73,16 @@ export const deleteTag = mutation({
 
         if (!user?.isAdmin) throw new Error("Admin access required");
 
+        const tag = await ctx.db.get(args.tagId);
         await ctx.db.delete(args.tagId);
+
+        await ctx.db.insert("auditLogs", {
+            userId: user._id,
+            action: "tag.delete",
+            targetType: "tag",
+            targetId: args.tagId,
+            details: tag?.name,
+            createdAt: Date.now(),
+        });
     },
 });

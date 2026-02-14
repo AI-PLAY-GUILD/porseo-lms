@@ -6,6 +6,11 @@ import { auth } from '@clerk/nextjs/server';
 
 export async function POST(req: Request) {
     try {
+        if (!process.env.NEXT_PUBLIC_BASE_URL) {
+            console.error('NEXT_PUBLIC_BASE_URL is not set');
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
+
         const { userId } = await auth();
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

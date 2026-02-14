@@ -18,6 +18,12 @@ export const updateProgress = mutation({
 
         if (!user) throw new Error("User not found");
 
+        // Input validation
+        if (args.currentTime < 0) throw new Error("currentTime must be >= 0");
+
+        const video = await ctx.db.get(args.videoId);
+        if (!video) throw new Error("Video not found");
+
         const existing = await ctx.db
             .query("videoProgress")
             .withIndex("by_user_and_video", (q) =>
@@ -100,6 +106,11 @@ export const logLearningTime = mutation({
             .first();
 
         if (!user) throw new Error("User not found");
+
+        // Input validation
+        if (args.minutesWatched <= 0 || args.minutesWatched > 1440) {
+            throw new Error("minutesWatched must be between 1 and 1440");
+        }
 
         // Use JST for date
         const JST_OFFSET = 9 * 60 * 60 * 1000;
