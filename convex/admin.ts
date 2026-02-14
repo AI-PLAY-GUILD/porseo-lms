@@ -257,7 +257,7 @@ export const getAuditLogs = query({
 
         return logs.map(log => ({
             ...log,
-            userName: userMap.get(log.userId)?.name ?? "Unknown",
+            userName: log.userId ? (userMap.get(log.userId)?.name ?? "Unknown") : "System",
         }));
     },
 });

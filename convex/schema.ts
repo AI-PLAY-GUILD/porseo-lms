@@ -46,6 +46,10 @@ export default defineSchema({
         isAiProcessed: v.optional(v.boolean()),
         customThumbnailStorageId: v.optional(v.id("_storage")),
         tags: v.optional(v.array(v.id("tags"))),
+        // Zoom integration fields
+        zoomMeetingId: v.optional(v.string()),
+        zoomRecordingId: v.optional(v.string()),
+        source: v.optional(v.string()), // "zoom" | "manual" | "upload"
         createdAt: v.number(),
         updatedAt: v.number(),
     }),
@@ -89,7 +93,7 @@ export default defineSchema({
         .index("by_user", ["userId"]),
 
     auditLogs: defineTable({
-        userId: v.id("users"),
+        userId: v.optional(v.id("users")), // optional for system-initiated actions (Zoom webhook etc.)
         action: v.string(), // e.g. "video.create", "video.delete", "tag.create"
         targetType: v.string(), // e.g. "video", "tag", "user"
         targetId: v.optional(v.string()),
@@ -101,6 +105,12 @@ export default defineSchema({
         .index("by_created_at", ["createdAt"]),
 
     processedStripeEvents: defineTable({
+        eventId: v.string(),
+        eventType: v.string(),
+        processedAt: v.number(),
+    }).index("by_event_id", ["eventId"]),
+
+    processedZoomEvents: defineTable({
         eventId: v.string(),
         eventType: v.string(),
         processedAt: v.number(),

@@ -15,6 +15,7 @@ export const createVideo = mutation({
         muxPlaybackId: v.string(),
         duration: v.optional(v.number()), // アップロード直後は不明な場合があるためoptional
         requiredRoles: v.array(v.string()),
+        source: v.optional(v.string()), // "zoom" | "manual" | "upload"
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -31,8 +32,10 @@ export const createVideo = mutation({
 
         if (!user?.isAdmin) throw new Error("Admin access required");
 
+        const { source, ...videoArgs } = args;
         const videoId = await ctx.db.insert("videos", {
-            ...args,
+            ...videoArgs,
+            source: source || "manual",
             duration: args.duration ?? 0,
             order: 0,
             isPublished: false,

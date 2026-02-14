@@ -83,9 +83,21 @@ function VideoList() {
                     {videos.map((video) => (
                         <tr key={video._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                             <td className="py-3 px-4 font-medium">
-                                <a href={`/videos/${video._id}`} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
-                                    {video.title}
-                                </a>
+                                <div className="flex items-center gap-2">
+                                    <a href={`/videos/${video._id}`} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                                        {video.title}
+                                    </a>
+                                    {(video as any).source === "zoom" && (
+                                        <Badge variant="outline" className="text-xs border-blue-500 text-blue-600">
+                                            Zoom
+                                        </Badge>
+                                    )}
+                                    {!(video as any).muxAssetId && (
+                                        <Badge variant="outline" className="text-xs border-orange-400 text-orange-500">
+                                            処理中...
+                                        </Badge>
+                                    )}
+                                </div>
                             </td>
                             <td className="py-3 px-4">
                                 <div className="flex flex-wrap gap-1">
