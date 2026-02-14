@@ -160,7 +160,36 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
         secret: process.env.CONVEX_INTERNAL_SECRET || "",
     });
 
-    // TODO: Optionally send a DM to notify user about payment failure
+    // Issue #58: Send Discord DM to notify user about payment failure
+    try {
+        const user = await convex.query("users:getUserByStripeCustomerId" as any, {
+            stripeCustomerId: customerId,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        });
+
+        if (user?.discordId && discordToken) {
+            // Create DM channel
+            const dmChannel = await rest.post('/users/@me/channels', {
+                body: { recipient_id: user.discordId },
+            }) as { id: string };
+
+            // Send notification message
+            await rest.post(`/channels/${dmChannel.id}/messages`, {
+                body: {
+                    content: [
+                        '⚠️ **お支払いに問題が発生しました**',
+                        '',
+                        'サブスクリプションの決済に失敗しました。',
+                        'お支払い情報をご確認の上、再度お試しください。',
+                        '',
+                        'ご不明な点がございましたら、サポートまでお問い合わせください。',
+                    ].join('\n'),
+                },
+            });
+        }
+    } catch (e) {
+        console.error('[Stripe Webhook] Failed to send payment failure DM:', e);
+    }
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {

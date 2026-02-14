@@ -26,6 +26,40 @@ function checkRateLimit(ip: string): boolean {
     return entry.count <= RATE_LIMIT_MAX_REQUESTS;
 }
 
+// Issue #54: Per-user rate limiter for Discord API endpoints
+const userRateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const USER_RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const USER_RATE_LIMIT_MAX = 10; // 10 requests per minute per user
+
+const DISCORD_API_PATHS = [
+    "/api/check-subscription",
+    "/api/join-server",
+    "/api/sync-role",
+];
+
+function checkUserRateLimit(userId: string): { allowed: boolean; retryAfter?: number } {
+    const now = Date.now();
+    const entry = userRateLimitMap.get(userId);
+
+    if (userRateLimitMap.size > 10000) {
+        for (const [key, val] of userRateLimitMap) {
+            if (now > val.resetAt) userRateLimitMap.delete(key);
+        }
+    }
+
+    if (!entry || now > entry.resetAt) {
+        userRateLimitMap.set(userId, { count: 1, resetAt: now + USER_RATE_LIMIT_WINDOW_MS });
+        return { allowed: true };
+    }
+
+    entry.count++;
+    if (entry.count > USER_RATE_LIMIT_MAX) {
+        const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
+        return { allowed: false, retryAfter };
+    }
+    return { allowed: true };
+}
+
 export default clerkMiddleware(async (_auth, request) => {
     // Rate limiting for API routes (exclude webhooks which have their own protection)
     if (
@@ -41,6 +75,23 @@ export default clerkMiddleware(async (_auth, request) => {
                 { error: "Too many requests" },
                 { status: 429 }
             );
+        }
+    }
+
+    // Issue #54: Per-user rate limiting for Discord API endpoints
+    if (DISCORD_API_PATHS.some(p => request.nextUrl.pathname === p)) {
+        const { userId } = await _auth();
+        if (userId) {
+            const { allowed, retryAfter } = checkUserRateLimit(userId);
+            if (!allowed) {
+                return NextResponse.json(
+                    { error: "Too many requests. Please try again later." },
+                    {
+                        status: 429,
+                        headers: { "Retry-After": String(retryAfter || 60) },
+                    }
+                );
+            }
         }
     }
 

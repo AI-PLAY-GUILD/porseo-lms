@@ -12,6 +12,30 @@ function safeCompare(a: string, b: string): boolean {
     return result === 0;
 }
 
+// Issue #59: Audit log helper — records user mutations for compliance
+async function writeAuditLog(
+    ctx: any,
+    userId: any,
+    action: string,
+    targetType: string,
+    targetId?: string,
+    details?: string
+) {
+    try {
+        await ctx.db.insert("auditLogs", {
+            userId,
+            action,
+            targetType,
+            targetId,
+            details,
+            createdAt: Date.now(),
+        });
+    } catch (e) {
+        // Audit logging should never break the main operation
+        console.error("[AuditLog] Failed to write:", e);
+    }
+}
+
 export const webhookSyncUser = mutation({
     args: {
         clerkId: v.string(),
@@ -37,9 +61,9 @@ export const webhookSyncUser = mutation({
                 .filter((q) => q.eq(q.field("email"), args.email))
                 .first();
 
-            // Only link if the existing user looks like a migrated user (e.g. has a placeholder Clerk ID or we just trust the email)
-            // For safety, let's assume if the email matches and we are creating a new Clerk link, we merge.
-            if (existingByEmail) {
+            // Issue #60: Only merge if the existing user has no clerkId (migrated user)
+            // Prevents account takeover via email address reuse
+            if (existingByEmail && !existingByEmail.clerkId) {
                 existing = existingByEmail;
             }
         }
@@ -57,6 +81,7 @@ export const webhookSyncUser = mutation({
                 isAdmin: existing.isAdmin || isAdmin,
                 updatedAt: Date.now(),
             });
+            await writeAuditLog(ctx, existing._id, "user.sync", "user", existing._id, "Webhook sync update");
             return existing._id;
         } else {
             const newUserId = await ctx.db.insert("users", {
@@ -69,6 +94,7 @@ export const webhookSyncUser = mutation({
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
             });
+            await writeAuditLog(ctx, newUserId, "user.create", "user", newUserId, "Webhook sync create");
             return newUserId;
         }
     },
@@ -107,6 +133,7 @@ export const updateDiscordRoles = internalMutation({
             discordRoles: args.discordRoles,
             updatedAt: Date.now(),
         });
+        await writeAuditLog(ctx, user._id, "user.discord_roles_update", "user", user._id);
     },
 });
 
@@ -229,6 +256,7 @@ export const updateSubscriptionStatus = mutation({
 
 
         await ctx.db.patch(user._id, patchData);
+        await writeAuditLog(ctx, user._id, "subscription.update", "user", user._id, `status=${args.subscriptionStatus}`);
     },
 });
 
@@ -258,6 +286,7 @@ export const updateSubscriptionStatusByCustomerId = mutation({
         await ctx.db.patch(user._id, {
             subscriptionStatus: args.subscriptionStatus,
         });
+        await writeAuditLog(ctx, user._id, "subscription.update_by_customer", "user", user._id, `status=${args.subscriptionStatus}`);
     },
 });
 
@@ -301,14 +330,15 @@ export const storeUser = mutation({
             .filter((q) => q.eq(q.field("email"), args.email))
             .first();
 
-        if (existingByEmail) {
-            // PII log removed (Issue #20)
+        // Issue #60: Only merge if the existing user has no clerkId (migrated user)
+        if (existingByEmail && !existingByEmail.clerkId) {
             await ctx.db.patch(existingByEmail._id, {
                 clerkId: args.clerkId, // Link Clerk ID
                 name: args.name,
                 imageUrl: args.imageUrl,
                 updatedAt: Date.now(),
             });
+            await writeAuditLog(ctx, existingByEmail._id, "user.link_by_email", "user", existingByEmail._id);
             return existingByEmail._id;
         }
 
@@ -323,6 +353,7 @@ export const storeUser = mutation({
             createdAt: Date.now(),
             updatedAt: Date.now(),
         });
+        await writeAuditLog(ctx, userId, "user.create", "user", userId, "storeUser create");
         return userId;
     },
 });
@@ -394,7 +425,8 @@ export const syncCurrentUser = mutation({
                 .query("users")
                 .filter((q) => q.eq(q.field("email"), email))
                 .first();
-            if (existingByEmail) {
+            // Issue #60: Only merge if the existing user has no clerkId (migrated user)
+            if (existingByEmail && !existingByEmail.clerkId) {
                 await ctx.db.patch(existingByEmail._id, {
                     clerkId: clerkId,
                     name: name,
