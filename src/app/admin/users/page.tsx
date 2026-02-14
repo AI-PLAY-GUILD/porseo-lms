@@ -45,19 +45,10 @@ export default function UserListPage() {
 
             <Card>
                 <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle>ユーザー一覧</CardTitle>
-                            <CardDescription>
-                                登録されているユーザーの管理ができます。
-                            </CardDescription>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Badge className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1">
-                                有効会員: {activeSubscriberCount}人
-                            </Badge>
-                        </div>
-                    </div>
+                    <CardTitle>ユーザー一覧</CardTitle>
+                    <CardDescription>
+                        登録されているユーザーの管理ができます。現在の有効会員数: {activeSubscriberCount}人
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <UserList users={users} />
