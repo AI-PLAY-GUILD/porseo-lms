@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -22,12 +23,20 @@ import { BrutalistFAQ } from "@/components/landing/BrutalistFAQ";
 import { BrutalistHackathon } from "@/components/landing/BrutalistHackathon";
 
 export default function Home() {
+    const router = useRouter();
     const { isSignedIn, user, isLoaded } = useUser();
     const userData = useQuery(api.users.getUser);
     const storeUser = useMutation(api.users.storeUser);
 
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [isSynced, setIsSynced] = useState(false);
+
+    // Redirect logged-in users to dashboard
+    useEffect(() => {
+        if (isLoaded && isSignedIn) {
+            router.push('/dashboard');
+        }
+    }, [isLoaded, isSignedIn, router]);
 
     // Sync User & Auto-Join
     useEffect(() => {
