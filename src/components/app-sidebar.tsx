@@ -2,16 +2,12 @@
 
 import * as React from "react"
 import { useTheme } from "next-themes"
-import { SignOutButton } from "@clerk/nextjs"
 import {
   BookOpen,
   LayoutDashboard,
   Settings,
-  LogOut,
   User,
   Video,
-  Moon,
-  Sun,
   Users,
   MessageCircle,
 } from "lucide-react"
@@ -137,20 +133,15 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       <SidebarFooter className="bg-cream p-4 gap-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild className="text-black hover:bg-gray-100 border-2 border-transparent hover:border-black hover:brutal-shadow-sm transition-all rounded-lg">
-              <SignOutButton>
-                <button className="flex w-full items-center gap-2 text-left">
-                  <Avatar className="h-8 w-8 rounded-lg border-2 border-black">
-                    <AvatarImage src={userData.avatar} alt={userData.name} />
-                    <AvatarFallback className="rounded-lg bg-pop-green font-bold text-black">CN</AvatarFallback>
-                  </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-bold text-black">{userData.name}</span>
-                    <span className="truncate text-xs font-medium text-gray-600">{userData.email}</span>
-                  </div>
-                  <LogOut className="ml-auto size-4 text-black" />
-                </button>
-              </SignOutButton>
+            <SidebarMenuButton size="lg" className="text-black cursor-default hover:bg-transparent border-2 border-transparent rounded-lg">
+              <Avatar className="h-8 w-8 rounded-lg border-2 border-black">
+                <AvatarImage src={userData.avatar} alt={userData.name} />
+                <AvatarFallback className="rounded-lg bg-pop-green font-bold text-black">CN</AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-bold text-black">{userData.name}</span>
+                <span className="truncate text-xs font-medium text-gray-600">{userData.email}</span>
+              </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
