@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { SignOutButton, useUser } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
@@ -27,11 +29,27 @@ import { Separator } from "@/components/ui/separator";
 import { BrutalistLoader } from "@/components/ui/brutalist-loader";
 
 export default function AllVideosPage() {
+    const router = useRouter();
     const videos = useQuery(api.videos.getPublishedVideos);
     const stats = useQuery(api.dashboard.getStats);
     const { user } = useUser();
+    const [isMounted, setIsMounted] = useState(false);
 
-    if (videos === undefined) {
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    // Gatekeeper: Redirect if not active subscriber
+    useEffect(() => {
+        if (isMounted && stats) {
+            const status = stats.subscriptionStatus;
+            if (status !== 'active' && status !== 'past_due') {
+                router.push('/join');
+            }
+        }
+    }, [isMounted, stats, router]);
+
+    if (!isMounted || videos === undefined) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-cream">
                 <BrutalistLoader />
