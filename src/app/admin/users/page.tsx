@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function UserListPage() {
     const userData = useQuery(api.users.getUser);
+    const users = useQuery(api.users.getAllUsers);
     const router = useRouter();
 
     useEffect(() => {
@@ -32,6 +33,10 @@ export default function UserListPage() {
         return null;
     }
 
+    const activeSubscriberCount = users
+        ? users.filter((u) => !u.isAdmin && u.subscriptionStatus === "active").length
+        : 0;
+
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
@@ -40,22 +45,29 @@ export default function UserListPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>ユーザー一覧</CardTitle>
-                    <CardDescription>
-                        登録されているユーザーの管理ができます。
-                    </CardDescription>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>ユーザー一覧</CardTitle>
+                            <CardDescription>
+                                登録されているユーザーの管理ができます。
+                            </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Badge className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1">
+                                有効会員: {activeSubscriberCount}人
+                            </Badge>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
-                    <UserList />
+                    <UserList users={users} />
                 </CardContent>
             </Card>
         </div>
     );
 }
 
-function UserList() {
-    const users = useQuery(api.users.getAllUsers);
-
+function UserList({ users }: { users: Array<{ _id: string; name?: string; email?: string; imageUrl?: string; isAdmin?: boolean; subscriptionStatus?: string; createdAt: number }> | undefined }) {
     if (users === undefined) {
         return <div>読み込み中...</div>;
     }
