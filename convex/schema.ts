@@ -100,6 +100,12 @@ export default defineSchema({
         .index("by_action", ["action"])
         .index("by_created_at", ["createdAt"]),
 
+    processedStripeEvents: defineTable({
+        eventId: v.string(),
+        eventType: v.string(),
+        processedAt: v.number(),
+    }).index("by_event_id", ["eventId"]),
+
     transcription_chunks: defineTable({
         videoId: v.id("videos"),
         startTime: v.number(),

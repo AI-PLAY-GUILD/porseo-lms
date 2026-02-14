@@ -27,29 +27,44 @@ export const createCustomer = action({
             const guildId = process.env.NEXT_PUBLIC_DISCORD_GUILD_ID;
 
             if (clerkSecretKey && guildId) {
-                const clerkResponse = await fetch(
-                    `https://api.clerk.com/v1/users/${identity.subject}/oauth_access_tokens/oauth_discord`,
-                    {
-                        headers: { Authorization: `Bearer ${clerkSecretKey}` },
-                    }
-                );
+                // Issue #56: Add timeout to external API calls
+                const clerkController = new AbortController();
+                const clerkTimeout = setTimeout(() => clerkController.abort(), 10000);
+                try {
+                    const clerkResponse = await fetch(
+                        `https://api.clerk.com/v1/users/${identity.subject}/oauth_access_tokens/oauth_discord`,
+                        {
+                            headers: { Authorization: `Bearer ${clerkSecretKey}` },
+                            signal: clerkController.signal,
+                        }
+                    );
 
-                if (clerkResponse.ok) {
-                    const clerkData = await clerkResponse.json();
-                    if (clerkData.length > 0 && clerkData[0].token) {
-                        const accessToken = clerkData[0].token;
-                        const discordResponse = await fetch(
-                            `https://discord.com/api/users/@me/guilds/${guildId}/member`,
-                            {
-                                headers: { Authorization: `Bearer ${accessToken}` },
+                    if (clerkResponse.ok) {
+                        const clerkData = await clerkResponse.json();
+                        if (clerkData.length > 0 && clerkData[0].token) {
+                            const accessToken = clerkData[0].token;
+                            const discordController = new AbortController();
+                            const discordTimeout = setTimeout(() => discordController.abort(), 10000);
+                            try {
+                                const discordResponse = await fetch(
+                                    `https://discord.com/api/users/@me/guilds/${guildId}/member`,
+                                    {
+                                        headers: { Authorization: `Bearer ${accessToken}` },
+                                        signal: discordController.signal,
+                                    }
+                                );
+
+                                if (discordResponse.ok) {
+                                    const discordData = await discordResponse.json();
+                                    discordRoles = discordData.roles as string[];
+                                }
+                            } finally {
+                                clearTimeout(discordTimeout);
                             }
-                        );
-
-                        if (discordResponse.ok) {
-                            const discordData = await discordResponse.json();
-                            discordRoles = discordData.roles as string[];
                         }
                     }
+                } finally {
+                    clearTimeout(clerkTimeout);
                 }
             }
         } catch (e) {
@@ -129,14 +144,23 @@ export const getDiscordRolesV2 = action({
             }
 
             // 1. Clerk API: Get Discord Access Token
-            const clerkResponse = await fetch(
-                `https://api.clerk.com/v1/users/${identity.subject}/oauth_access_tokens/oauth_discord`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${clerkSecretKey}`,
-                    },
-                }
-            );
+            // Issue #56: Add timeout to external API calls
+            const clerkController = new AbortController();
+            const clerkTimeout = setTimeout(() => clerkController.abort(), 10000);
+            let clerkResponse: Response;
+            try {
+                clerkResponse = await fetch(
+                    `https://api.clerk.com/v1/users/${identity.subject}/oauth_access_tokens/oauth_discord`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${clerkSecretKey}`,
+                        },
+                        signal: clerkController.signal,
+                    }
+                );
+            } finally {
+                clearTimeout(clerkTimeout);
+            }
 
             if (!clerkResponse.ok) {
                 console.error("Clerk API Error:", await clerkResponse.text());
@@ -151,14 +175,22 @@ export const getDiscordRolesV2 = action({
             const accessToken = clerkData[0].token;
 
             // 2. Discord API: Get Current User Guild Member
-            const discordResponse = await fetch(
-                `https://discord.com/api/users/@me/guilds/${guildId}/member`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                    },
-                }
-            );
+            const discordController = new AbortController();
+            const discordTimeout = setTimeout(() => discordController.abort(), 10000);
+            let discordResponse: Response;
+            try {
+                discordResponse = await fetch(
+                    `https://discord.com/api/users/@me/guilds/${guildId}/member`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                        signal: discordController.signal,
+                    }
+                );
+            } finally {
+                clearTimeout(discordTimeout);
+            }
 
             if (!discordResponse.ok) {
                 if (discordResponse.status === 404) {

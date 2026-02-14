@@ -250,6 +250,8 @@ export const updateSubscriptionStatusByCustomerId = mutation({
             .first();
 
         if (!user) {
+            // Issue #61: Log warning instead of silently returning
+            console.warn(`[updateSubscriptionStatusByCustomerId] User not found for stripeCustomerId: ${args.stripeCustomerId}`);
             return;
         }
 
@@ -416,6 +418,42 @@ export const syncCurrentUser = mutation({
         });
 
         return newUserId;
+    },
+});
+
+// Stripe webhook idempotency check (Issue #53)
+export const checkStripeEventProcessed = query({
+    args: {
+        eventId: v.string(),
+        secret: v.string(),
+    },
+    handler: async (ctx, args) => {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+        const existing = await ctx.db
+            .query("processedStripeEvents")
+            .withIndex("by_event_id", (q) => q.eq("eventId", args.eventId))
+            .first();
+        return !!existing;
+    },
+});
+
+export const markStripeEventProcessed = mutation({
+    args: {
+        eventId: v.string(),
+        eventType: v.string(),
+        secret: v.string(),
+    },
+    handler: async (ctx, args) => {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+        await ctx.db.insert("processedStripeEvents", {
+            eventId: args.eventId,
+            eventType: args.eventType,
+            processedAt: Date.now(),
+        });
     },
 });
 

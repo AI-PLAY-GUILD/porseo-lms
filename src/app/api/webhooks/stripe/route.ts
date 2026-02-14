@@ -15,7 +15,8 @@ if (!discordToken || !guildId || !roleId) {
     console.error('Missing Discord environment variables');
 }
 
-const rest = new REST({ version: '10' }).setToken(discordToken || '');
+// Issue #56: Add timeout to Discord REST client
+const rest = new REST({ version: '10', timeout: 10_000 }).setToken(discordToken || '');
 
 export async function POST(req: Request) {
     const body = await req.text();
@@ -35,6 +36,19 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error(`Webhook signature verification failed: ${error.message}`);
         return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 });
+    }
+
+    // Idempotency check (Issue #53): Skip already-processed events
+    try {
+        const alreadyProcessed = await convex.query("users:checkStripeEventProcessed" as any, {
+            eventId: event.id,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        });
+        if (alreadyProcessed) {
+            return NextResponse.json({ received: true, duplicate: true });
+        }
+    } catch (error) {
+        console.error('Idempotency check failed, proceeding with event processing:', error);
     }
 
     try {
@@ -60,6 +74,17 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error(`Error handling event ${event.type}:`, error);
         return NextResponse.json({ error: 'Error handling event' }, { status: 500 });
+    }
+
+    // Mark event as processed (Issue #53)
+    try {
+        await convex.mutation("users:markStripeEventProcessed" as any, {
+            eventId: event.id,
+            eventType: event.type,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        });
+    } catch (error) {
+        console.error('Failed to mark event as processed:', error);
     }
 
     return NextResponse.json({ received: true });

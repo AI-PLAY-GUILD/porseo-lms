@@ -41,28 +41,41 @@ export async function POST(req: Request) {
         }
 
         // Discord API: PUT /guilds/{guild.id}/members/{user.id}
-        const discordRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${discordUserId}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bot ${botToken}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                access_token: accessToken,
-            }),
-        });
+        // Issue #56: Add timeout to Discord API call
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        let discordRes: Response;
+        try {
+            discordRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${discordUserId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bot ${botToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    access_token: accessToken,
+                }),
+                signal: controller.signal,
+            });
+        } finally {
+            clearTimeout(timeoutId);
+        }
 
         if (discordRes.ok || discordRes.status === 201 || discordRes.status === 204) {
             return NextResponse.json({ success: true });
         } else {
             const errorText = await discordRes.text();
             console.error("Discord API Error:", errorText);
-            // Ignore "Already in server" errors if needed, but usually 204 or 201 covers success.
-            // If user is already in server, it might return 204.
-            return NextResponse.json({ error: 'Failed to join server', details: errorText }, { status: discordRes.status });
+            // Issue #57: Sanitize error response — don't expose Discord error details to client
+            return NextResponse.json({ error: 'Failed to join Discord server' }, { status: 502 });
         }
 
     } catch (error: any) {
+        // Issue #56: Handle timeout errors
+        if (error.name === 'AbortError') {
+            return NextResponse.json({ error: 'External service timeout' }, { status: 504 });
+        }
         console.error("Error joining server:", error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }

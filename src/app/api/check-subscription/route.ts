@@ -38,20 +38,30 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Configuration error' }, { status: 500 });
         }
 
-        const discordRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${user.discordId}`, {
-            headers: {
-                'Authorization': `Bot ${discordToken}`,
-            },
-        });
+        // Issue #56: Add timeout to Discord API call
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        let discordRes: Response;
+        try {
+            discordRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${user.discordId}`, {
+                headers: {
+                    'Authorization': `Bot ${discordToken}`,
+                },
+                signal: controller.signal,
+            });
+        } finally {
+            clearTimeout(timeoutId);
+        }
 
         if (!discordRes.ok) {
             const errorText = await discordRes.text();
             console.error("Discord API Error:", errorText);
-            // If user is not in server (404), we can't check roles
             if (discordRes.status === 404) {
                 return NextResponse.json({ error: 'User not in Discord server' }, { status: 404 });
             }
-            return NextResponse.json({ error: 'Failed to fetch Discord member' }, { status: discordRes.status });
+            // Issue #57: Sanitize error response — don't expose Discord status code
+            return NextResponse.json({ error: 'Failed to fetch Discord member' }, { status: 502 });
         }
 
         const member = await discordRes.json();
@@ -71,6 +81,10 @@ export async function POST(req: Request) {
         }
 
     } catch (error: any) {
+        // Issue #56: Handle timeout errors
+        if (error.name === 'AbortError') {
+            return NextResponse.json({ error: 'External service timeout' }, { status: 504 });
+        }
         console.error("Error checking subscription:", error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }

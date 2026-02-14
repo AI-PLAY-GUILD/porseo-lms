@@ -8,7 +8,8 @@ const discordToken = process.env.DISCORD_BOT_TOKEN;
 const guildId = process.env.DISCORD_GUILD_ID;
 const roleId = process.env.DISCORD_ROLE_ID;
 
-const rest = new REST({ version: '10' }).setToken(discordToken || '');
+// Issue #56: Add timeout to Discord REST client
+const rest = new REST({ version: '10', timeout: 10_000 }).setToken(discordToken || '');
 
 export async function POST(req: Request) {
     try {
