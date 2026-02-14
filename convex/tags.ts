@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
+const MAX_TAG_NAME_LENGTH = 50;
+
 export const getTags = query({
     handler: async (ctx) => {
         return await ctx.db.query("tags").order("desc").collect();
@@ -15,6 +17,10 @@ export const createTag = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Unauthorized");
 
+        // Input validation
+        if (args.name.trim().length === 0) throw new Error("Tag name cannot be empty");
+        if (args.name.length > MAX_TAG_NAME_LENGTH) throw new Error(`Tag name must be ${MAX_TAG_NAME_LENGTH} characters or less`);
+
         const user = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -22,26 +28,25 @@ export const createTag = mutation({
 
         if (!user?.isAdmin) throw new Error("Admin access required");
 
-        // Simple slug generation: lowercase and replace spaces with hyphens
-        // For Japanese characters, this might result in empty or same strings if not handled,
-        // but for now we'll just use the name as is if it's not ascii, or maybe just use a random ID if collision?
-        // Actually, let's just use the name as the slug if it's unique enough, or just generate a random one.
-        // Given the user doesn't care about slugs, let's just make it a random string or based on name.
-        // Let's try to make it readable if possible, but fallback to random.
+        // Unicode-safe slug generation:
+        // Normalize, lowercase, replace whitespace with hyphens, keep CJK + alphanumeric
+        const baseSlug = args.name
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBF-]/g, "")
+            .replace(/^-+|-+$/g, "")
+            || `tag-${Date.now()}`;
 
-        // Better approach for now: just use the name as the slug, but check for uniqueness.
-        // If the user doesn't care, maybe we don't even need a unique slug? 
-        // But the schema requires it and indexes it.
-        // Let's generate a slug from the name, and append a random string if it exists.
-
-        const slug = args.name.toLowerCase().replace(/\s+/g, "-");
-
+        let slug = baseSlug;
         const existing = await ctx.db
             .query("tags")
             .withIndex("by_slug", (q) => q.eq("slug", slug))
             .first();
 
-        if (existing) throw new Error("Tag with this name already exists");
+        // Append timestamp suffix on collision instead of rejecting
+        if (existing) {
+            slug = `${baseSlug}-${Date.now().toString(36)}`;
+        }
 
         const tagId = await ctx.db.insert("tags", {
             name: args.name,

@@ -1,6 +1,12 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 
+// Input length limits
+const MAX_TITLE_LENGTH = 200;
+const MAX_DESCRIPTION_LENGTH = 5000;
+const MAX_SUMMARY_LENGTH = 10000;
+const MAX_TRANSCRIPTION_LENGTH = 100000;
+
 export const createVideo = mutation({
     args: {
         title: v.string(),
@@ -13,6 +19,10 @@ export const createVideo = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Unauthorized");
+
+        // Input length validation
+        if (args.title.length > MAX_TITLE_LENGTH) throw new Error(`Title must be ${MAX_TITLE_LENGTH} characters or less`);
+        if (args.description && args.description.length > MAX_DESCRIPTION_LENGTH) throw new Error(`Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`);
 
         const user = await ctx.db
             .query("users")
@@ -248,7 +258,7 @@ export const updateVideo = mutation({
         tags: v.optional(v.array(v.id("tags"))),
         transcription: v.optional(v.string()),
         summary: v.optional(v.string()),
-        createdAt: v.optional(v.number()),
+        // Security fix (Issue #50): createdAt removed — immutable field, set only at creation
         chapters: v.optional(
             v.array(
                 v.object({
@@ -262,6 +272,12 @@ export const updateVideo = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Unauthorized");
+
+        // Input length validation
+        if (args.title && args.title.length > MAX_TITLE_LENGTH) throw new Error(`Title must be ${MAX_TITLE_LENGTH} characters or less`);
+        if (args.description && args.description.length > MAX_DESCRIPTION_LENGTH) throw new Error(`Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`);
+        if (args.summary && args.summary.length > MAX_SUMMARY_LENGTH) throw new Error(`Summary must be ${MAX_SUMMARY_LENGTH} characters or less`);
+        if (args.transcription && args.transcription.length > MAX_TRANSCRIPTION_LENGTH) throw new Error(`Transcription must be ${MAX_TRANSCRIPTION_LENGTH} characters or less`);
 
         const user = await ctx.db
             .query("users")

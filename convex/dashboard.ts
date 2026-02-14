@@ -161,7 +161,6 @@ export const getStats = query({
             streakDays,
             chartData,
             userName: user.name,
-            userEmail: user.email,
             userAvatar: user.imageUrl,
             inProgressVideos: validInProgressVideos,
             subscriptionStatus: user.subscriptionStatus,

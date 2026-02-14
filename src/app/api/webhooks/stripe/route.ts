@@ -65,18 +65,37 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
 }
 
+// Discord ID format validation (17-20 digit snowflake)
+function isValidDiscordId(id: string): boolean {
+    return /^\d{17,20}$/.test(id);
+}
+
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-    const discordId = session.metadata?.discordId;
+    const clerkUserId = session.metadata?.userId;
     const customerId = session.customer as string;
 
-    if (!discordId || !customerId) {
-        console.error('Missing discordId or customerId in session metadata/payload');
+    if (!clerkUserId || !customerId) {
+        console.error('Missing userId or customerId in session metadata/payload');
         return;
     }
 
-    // Action 1: Update Convex DB
-    // We use the string identifier for the mutation since we don't have generated types here
-    // Changed to "users:..." because internal.ts is private
+    // Security fix (Issue #48): Fetch discordId from DB instead of trusting metadata
+    let discordId: string | undefined;
+    try {
+        const user = await convex.query("users:getUserByClerkIdServer" as any, {
+            clerkId: clerkUserId,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        });
+        discordId = user?.discordId;
+    } catch (error) {
+        console.error('Error fetching user from Convex:', error);
+        return;
+    }
+
+    if (!discordId || !isValidDiscordId(discordId)) {
+        console.error('User has no valid discordId in DB');
+        return;
+    }
 
     // Retrieve the session with line_items expanded to get the product name
     const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
@@ -91,12 +110,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         stripeCustomerId: customerId,
         subscriptionStatus: 'active',
         subscriptionName: subscriptionName,
-        roleId: roleId, // Pass the role ID to Convex
+        roleId: roleId,
         secret: process.env.CONVEX_INTERNAL_SECRET || "",
     });
 
-
-    // Action 2: Add Discord Role
+    // Add Discord Role
     if (discordToken && guildId && roleId) {
         try {
             await rest.put(Routes.guildMemberRole(guildId, discordId, roleId));

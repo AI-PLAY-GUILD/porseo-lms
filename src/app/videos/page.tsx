@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { SignOutButton } from "@clerk/nextjs";
+import { SignOutButton, useUser } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +29,7 @@ import { BrutalistLoader } from "@/components/ui/brutalist-loader";
 export default function AllVideosPage() {
     const videos = useQuery(api.videos.getPublishedVideos);
     const stats = useQuery(api.dashboard.getStats);
+    const { user } = useUser();
 
     if (videos === undefined) {
         return (
@@ -40,7 +41,7 @@ export default function AllVideosPage() {
 
     return (
         <SidebarProvider>
-            <AppSidebar user={stats ? { name: stats.userName, email: stats.userEmail, avatar: stats.userAvatar } : undefined} />
+            <AppSidebar user={stats ? { name: stats.userName, email: user?.emailAddresses?.[0]?.emailAddress, avatar: stats.userAvatar } : undefined} />
             <SidebarInset className="bg-cream">
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 w-full bg-cream px-4">
                     <div className="flex items-center gap-2">

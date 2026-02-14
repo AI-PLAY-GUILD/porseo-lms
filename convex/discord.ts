@@ -1,11 +1,12 @@
 "use node";
 
 import { action } from "./_generated/server";
-import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
+// Security fix: Save Discord roles server-side only, return sync status (not raw role IDs)
 export const getDiscordRolesV2 = action({
     args: {},
-    handler: async (ctx) => {
+    handler: async (ctx): Promise<{ synced: boolean }> => {
         try {
             const identity = await ctx.auth.getUserIdentity();
             if (!identity) {
@@ -33,14 +34,13 @@ export const getDiscordRolesV2 = action({
             );
 
             if (!clerkResponse.ok) {
-                const errorText = await clerkResponse.text();
-                console.error("Clerk API Error:", errorText);
-                return [];
+                console.error("Clerk API Error:", await clerkResponse.text());
+                return { synced: false };
             }
 
             const clerkData = await clerkResponse.json();
             if (!clerkData.length || !clerkData[0].token) {
-                return [];
+                return { synced: false };
             }
 
             const accessToken = clerkData[0].token;
@@ -57,18 +57,25 @@ export const getDiscordRolesV2 = action({
 
             if (!discordResponse.ok) {
                 if (discordResponse.status === 404) {
-                    return [];
+                    return { synced: false };
                 }
-                const errorText = await discordResponse.text();
-                console.error("Discord API Error:", errorText);
-                return [];
+                console.error("Discord API Error:", await discordResponse.text());
+                return { synced: false };
             }
 
             const discordData = await discordResponse.json();
-            return discordData.roles as string[];
+            const roles = discordData.roles as string[];
+
+            // Save roles server-side — never expose raw role IDs to client
+            await ctx.runMutation(internal.users.updateDiscordRoles, {
+                clerkId: identity.subject,
+                discordRoles: roles,
+            });
+
+            return { synced: true };
         } catch (error) {
             console.error("[Discord API] Critical Error:", error);
-            throw error; // Rethrow to ensure client sees it
+            throw error;
         }
     },
 });
