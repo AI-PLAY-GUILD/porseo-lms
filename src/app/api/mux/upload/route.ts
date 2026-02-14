@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const user = await convex.query("users:getUserByClerkIdQuery" as any, { clerkId: userId });
+        const user = await convex.query("users:getUserByClerkIdServer" as any, {
+            clerkId: userId,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        });
         if (!user?.isAdmin) {
             return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
         }

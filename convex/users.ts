@@ -145,6 +145,25 @@ export const getUserByClerkId = async (ctx: any, clerkId: string) => {
         .withIndex("by_clerk_id", (q: any) => q.eq("clerkId", clerkId))
         .first();
 };
+// Server-to-server query: Clerk IDでユーザーを取得（ConvexHttpClientから呼び出し用）
+// Security: CONVEX_INTERNAL_SECRET で認証（ctx.authが使えないため）
+export const getUserByClerkIdServer = query({
+    args: {
+        clerkId: v.string(),
+        secret: v.string(),
+    },
+    handler: async (ctx, args) => {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+
+        return await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+            .first();
+    },
+});
+
 // 1. Stripe Customer IDからユーザーを取得
 // Security: Uses dedicated CONVEX_INTERNAL_SECRET (separated from CLERK_WEBHOOK_SECRET per Issue #4)
 export const getUserByStripeCustomerId = query({

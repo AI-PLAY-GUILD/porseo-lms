@@ -14,7 +14,10 @@ export async function POST(req: Request) {
         }
 
         // 1. Get user from Convex
-        const user = await convex.query("users:getUserByClerkIdQuery" as any, { clerkId: userId });
+        const user = await convex.query("users:getUserByClerkIdServer" as any, {
+            clerkId: userId,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        });
 
         if (!user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });

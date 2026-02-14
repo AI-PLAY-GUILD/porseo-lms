@@ -16,7 +16,10 @@ export async function POST(req: Request) {
         }
 
         // Get user from Convex to find Stripe Customer ID
-        const user = await convex.query("users:getUserByClerkIdQuery" as any, { clerkId: userId });
+        const user = await convex.query("users:getUserByClerkIdServer" as any, {
+            clerkId: userId,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        });
 
         if (!user || !user.stripeCustomerId) {
             return NextResponse.json({ error: 'No billing information found' }, { status: 404 });
