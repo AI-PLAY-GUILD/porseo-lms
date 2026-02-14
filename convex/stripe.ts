@@ -59,7 +59,7 @@ export const createCustomer = action({
 
         // Security fix (Issue #8): Save roles server-side directly, don't return to client
         if (discordRoles.length > 0) {
-            await ctx.runMutation(api.users.updateDiscordRoles, {
+            await ctx.runMutation(internal.users.updateDiscordRoles, {
                 clerkId: identity.subject,
                 discordRoles: discordRoles,
             });
@@ -113,7 +113,6 @@ export const getDiscordRolesV2 = action({
     args: {},
     handler: async (ctx) => {
         try {
-            console.log("[Discord API (in stripe.ts)] Starting getDiscordRoles...");
             const identity = await ctx.auth.getUserIdentity();
             if (!identity) {
                 throw new Error("Unauthenticated");
@@ -147,7 +146,6 @@ export const getDiscordRolesV2 = action({
 
             const clerkData = await clerkResponse.json();
             if (!clerkData.length || !clerkData[0].token) {
-                console.log("No Discord token found in Clerk response");
                 return [];
             }
 
@@ -162,12 +160,6 @@ export const getDiscordRolesV2 = action({
                     },
                 }
             );
-
-            // Rate Limit Logging
-            const limit = discordResponse.headers.get("x-ratelimit-limit");
-            const remaining = discordResponse.headers.get("x-ratelimit-remaining");
-            const reset = discordResponse.headers.get("x-ratelimit-reset");
-            console.log(`[Discord API] Rate Limit: ${remaining}/${limit} (Reset: ${reset})`);
 
             if (!discordResponse.ok) {
                 if (discordResponse.status === 404) {

@@ -62,7 +62,6 @@ export async function POST(req: Request) {
                 roleId: roleId,
                 secret: process.env.CLERK_WEBHOOK_SECRET || "",
             });
-            console.log(`Updated subscription for user ${user.discordId} based on role`);
             return NextResponse.json({ status: 'active', updated: true });
         } else {
             return NextResponse.json({ status: 'inactive' });
@@ -70,6 +69,6 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error("Error checking subscription:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

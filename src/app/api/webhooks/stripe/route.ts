@@ -137,26 +137,12 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
         secret: process.env.CLERK_WEBHOOK_SECRET || "", // Pass secret
     });
 
-    // Action: Remove Discord Role
-    // We need the Discord ID to remove the role. 
-    // We can query Convex to get the Discord ID from the customerId.
-    // Since we don't have a direct "get user by customer id" query exposed in `lib/convex.ts` (it's an HttpClient),
-    // we might need another internal query or just rely on the mutation to handle it?
-    // But the Discord API needs the Discord ID.
-    // Let's add a query to `convex/internal.ts` or just assume we can't do it without it.
-    // Actually, I can define a query in `convex/internal.ts` to get the discordId.
-
-    // Let's assume we can't easily get the discord ID right now without adding more code.
-    // Wait, I can just add a query to `convex/internal.ts`!
-    // But I already wrote `convex/internal.ts`. I should update it if I want to be robust.
-    // However, for now, I'll skip the role removal if I can't get the ID, or I'll try to fetch it.
-
-    // Let's try to fetch it using a query I'll add to `convex/internal.ts` in a moment.
-    // I'll assume `internal:getUserByStripeCustomerId` exists.
+    // Remove Discord Role using user's discordId from Convex
 
     try {
         const user = await convex.query("users:getUserByStripeCustomerId" as any, {
-            stripeCustomerId: customerId
+            stripeCustomerId: customerId,
+            secret: process.env.CLERK_WEBHOOK_SECRET || "",
         });
 
         if (user && user.discordId && discordToken && guildId && roleId) {

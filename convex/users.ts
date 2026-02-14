@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const webhookSyncUser = mutation({
@@ -29,7 +29,6 @@ export const webhookSyncUser = mutation({
             // Only link if the existing user looks like a migrated user (e.g. has a placeholder Clerk ID or we just trust the email)
             // For safety, let's assume if the email matches and we are creating a new Clerk link, we merge.
             if (existingByEmail) {
-                console.log(`Found existing user by email ${args.email}. Linking to Clerk ID ${args.clerkId}`);
                 existing = existingByEmail;
             }
         }
@@ -76,23 +75,14 @@ export const getUser = query({
     },
 });
 
-export const updateDiscordRoles = mutation({
+// Security: internalMutation - only callable from server-side Convex actions (e.g. stripe.ts)
+// Prevents users from setting arbitrary Discord roles on themselves (privilege escalation)
+export const updateDiscordRoles = internalMutation({
     args: {
         clerkId: v.string(),
         discordRoles: v.array(v.string()),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) {
-            // サーバーサイドからの同期の場合はSecretが必要かもしれないが、
-            // UserSync.tsx（クライアント）から呼ばれる場合はこのチェックで十分。
-            // もしWebhookからも呼ばれるなら分岐が必要だが、今回はクライアント用としてAuthチェックを入れる。
-            throw new Error("Unauthorized");
-        }
-        if (identity.subject !== args.clerkId) {
-            throw new Error("Unauthorized: You can only update your own roles");
-        }
-
         const user = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
@@ -144,17 +134,17 @@ export const getUserByClerkId = async (ctx: any, clerkId: string) => {
         .withIndex("by_clerk_id", (q: any) => q.eq("clerkId", clerkId))
         .first();
 };
-// ▼▼▼ 以下をファイルの末尾に追加してください ▼▼▼
-
 // 1. Stripe Customer IDからユーザーを取得
-// Security: Admin-only access to prevent unauthorized user lookup
+// Security: Secret-based auth for server-to-server calls (Stripe webhook → ConvexHttpClient)
 export const getUserByStripeCustomerId = query({
-    args: { stripeCustomerId: v.string() },
+    args: {
+        stripeCustomerId: v.string(),
+        secret: v.string(),
+    },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthorized");
-        const currentUser = await getUserByClerkId(ctx, identity.subject);
-        if (!currentUser?.isAdmin) throw new Error("Admin access required");
+        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
 
         return await ctx.db
             .query("users")

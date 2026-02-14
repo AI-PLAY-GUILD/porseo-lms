@@ -9,7 +9,6 @@ const mux = new Mux({
 });
 
 export async function POST(req: NextRequest) {
-    console.log("POST /api/mux/upload called");
     try {
         // Security: Verify authentication and admin access
         const { userId } = await auth();
@@ -22,7 +21,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
         }
 
-        const allowedOrigin = process.env.NEXT_PUBLIC_BASE_URL || "*";
+        const allowedOrigin = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
         const uploadSettings = {
             new_asset_settings: {
@@ -37,11 +36,7 @@ export async function POST(req: NextRequest) {
             cors_origin: allowedOrigin,
         };
 
-        console.log("Creating upload with settings:", JSON.stringify(uploadSettings, null, 2));
-
         const upload = await mux.video.uploads.create(uploadSettings);
-
-        console.log("Upload URL created:", upload.url);
 
         return NextResponse.json({
             id: upload.id,
@@ -51,14 +46,14 @@ export async function POST(req: NextRequest) {
     } catch (error) {
         console.error("Error creating upload URL:", error);
         return NextResponse.json(
-            { error: "Error creating upload URL", details: error instanceof Error ? error.message : String(error) },
+            { error: "Internal server error" },
             { status: 500 }
         );
     }
 }
 
 export async function OPTIONS(req: NextRequest) {
-    const allowedOrigin = process.env.NEXT_PUBLIC_BASE_URL || "*";
+    const allowedOrigin = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     return new NextResponse(null, {
         status: 200,
         headers: {
@@ -69,12 +64,3 @@ export async function OPTIONS(req: NextRequest) {
     });
 }
 
-export async function GET(req: NextRequest) {
-    console.log("GET /api/mux/upload called");
-    return NextResponse.json({ message: "Mux Upload API is working" });
-}
-
-export async function PUT(req: NextRequest) {
-    console.log("PUT /api/mux/upload called");
-    return NextResponse.json({ error: "PUT method not supported, use POST" }, { status: 405 });
-}
