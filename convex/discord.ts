@@ -7,7 +7,6 @@ export const getDiscordRolesV2 = action({
     args: {},
     handler: async (ctx) => {
         try {
-            console.log("[Discord API] Starting getDiscordRoles... (v2)");
             const identity = await ctx.auth.getUserIdentity();
             if (!identity) {
                 throw new Error("Unauthenticated");
@@ -41,7 +40,6 @@ export const getDiscordRolesV2 = action({
 
             const clerkData = await clerkResponse.json();
             if (!clerkData.length || !clerkData[0].token) {
-                console.log("No Discord token found in Clerk response");
                 return [];
             }
 
@@ -56,12 +54,6 @@ export const getDiscordRolesV2 = action({
                     },
                 }
             );
-
-            // Rate Limit Logging
-            const limit = discordResponse.headers.get("x-ratelimit-limit");
-            const remaining = discordResponse.headers.get("x-ratelimit-remaining");
-            const reset = discordResponse.headers.get("x-ratelimit-reset");
-            console.log(`[Discord API] Rate Limit: ${remaining}/${limit} (Reset: ${reset})`);
 
             if (!discordResponse.ok) {
                 if (discordResponse.status === 404) {

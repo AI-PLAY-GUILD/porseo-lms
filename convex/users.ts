@@ -1,6 +1,17 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
+// Constant-time string comparison to prevent timing attacks on secret verification.
+// Convex V8 isolate doesn't have crypto.timingSafeEqual, so we use a pure JS implementation.
+function safeCompare(a: string, b: string): boolean {
+    const len = Math.max(a.length, b.length);
+    let result = a.length ^ b.length;
+    for (let i = 0; i < len; i++) {
+        result |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+    }
+    return result === 0;
+}
+
 export const webhookSyncUser = mutation({
     args: {
         clerkId: v.string(),
@@ -10,7 +21,7 @@ export const webhookSyncUser = mutation({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
-        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+        if (!safeCompare(args.secret, process.env.CLERK_WEBHOOK_SECRET || "")) {
             throw new Error("Unauthorized: Invalid secret");
         }
 
@@ -142,7 +153,7 @@ export const getUserByStripeCustomerId = query({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
-        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+        if (!safeCompare(args.secret, process.env.CLERK_WEBHOOK_SECRET || "")) {
             throw new Error("Unauthorized: Invalid secret");
         }
 
@@ -164,8 +175,7 @@ export const updateSubscriptionStatus = mutation({
         secret: v.string(), // Added for security
     },
     handler: async (ctx, args) => {
-        // Verify secret (using CLERK_WEBHOOK_SECRET as a shared secret for now)
-        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+        if (!safeCompare(args.secret, process.env.CLERK_WEBHOOK_SECRET || "")) {
             throw new Error("Unauthorized: Invalid secret");
         }
 
@@ -211,8 +221,7 @@ export const updateSubscriptionStatusByCustomerId = mutation({
         secret: v.string(), // Added for security
     },
     handler: async (ctx, args) => {
-        // Verify secret
-        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+        if (!safeCompare(args.secret, process.env.CLERK_WEBHOOK_SECRET || "")) {
             throw new Error("Unauthorized: Invalid secret");
         }
 
@@ -222,7 +231,6 @@ export const updateSubscriptionStatusByCustomerId = mutation({
             .first();
 
         if (!user) {
-            console.warn(`User with Stripe Customer ID ${args.stripeCustomerId} not found`);
             return;
         }
 

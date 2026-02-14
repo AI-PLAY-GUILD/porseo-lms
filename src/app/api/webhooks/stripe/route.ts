@@ -100,7 +100,6 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     if (discordToken && guildId && roleId) {
         try {
             await rest.put(Routes.guildMemberRole(guildId, discordId, roleId));
-            console.log(`Added role ${roleId} to user ${discordId}`);
         } catch (error) {
             console.error('Failed to add Discord role:', error);
         }
@@ -118,12 +117,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
         secret: process.env.CLERK_WEBHOOK_SECRET || "", // Pass secret
     });
 
-    // Action: Notify User (Optional - Log for now)
-    console.log(`Payment failed for customer ${customerId}. User should be notified.`);
-    // To send a DM, we'd need to fetch the user's Discord ID from Convex first using the customerId,
-    // then use the Discord API to open a DM channel and send a message.
-    // For this MVP, we'll skip the DM implementation to keep it simple unless strictly required, 
-    // as the prompt said "Action: Send a DM... (optional)".
+    // TODO: Optionally send a DM to notify user about payment failure
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -147,7 +141,6 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
         if (user && user.discordId && discordToken && guildId && roleId) {
             await rest.delete(Routes.guildMemberRole(guildId, user.discordId, roleId));
-            console.log(`Removed role ${roleId} from user ${user.discordId}`);
         }
     } catch (e) {
         console.error("Failed to remove role or find user:", e);

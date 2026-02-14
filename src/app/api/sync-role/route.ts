@@ -36,7 +36,6 @@ export async function POST(req: Request) {
         if (discordToken && guildId && roleId) {
             try {
                 await rest.put(Routes.guildMemberRole(guildId, user.discordId, roleId));
-                console.log(`Manually added role ${roleId} to user ${user.discordId}`);
                 return NextResponse.json({ success: true });
             } catch (error: any) {
                 console.error('Failed to add Discord role:', error);

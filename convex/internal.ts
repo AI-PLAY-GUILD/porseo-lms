@@ -1,65 +1,9 @@
-import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
-// 1. Stripe Customer IDからユーザーを取得 (internal only - called from Stripe webhook)
-export const getUserByStripeCustomerId = internalQuery({
-    args: { stripeCustomerId: v.string() },
-    handler: async (ctx, args) => {
-        return await ctx.db
-            .query("users")
-            .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
-            .first();
-    },
-});
-
-// 2. Discord IDを使ってサブスクリプション状態を更新（決済成功時）
-// Security: Changed to internalMutation - only called from verified Stripe webhook
-export const updateSubscriptionStatus = internalMutation({
-    args: {
-        discordId: v.string(),
-        stripeCustomerId: v.string(),
-        subscriptionStatus: v.string(),
-    },
-    handler: async (ctx, args) => {
-        const user = await ctx.db
-            .query("users")
-            .withIndex("by_discord_id", (q) => q.eq("discordId", args.discordId))
-            .first();
-
-        if (!user) {
-            throw new Error(`User with Discord ID ${args.discordId} not found`);
-        }
-
-        await ctx.db.patch(user._id, {
-            stripeCustomerId: args.stripeCustomerId,
-            subscriptionStatus: args.subscriptionStatus,
-        });
-    },
-});
-
-// 3. Stripe Customer IDを使ってサブスクリプション状態を更新（キャンセル/失敗時）
-// Security: Changed to internalMutation - only called from verified Stripe webhook
-export const updateSubscriptionStatusByCustomerId = internalMutation({
-    args: {
-        stripeCustomerId: v.string(),
-        subscriptionStatus: v.string(),
-    },
-    handler: async (ctx, args) => {
-        const user = await ctx.db
-            .query("users")
-            .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
-            .first();
-
-        if (!user) {
-            console.warn(`User with Stripe Customer ID ${args.stripeCustomerId} not found`);
-            return;
-        }
-
-        await ctx.db.patch(user._id, {
-            subscriptionStatus: args.subscriptionStatus,
-        });
-    },
-});
+// Note: getUserByStripeCustomerId, updateSubscriptionStatus, updateSubscriptionStatusByCustomerId
+// are defined in users.ts as public mutations with secret-based auth (for ConvexHttpClient access).
+// See Issue #30 for architectural context.
 
 export const batchMigrateUsers = internalMutation({
     args: {
@@ -144,17 +88,3 @@ export const setStripeCustomerId = internalMutation({
     },
 });
 
-export const updateUserStripeInfo = internalMutation({
-    args: {
-        userId: v.id("users"),
-        stripeCustomerId: v.string(),
-        subscriptionStatus: v.string(),
-    },
-    handler: async (ctx, args) => {
-        await ctx.db.patch(args.userId, {
-            stripeCustomerId: args.stripeCustomerId,
-            subscriptionStatus: args.subscriptionStatus,
-            updatedAt: Date.now(),
-        });
-    },
-});

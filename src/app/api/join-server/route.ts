@@ -53,7 +53,6 @@ export async function POST(req: Request) {
         });
 
         if (discordRes.ok || discordRes.status === 201 || discordRes.status === 204) {
-            console.log(`Successfully added user ${discordUserId} to server`);
             return NextResponse.json({ success: true });
         } else {
             const errorText = await discordRes.text();

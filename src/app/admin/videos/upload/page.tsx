@@ -45,7 +45,6 @@ export default function VideoUploadPage() {
     };
 
     const handleUploadSuccess = (event: any) => {
-        console.log("Upload success:", event);
         setUploadSuccess(true);
         setIsUploading(false);
     };
