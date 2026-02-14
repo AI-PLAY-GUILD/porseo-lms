@@ -5,13 +5,21 @@ import { auth } from '@clerk/nextjs/server';
 
 export async function POST(req: Request) {
     try {
+        if (!process.env.NEXT_PUBLIC_BASE_URL) {
+            console.error('NEXT_PUBLIC_BASE_URL is not set');
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
+
         const { userId } = await auth();
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         // Get user from Convex to find Stripe Customer ID
-        const user = await convex.query("users:getUserByClerkIdQuery" as any, { clerkId: userId });
+        const user = await convex.query("users:getUserByClerkIdServer" as any, {
+            clerkId: userId,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        });
 
         if (!user || !user.stripeCustomerId) {
             return NextResponse.json({ error: 'No billing information found' }, { status: 404 });
@@ -26,6 +34,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ url: session.url });
     } catch (error: any) {
         console.error('Error creating portal session:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

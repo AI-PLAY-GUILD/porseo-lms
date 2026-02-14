@@ -1,6 +1,12 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 
+// Input length limits
+const MAX_TITLE_LENGTH = 200;
+const MAX_DESCRIPTION_LENGTH = 5000;
+const MAX_SUMMARY_LENGTH = 10000;
+const MAX_TRANSCRIPTION_LENGTH = 100000;
+
 export const createVideo = mutation({
     args: {
         title: v.string(),
@@ -14,6 +20,10 @@ export const createVideo = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Unauthorized");
 
+        // Input length validation
+        if (args.title.length > MAX_TITLE_LENGTH) throw new Error(`Title must be ${MAX_TITLE_LENGTH} characters or less`);
+        if (args.description && args.description.length > MAX_DESCRIPTION_LENGTH) throw new Error(`Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`);
+
         const user = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -21,15 +31,26 @@ export const createVideo = mutation({
 
         if (!user?.isAdmin) throw new Error("Admin access required");
 
-        return await ctx.db.insert("videos", {
+        const videoId = await ctx.db.insert("videos", {
             ...args,
             duration: args.duration ?? 0,
             order: 0,
-            isPublished: false, // デフォルトは非公開
+            isPublished: false,
             uploadedBy: user._id,
             createdAt: Date.now(),
             updatedAt: Date.now(),
         });
+
+        await ctx.db.insert("auditLogs", {
+            userId: user._id,
+            action: "video.create",
+            targetType: "video",
+            targetId: videoId,
+            details: args.title,
+            createdAt: Date.now(),
+        });
+
+        return videoId;
     },
 });
 
@@ -85,13 +106,25 @@ export const getPublishedVideos = query({
             return await ctx.storage.getUrl(storageId);
         };
 
-        // 2. If not logged in, return videos without progress but WITH thumbnails
+        // Helper to strip sensitive data from videos the user can't access
+        // Security fix (Issue #14): Hide muxPlaybackId for role-restricted videos
+        const sanitizeVideo = (video: any, hasAccess: boolean) => {
+            if (hasAccess) return video;
+            // Return metadata only, hide playback info
+            const { muxPlaybackId, muxAssetId, transcription, ...safe } = video;
+            return { ...safe, muxPlaybackId: null, muxAssetId: null, isLocked: true };
+        };
+
+        // 2. If not logged in, return videos but hide role-restricted content
         if (!identity) {
-            return await Promise.all(videos.map(async (v) => ({
-                ...v,
-                userProgress: null,
-                thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId)
-            })));
+            return await Promise.all(videos.map(async (v) => {
+                const hasAccess = !v.requiredRoles || v.requiredRoles.length === 0;
+                return {
+                    ...sanitizeVideo(v, hasAccess),
+                    userProgress: null,
+                    thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId)
+                };
+            }));
         }
 
         const user = await ctx.db
@@ -100,11 +133,14 @@ export const getPublishedVideos = query({
             .first();
 
         if (!user) {
-            return await Promise.all(videos.map(async (v) => ({
-                ...v,
-                userProgress: null,
-                thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId)
-            })));
+            return await Promise.all(videos.map(async (v) => {
+                const hasAccess = !v.requiredRoles || v.requiredRoles.length === 0;
+                return {
+                    ...sanitizeVideo(v, hasAccess),
+                    userProgress: null,
+                    thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId)
+                };
+            }));
         }
 
         // 3. Get user's progress for all videos
@@ -115,12 +151,18 @@ export const getPublishedVideos = query({
 
         const progressMap = new Map(progressRecords.map(p => [p.videoId, p]));
 
-        // 4. Merge progress and resolve thumbnail URL
+        // 4. Merge progress, resolve thumbnail, and check role access
         return await Promise.all(videos.map(async (video) => {
             const thumbnailUrl = await resolveThumbnail(video.customThumbnailStorageId);
 
+            // Admin can see everything
+            const isAdmin = user.isAdmin;
+            const hasRequiredRole = !video.requiredRoles || video.requiredRoles.length === 0 ||
+                video.requiredRoles.some((role: string) => user.discordRoles?.includes(role));
+            const hasAccess = isAdmin || hasRequiredRole;
+
             return {
-                ...video,
+                ...sanitizeVideo(video, hasAccess),
                 userProgress: progressMap.get(video._id) || null,
                 thumbnailUrl
             };
@@ -191,6 +233,14 @@ export const generateUploadUrl = mutation({
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Unauthorized");
+
+        // Security: Admin-only (Issue #12)
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+            .first();
+        if (!user?.isAdmin) throw new Error("Admin access required");
+
         return await ctx.storage.generateUploadUrl();
     },
 });
@@ -208,7 +258,7 @@ export const updateVideo = mutation({
         tags: v.optional(v.array(v.id("tags"))),
         transcription: v.optional(v.string()),
         summary: v.optional(v.string()),
-        createdAt: v.optional(v.number()),
+        // Security fix (Issue #50): createdAt removed — immutable field, set only at creation
         chapters: v.optional(
             v.array(
                 v.object({
@@ -223,6 +273,12 @@ export const updateVideo = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Unauthorized");
 
+        // Input length validation
+        if (args.title && args.title.length > MAX_TITLE_LENGTH) throw new Error(`Title must be ${MAX_TITLE_LENGTH} characters or less`);
+        if (args.description && args.description.length > MAX_DESCRIPTION_LENGTH) throw new Error(`Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`);
+        if (args.summary && args.summary.length > MAX_SUMMARY_LENGTH) throw new Error(`Summary must be ${MAX_SUMMARY_LENGTH} characters or less`);
+        if (args.transcription && args.transcription.length > MAX_TRANSCRIPTION_LENGTH) throw new Error(`Transcription must be ${MAX_TRANSCRIPTION_LENGTH} characters or less`);
+
         const user = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -234,6 +290,15 @@ export const updateVideo = mutation({
         await ctx.db.patch(videoId, {
             ...updates,
             updatedAt: Date.now(),
+        });
+
+        await ctx.db.insert("auditLogs", {
+            userId: user._id,
+            action: "video.update",
+            targetType: "video",
+            targetId: videoId,
+            details: Object.keys(updates).join(", "),
+            createdAt: Date.now(),
         });
     },
 });
@@ -274,6 +339,16 @@ export const deleteVideo = mutation({
 
         if (!user?.isAdmin) throw new Error("Admin access required");
 
+        const video = await ctx.db.get(args.videoId);
         await ctx.db.delete(args.videoId);
+
+        await ctx.db.insert("auditLogs", {
+            userId: user._id,
+            action: "video.delete",
+            targetType: "video",
+            targetId: args.videoId,
+            details: video?.title,
+            createdAt: Date.now(),
+        });
     },
 });

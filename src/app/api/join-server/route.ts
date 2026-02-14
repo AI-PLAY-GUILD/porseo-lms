@@ -53,7 +53,6 @@ export async function POST(req: Request) {
         });
 
         if (discordRes.ok || discordRes.status === 201 || discordRes.status === 204) {
-            console.log(`Successfully added user ${discordUserId} to server`);
             return NextResponse.json({ success: true });
         } else {
             const errorText = await discordRes.text();
@@ -65,6 +64,6 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error("Error joining server:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

@@ -1,5 +1,16 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+
+// Constant-time string comparison to prevent timing attacks on secret verification.
+// Convex V8 isolate doesn't have crypto.timingSafeEqual, so we use a pure JS implementation.
+function safeCompare(a: string, b: string): boolean {
+    const len = Math.max(a.length, b.length);
+    let result = a.length ^ b.length;
+    for (let i = 0; i < len; i++) {
+        result |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+    }
+    return result === 0;
+}
 
 export const webhookSyncUser = mutation({
     args: {
@@ -10,7 +21,7 @@ export const webhookSyncUser = mutation({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
-        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+        if (!safeCompare(args.secret, process.env.CLERK_WEBHOOK_SECRET || "")) {
             throw new Error("Unauthorized: Invalid secret");
         }
 
@@ -29,15 +40,13 @@ export const webhookSyncUser = mutation({
             // Only link if the existing user looks like a migrated user (e.g. has a placeholder Clerk ID or we just trust the email)
             // For safety, let's assume if the email matches and we are creating a new Clerk link, we merge.
             if (existingByEmail) {
-                console.log(`Found existing user by email ${args.email}. Linking to Clerk ID ${args.clerkId}`);
                 existing = existingByEmail;
             }
         }
 
         const isAdmin = args.clerkId === process.env.ADMIN_CLERK_ID;
 
-        console.log("Syncing user:", args.clerkId);
-        console.log("Is Admin?:", isAdmin);
+        // PII logs removed for security (Issue #20)
 
         if (existing) {
             await ctx.db.patch(existing._id, {
@@ -77,23 +86,14 @@ export const getUser = query({
     },
 });
 
-export const updateDiscordRoles = mutation({
+// Security: internalMutation - only callable from server-side Convex actions (e.g. stripe.ts)
+// Prevents users from setting arbitrary Discord roles on themselves (privilege escalation)
+export const updateDiscordRoles = internalMutation({
     args: {
         clerkId: v.string(),
         discordRoles: v.array(v.string()),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) {
-            // サーバーサイドからの同期の場合はSecretが必要かもしれないが、
-            // UserSync.tsx（クライアント）から呼ばれる場合はこのチェックで十分。
-            // もしWebhookからも呼ばれるなら分岐が必要だが、今回はクライアント用としてAuthチェックを入れる。
-            throw new Error("Unauthorized");
-        }
-        if (identity.subject !== args.clerkId) {
-            throw new Error("Unauthorized: You can only update your own roles");
-        }
-
         const user = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
@@ -145,12 +145,37 @@ export const getUserByClerkId = async (ctx: any, clerkId: string) => {
         .withIndex("by_clerk_id", (q: any) => q.eq("clerkId", clerkId))
         .first();
 };
-// ▼▼▼ 以下をファイルの末尾に追加してください ▼▼▼
+// Server-to-server query: Clerk IDでユーザーを取得（ConvexHttpClientから呼び出し用）
+// Security: CONVEX_INTERNAL_SECRET で認証（ctx.authが使えないため）
+export const getUserByClerkIdServer = query({
+    args: {
+        clerkId: v.string(),
+        secret: v.string(),
+    },
+    handler: async (ctx, args) => {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+
+        return await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+            .first();
+    },
+});
 
 // 1. Stripe Customer IDからユーザーを取得
+// Security: Uses dedicated CONVEX_INTERNAL_SECRET (separated from CLERK_WEBHOOK_SECRET per Issue #4)
 export const getUserByStripeCustomerId = query({
-    args: { stripeCustomerId: v.string() },
+    args: {
+        stripeCustomerId: v.string(),
+        secret: v.string(),
+    },
     handler: async (ctx, args) => {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+
         return await ctx.db
             .query("users")
             .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
@@ -162,15 +187,14 @@ export const getUserByStripeCustomerId = query({
 export const updateSubscriptionStatus = mutation({
     args: {
         discordId: v.string(),
-        stripeCustomerId: v.optional(v.string()), // Optional for manual/role-based sync
+        stripeCustomerId: v.optional(v.string()),
         subscriptionStatus: v.string(),
         subscriptionName: v.optional(v.string()),
         roleId: v.optional(v.string()),
-        secret: v.string(), // Added for security
+        secret: v.string(),
     },
     handler: async (ctx, args) => {
-        // Verify secret (using CLERK_WEBHOOK_SECRET as a shared secret for now)
-        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
             throw new Error("Unauthorized: Invalid secret");
         }
 
@@ -213,11 +237,10 @@ export const updateSubscriptionStatusByCustomerId = mutation({
     args: {
         stripeCustomerId: v.string(),
         subscriptionStatus: v.string(),
-        secret: v.string(), // Added for security
+        secret: v.string(),
     },
     handler: async (ctx, args) => {
-        // Verify secret
-        if (args.secret !== process.env.CLERK_WEBHOOK_SECRET) {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
             throw new Error("Unauthorized: Invalid secret");
         }
 
@@ -227,7 +250,6 @@ export const updateSubscriptionStatusByCustomerId = mutation({
             .first();
 
         if (!user) {
-            console.warn(`User with Stripe Customer ID ${args.stripeCustomerId} not found`);
             return;
         }
 
@@ -237,15 +259,14 @@ export const updateSubscriptionStatusByCustomerId = mutation({
     },
 });
 
-// 4. ユーザー情報を保存・更新（Entryアプリ用：Discord IDを含む）
-// ※既存のsyncUserとは別に、Entryアプリ専用の関数として追加します
+// 4. ユーザー情報を保存・更新（Entryアプリ用）
+// Security: discordId removed from client args (Issue #16) - should only be set server-side
 export const storeUser = mutation({
     args: {
         clerkId: v.string(),
         email: v.string(),
         name: v.string(),
         imageUrl: v.optional(v.string()),
-        discordId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -267,7 +288,6 @@ export const storeUser = mutation({
                 email: args.email,
                 name: args.name,
                 imageUrl: args.imageUrl,
-                discordId: args.discordId, // Update Discord ID
                 updatedAt: Date.now(),
             });
             return user._id;
@@ -280,12 +300,11 @@ export const storeUser = mutation({
             .first();
 
         if (existingByEmail) {
-            console.log(`[storeUser] Found existing user by email ${args.email}. Linking to Clerk ID ${args.clerkId}`);
+            // PII log removed (Issue #20)
             await ctx.db.patch(existingByEmail._id, {
                 clerkId: args.clerkId, // Link Clerk ID
                 name: args.name,
                 imageUrl: args.imageUrl,
-                discordId: args.discordId,
                 updatedAt: Date.now(),
             });
             return existingByEmail._id;
@@ -297,7 +316,6 @@ export const storeUser = mutation({
             email: args.email,
             name: args.name,
             imageUrl: args.imageUrl,
-            discordId: args.discordId,
             discordRoles: [],
             isAdmin: false,
             createdAt: Date.now(),
@@ -307,9 +325,21 @@ export const storeUser = mutation({
     },
 });
 
+// Security: Requires authentication. Users can only query their own data, admins can query any user.
 export const getUserByClerkIdQuery = query({
     args: { clerkId: v.string() },
     handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+
+        // Allow querying own data or admin access
+        if (identity.subject !== args.clerkId) {
+            const currentUser = await getUserByClerkId(ctx, identity.subject);
+            if (!currentUser?.isAdmin) {
+                throw new Error("Unauthorized: You can only access your own data");
+            }
+        }
+
         return await getUserByClerkId(ctx, args.clerkId);
     },
 });
@@ -389,9 +419,15 @@ export const syncCurrentUser = mutation({
     },
 });
 
+// Security: Admin-only to prevent user enumeration attacks
 export const checkUserByEmail = query({
     args: { email: v.string() },
     handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+        const currentUser = await getUserByClerkId(ctx, identity.subject);
+        if (!currentUser?.isAdmin) throw new Error("Admin access required");
+
         const user = await ctx.db
             .query("users")
             .filter((q) => q.eq(q.field("email"), args.email))

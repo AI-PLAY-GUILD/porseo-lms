@@ -18,7 +18,10 @@ export async function POST(req: Request) {
         }
 
         // 1. Get user from Convex to check subscription and Discord ID
-        const user = await convex.query("users:getUserByClerkId" as any, { clerkId: userId });
+        const user = await convex.query("users:getUserByClerkIdServer" as any, {
+            clerkId: userId,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        });
 
         if (!user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -36,7 +39,6 @@ export async function POST(req: Request) {
         if (discordToken && guildId && roleId) {
             try {
                 await rest.put(Routes.guildMemberRole(guildId, user.discordId, roleId));
-                console.log(`Manually added role ${roleId} to user ${user.discordId}`);
                 return NextResponse.json({ success: true });
             } catch (error: any) {
                 console.error('Failed to add Discord role:', error);
@@ -52,6 +54,6 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error('Error syncing role:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

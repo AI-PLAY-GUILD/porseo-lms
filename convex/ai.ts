@@ -29,8 +29,6 @@ export const generateVideoMetadata = action({
         // --- Security Check End ---
 
         try {
-            console.log("Generating metadata for video:", args.videoId);
-
             const apiKey = process.env.GEMINI_API_KEY;
             if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
 
@@ -46,11 +44,8 @@ export const generateVideoMetadata = action({
 
             // テキストが空の場合のチェックを強化
             if (!subtitleText || subtitleText.trim().length === 0) {
-                console.warn("No transcription found for video:", args.videoId);
                 throw new Error("文字起こしテキストがありません。");
             }
-
-            console.log("Using transcription text length:", subtitleText.length);
 
             // 2. Geminiで分析
             const client = new GoogleGenAI({ apiKey: apiKey });
@@ -120,14 +115,11 @@ ${subtitleText}
             // 余計なMarkdown記法が含まれていた場合のクリーニング（念のため）
             responseText = responseText.replace(/^```json\s*/, "").replace(/\s*```$/, "");
 
-            console.log("Gemini Response:", responseText);
-
             // JSONパース
             let aiData;
             try {
                 aiData = JSON.parse(responseText);
             } catch (e) {
-                console.log("JSON Parse failed, trying regex extraction...");
                 // JSONオブジェクト部分だけを抽出する正規表現
                 const jsonMatch = responseText.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {

@@ -42,3 +42,8 @@ next-env.d.ts
 
 # migration data
 migration_data.json
+users_to_migrate.json
+
+# database snapshots
+snapshot_full.zip
+*.jsonl

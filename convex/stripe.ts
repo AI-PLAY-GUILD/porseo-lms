@@ -1,13 +1,12 @@
 "use node";
 
 import { action } from "./_generated/server";
-import { v } from "convex/values";
 import { internal, api } from "./_generated/api";
 import Stripe from "stripe";
 
 export const createCustomer = action({
     args: {},
-    handler: async (ctx): Promise<{ customerId: string; discordRoles: string[] }> => {
+    handler: async (ctx): Promise<{ customerId: string }> => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
             throw new Error("Unauthenticated");
@@ -24,7 +23,6 @@ export const createCustomer = action({
         // --- Discord Logic Start ---
         let discordRoles: string[] = [];
         try {
-            console.log("[Stripe+Discord] Starting Discord sync...");
             const clerkSecretKey = process.env.CLERK_SECRET_KEY;
             const guildId = process.env.NEXT_PUBLIC_DISCORD_GUILD_ID;
 
@@ -50,22 +48,20 @@ export const createCustomer = action({
                         if (discordResponse.ok) {
                             const discordData = await discordResponse.json();
                             discordRoles = discordData.roles as string[];
-                            console.log(`[Stripe+Discord] Fetched ${discordRoles.length} roles`);
-                        } else {
-                            console.error("[Stripe+Discord] Discord API failed:", await discordResponse.text());
                         }
-                    } else {
-                        console.log("[Stripe+Discord] No Discord token found");
                     }
-                } else {
-                    console.error("[Stripe+Discord] Clerk API failed:", await clerkResponse.text());
                 }
-            } else {
-                console.error("[Stripe+Discord] Missing env variables");
             }
         } catch (e) {
             console.error("[Stripe+Discord] Error fetching roles:", e);
-            // Don't fail the whole action if Discord fails, just log it
+        }
+
+        // Security fix (Issue #8): Save roles server-side directly, don't return to client
+        if (discordRoles.length > 0) {
+            await ctx.runMutation(internal.users.updateDiscordRoles, {
+                clerkId: identity.subject,
+                discordRoles: discordRoles,
+            });
         }
         // --- Discord Logic End ---
 
@@ -86,7 +82,6 @@ export const createCustomer = action({
             if (existingCustomers.data.length > 0) {
                 // Found existing customer
                 customerId = existingCustomers.data[0].id;
-                console.log(`Found existing Stripe customer for ${user.email}: ${customerId}`);
             } else {
                 // Create new customer
                 const customer = await stripe.customers.create({
@@ -98,7 +93,6 @@ export const createCustomer = action({
                     },
                 });
                 customerId = customer.id;
-                console.log(`Created new Stripe customer for ${user.email}: ${customerId}`);
             }
 
             await ctx.runMutation(internal.internal.setStripeCustomerId, {
@@ -107,18 +101,18 @@ export const createCustomer = action({
             });
         }
 
-        return { customerId, discordRoles };
+        return { customerId };
     },
 });
 
 // linkStripeCustomerByEmail has been removed due to security risks (CWE-285). 
 // See security_diagnosis_report.md for details.
 
+// Security fix: Save Discord roles server-side only, return sync status (not raw role IDs)
 export const getDiscordRolesV2 = action({
     args: {},
-    handler: async (ctx) => {
+    handler: async (ctx): Promise<{ synced: boolean }> => {
         try {
-            console.log("[Discord API (in stripe.ts)] Starting getDiscordRoles...");
             const identity = await ctx.auth.getUserIdentity();
             if (!identity) {
                 throw new Error("Unauthenticated");
@@ -145,15 +139,13 @@ export const getDiscordRolesV2 = action({
             );
 
             if (!clerkResponse.ok) {
-                const errorText = await clerkResponse.text();
-                console.error("Clerk API Error:", errorText);
-                return [];
+                console.error("Clerk API Error:", await clerkResponse.text());
+                return { synced: false };
             }
 
             const clerkData = await clerkResponse.json();
             if (!clerkData.length || !clerkData[0].token) {
-                console.log("No Discord token found in Clerk response");
-                return [];
+                return { synced: false };
             }
 
             const accessToken = clerkData[0].token;
@@ -168,26 +160,27 @@ export const getDiscordRolesV2 = action({
                 }
             );
 
-            // Rate Limit Logging
-            const limit = discordResponse.headers.get("x-ratelimit-limit");
-            const remaining = discordResponse.headers.get("x-ratelimit-remaining");
-            const reset = discordResponse.headers.get("x-ratelimit-reset");
-            console.log(`[Discord API] Rate Limit: ${remaining}/${limit} (Reset: ${reset})`);
-
             if (!discordResponse.ok) {
                 if (discordResponse.status === 404) {
-                    return [];
+                    return { synced: false };
                 }
-                const errorText = await discordResponse.text();
-                console.error("Discord API Error:", errorText);
-                return [];
+                console.error("Discord API Error:", await discordResponse.text());
+                return { synced: false };
             }
 
             const discordData = await discordResponse.json();
-            return discordData.roles as string[];
+            const roles = discordData.roles as string[];
+
+            // Save roles server-side — never expose raw role IDs to client
+            await ctx.runMutation(internal.users.updateDiscordRoles, {
+                clerkId: identity.subject,
+                discordRoles: roles,
+            });
+
+            return { synced: true };
         } catch (error) {
             console.error("[Discord API] Critical Error:", error);
-            throw error; // Rethrow to ensure client sees it
+            throw error;
         }
     },
 });

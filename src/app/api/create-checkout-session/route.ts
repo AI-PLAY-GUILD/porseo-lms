@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { convex } from '@/lib/convex';
-import { api } from '../../../../convex/_generated/api';
 import { auth } from '@clerk/nextjs/server';
 
 export async function POST(req: Request) {
     try {
+        if (!process.env.NEXT_PUBLIC_BASE_URL) {
+            console.error('NEXT_PUBLIC_BASE_URL is not set');
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
+
         const { userId } = await auth();
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -16,7 +20,10 @@ export async function POST(req: Request) {
         let discordId: string | undefined;
 
         try {
-            const user = await convex.query(api.users.getUserByClerkIdQuery, { clerkId: userId });
+            const user = await convex.query("users:getUserByClerkIdServer" as any, {
+                clerkId: userId,
+                secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            });
             if (user) {
                 stripeCustomerId = user.stripeCustomerId;
                 discordId = user.discordId;

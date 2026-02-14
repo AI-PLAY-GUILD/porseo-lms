@@ -14,7 +14,10 @@ export async function POST(req: Request) {
         }
 
         // 1. Get user from Convex
-        const user = await convex.query("users:getUserByClerkIdQuery" as any, { clerkId: userId });
+        const user = await convex.query("users:getUserByClerkIdServer" as any, {
+            clerkId: userId,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        });
 
         if (!user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -60,8 +63,8 @@ export async function POST(req: Request) {
                 discordId: user.discordId,
                 subscriptionStatus: 'active',
                 roleId: roleId,
+                secret: process.env.CONVEX_INTERNAL_SECRET || "",
             });
-            console.log(`Updated subscription for user ${user.discordId} based on role`);
             return NextResponse.json({ status: 'active', updated: true });
         } else {
             return NextResponse.json({ status: 'inactive' });
@@ -69,6 +72,6 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error("Error checking subscription:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

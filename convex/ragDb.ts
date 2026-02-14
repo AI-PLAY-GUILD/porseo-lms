@@ -20,9 +20,12 @@ export const saveChunks = internalMutation({
     },
 });
 
+// Security: Added auth check to prevent unauthenticated access to transcript data (Issue #18)
 export const getChunk = query({
     args: { id: v.id("transcription_chunks") },
     handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
         return await ctx.db.get(args.id);
     },
 });

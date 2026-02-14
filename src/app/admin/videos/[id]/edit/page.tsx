@@ -116,7 +116,6 @@ export default function EditVideoPage() {
                 transcription,
                 summary,
                 chapters,
-                createdAt: createdAt ? new Date(createdAt).getTime() : undefined,
             });
 
             alert("更新しました！");

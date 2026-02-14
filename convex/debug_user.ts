@@ -1,9 +1,16 @@
 
 import { query } from "./_generated/server";
+import { getUserByClerkId } from "./users";
 
 export const checkDuplicates = query({
     args: {},
     handler: async (ctx) => {
+        // Security: Admin-only access
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+        const user = await getUserByClerkId(ctx, identity.subject);
+        if (!user?.isAdmin) throw new Error("Admin access required");
+
         const users = await ctx.db.query("users").collect();
         const emailCounts: Record<string, number> = {};
         const duplicates: string[] = [];

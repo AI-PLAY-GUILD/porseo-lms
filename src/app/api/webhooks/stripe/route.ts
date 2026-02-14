@@ -65,18 +65,37 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
 }
 
+// Discord ID format validation (17-20 digit snowflake)
+function isValidDiscordId(id: string): boolean {
+    return /^\d{17,20}$/.test(id);
+}
+
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-    const discordId = session.metadata?.discordId;
+    const clerkUserId = session.metadata?.userId;
     const customerId = session.customer as string;
 
-    if (!discordId || !customerId) {
-        console.error('Missing discordId or customerId in session metadata/payload');
+    if (!clerkUserId || !customerId) {
+        console.error('Missing userId or customerId in session metadata/payload');
         return;
     }
 
-    // Action 1: Update Convex DB
-    // We use the string identifier for the mutation since we don't have generated types here
-    // Changed to "users:..." because internal.ts is private
+    // Security fix (Issue #48): Fetch discordId from DB instead of trusting metadata
+    let discordId: string | undefined;
+    try {
+        const user = await convex.query("users:getUserByClerkIdServer" as any, {
+            clerkId: clerkUserId,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        });
+        discordId = user?.discordId;
+    } catch (error) {
+        console.error('Error fetching user from Convex:', error);
+        return;
+    }
+
+    if (!discordId || !isValidDiscordId(discordId)) {
+        console.error('User has no valid discordId in DB');
+        return;
+    }
 
     // Retrieve the session with line_items expanded to get the product name
     const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
@@ -91,16 +110,14 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         stripeCustomerId: customerId,
         subscriptionStatus: 'active',
         subscriptionName: subscriptionName,
-        roleId: roleId, // Pass the role ID to Convex
-        secret: process.env.CLERK_WEBHOOK_SECRET || "", // Pass secret
+        roleId: roleId,
+        secret: process.env.CONVEX_INTERNAL_SECRET || "",
     });
 
-
-    // Action 2: Add Discord Role
+    // Add Discord Role
     if (discordToken && guildId && roleId) {
         try {
             await rest.put(Routes.guildMemberRole(guildId, discordId, roleId));
-            console.log(`Added role ${roleId} to user ${discordId}`);
         } catch (error) {
             console.error('Failed to add Discord role:', error);
         }
@@ -115,15 +132,10 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     await convex.mutation("users:updateSubscriptionStatusByCustomerId" as any, {
         stripeCustomerId: customerId,
         subscriptionStatus: 'past_due',
-        secret: process.env.CLERK_WEBHOOK_SECRET || "", // Pass secret
+        secret: process.env.CONVEX_INTERNAL_SECRET || "",
     });
 
-    // Action: Notify User (Optional - Log for now)
-    console.log(`Payment failed for customer ${customerId}. User should be notified.`);
-    // To send a DM, we'd need to fetch the user's Discord ID from Convex first using the customerId,
-    // then use the Discord API to open a DM channel and send a message.
-    // For this MVP, we'll skip the DM implementation to keep it simple unless strictly required, 
-    // as the prompt said "Action: Send a DM... (optional)".
+    // TODO: Optionally send a DM to notify user about payment failure
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -134,34 +146,19 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     await convex.mutation("users:updateSubscriptionStatusByCustomerId" as any, {
         stripeCustomerId: customerId,
         subscriptionStatus: 'canceled',
-        secret: process.env.CLERK_WEBHOOK_SECRET || "", // Pass secret
+        secret: process.env.CONVEX_INTERNAL_SECRET || "",
     });
 
-    // Action: Remove Discord Role
-    // We need the Discord ID to remove the role. 
-    // We can query Convex to get the Discord ID from the customerId.
-    // Since we don't have a direct "get user by customer id" query exposed in `lib/convex.ts` (it's an HttpClient),
-    // we might need another internal query or just rely on the mutation to handle it?
-    // But the Discord API needs the Discord ID.
-    // Let's add a query to `convex/internal.ts` or just assume we can't do it without it.
-    // Actually, I can define a query in `convex/internal.ts` to get the discordId.
-
-    // Let's assume we can't easily get the discord ID right now without adding more code.
-    // Wait, I can just add a query to `convex/internal.ts`!
-    // But I already wrote `convex/internal.ts`. I should update it if I want to be robust.
-    // However, for now, I'll skip the role removal if I can't get the ID, or I'll try to fetch it.
-
-    // Let's try to fetch it using a query I'll add to `convex/internal.ts` in a moment.
-    // I'll assume `internal:getUserByStripeCustomerId` exists.
+    // Remove Discord Role using user's discordId from Convex
 
     try {
         const user = await convex.query("users:getUserByStripeCustomerId" as any, {
-            stripeCustomerId: customerId
+            stripeCustomerId: customerId,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
         });
 
         if (user && user.discordId && discordToken && guildId && roleId) {
             await rest.delete(Routes.guildMemberRole(guildId, user.discordId, roleId));
-            console.log(`Removed role ${roleId} from user ${user.discordId}`);
         }
     } catch (e) {
         console.error("Failed to remove role or find user:", e);

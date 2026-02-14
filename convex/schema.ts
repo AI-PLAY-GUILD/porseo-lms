@@ -88,6 +88,18 @@ export default defineSchema({
         .index("by_user_date", ["userId", "date"])
         .index("by_user", ["userId"]),
 
+    auditLogs: defineTable({
+        userId: v.id("users"),
+        action: v.string(), // e.g. "video.create", "video.delete", "tag.create"
+        targetType: v.string(), // e.g. "video", "tag", "user"
+        targetId: v.optional(v.string()),
+        details: v.optional(v.string()),
+        createdAt: v.number(),
+    })
+        .index("by_user", ["userId"])
+        .index("by_action", ["action"])
+        .index("by_created_at", ["createdAt"]),
+
     transcription_chunks: defineTable({
         videoId: v.id("videos"),
         startTime: v.number(),
