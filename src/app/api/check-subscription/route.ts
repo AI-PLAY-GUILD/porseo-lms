@@ -60,7 +60,7 @@ export async function POST(req: Request) {
                 discordId: user.discordId,
                 subscriptionStatus: 'active',
                 roleId: roleId,
-                secret: process.env.CLERK_WEBHOOK_SECRET || "",
+                secret: process.env.CONVEX_INTERNAL_SECRET || "",
             });
             return NextResponse.json({ status: 'active', updated: true });
         } else {

@@ -146,14 +146,14 @@ export const getUserByClerkId = async (ctx: any, clerkId: string) => {
         .first();
 };
 // 1. Stripe Customer IDからユーザーを取得
-// Security: Secret-based auth for server-to-server calls (Stripe webhook → ConvexHttpClient)
+// Security: Uses dedicated CONVEX_INTERNAL_SECRET (separated from CLERK_WEBHOOK_SECRET per Issue #4)
 export const getUserByStripeCustomerId = query({
     args: {
         stripeCustomerId: v.string(),
         secret: v.string(),
     },
     handler: async (ctx, args) => {
-        if (!safeCompare(args.secret, process.env.CLERK_WEBHOOK_SECRET || "")) {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
             throw new Error("Unauthorized: Invalid secret");
         }
 
@@ -168,14 +168,14 @@ export const getUserByStripeCustomerId = query({
 export const updateSubscriptionStatus = mutation({
     args: {
         discordId: v.string(),
-        stripeCustomerId: v.optional(v.string()), // Optional for manual/role-based sync
+        stripeCustomerId: v.optional(v.string()),
         subscriptionStatus: v.string(),
         subscriptionName: v.optional(v.string()),
         roleId: v.optional(v.string()),
-        secret: v.string(), // Added for security
+        secret: v.string(),
     },
     handler: async (ctx, args) => {
-        if (!safeCompare(args.secret, process.env.CLERK_WEBHOOK_SECRET || "")) {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
             throw new Error("Unauthorized: Invalid secret");
         }
 
@@ -218,10 +218,10 @@ export const updateSubscriptionStatusByCustomerId = mutation({
     args: {
         stripeCustomerId: v.string(),
         subscriptionStatus: v.string(),
-        secret: v.string(), // Added for security
+        secret: v.string(),
     },
     handler: async (ctx, args) => {
-        if (!safeCompare(args.secret, process.env.CLERK_WEBHOOK_SECRET || "")) {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
             throw new Error("Unauthorized: Invalid secret");
         }
 
