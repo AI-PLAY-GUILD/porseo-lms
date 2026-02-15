@@ -33,28 +33,8 @@ export const checkZoomEventProcessed = query({
 });
 
 // ============================
-// Idempotency: Mark event as processed
-// ============================
-export const markZoomEventProcessed = mutation({
-    args: {
-        eventId: v.string(),
-        eventType: v.string(),
-        secret: v.string(),
-    },
-    handler: async (ctx, args) => {
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            throw new Error("Unauthorized: Invalid secret");
-        }
-        await ctx.db.insert("processedZoomEvents", {
-            eventId: args.eventId,
-            eventType: args.eventType,
-            processedAt: Date.now(),
-        });
-    },
-});
-
-// ============================
 // Create draft video from Zoom recording
+// Combines video creation + idempotency mark in one atomic mutation (TOCTOU fix)
 // ============================
 export const createZoomDraftVideo = mutation({
     args: {
@@ -72,16 +52,34 @@ export const createZoomDraftVideo = mutation({
             throw new Error("Unauthorized: Invalid secret");
         }
 
-        // Duplicate check: same Zoom recording file ID
+        // Atomic idempotency check + mark within the same mutation (prevents TOCTOU race)
+        const alreadyProcessed = await ctx.db
+            .query("processedZoomEvents")
+            .withIndex("by_event_id", (q) => q.eq("eventId", args.eventId))
+            .first();
+        if (alreadyProcessed) {
+            return null; // Already processed, skip
+        }
+
+        // Mark as processed immediately (within same transaction)
+        await ctx.db.insert("processedZoomEvents", {
+            eventId: args.eventId,
+            eventType: "recording.completed",
+            processedAt: Date.now(),
+        });
+
+        // Duplicate check: same Zoom recording file ID (using index)
         const existing = await ctx.db
             .query("videos")
-            .filter((q) => q.eq(q.field("zoomRecordingId"), args.recordingFileId))
+            .withIndex("by_zoom_recording_id", (q) => q.eq("zoomRecordingId", args.recordingFileId))
             .first();
         if (existing) {
             return existing._id;
         }
 
-        const title = `【Zoom】${args.meetingTopic}`.slice(0, 200);
+        // Truncate topic for safety
+        const safeTopic = args.meetingTopic.slice(0, 200);
+        const title = `【Zoom】${safeTopic}`.slice(0, 200);
 
         const videoId = await ctx.db.insert("videos", {
             title,
@@ -100,7 +98,7 @@ export const createZoomDraftVideo = mutation({
             action: "video.create.zoom",
             targetType: "video",
             targetId: videoId,
-            details: `Zoom recording: ${args.meetingTopic} (Meeting ID: ${args.meetingId})`,
+            details: `Zoom recording: ${safeTopic} (Meeting ID: ${args.meetingId})`.slice(0, 500),
             createdAt: Date.now(),
         });
 
@@ -153,7 +151,7 @@ export const updateVideoError = internalMutation({
     },
     handler: async (ctx, args) => {
         await ctx.db.patch(args.videoId, {
-            description: `[エラー] ${args.error}`,
+            description: `[エラー] ${args.error.slice(0, 200)}`,
             updatedAt: Date.now(),
         });
     },

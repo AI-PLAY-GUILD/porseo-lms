@@ -52,7 +52,7 @@ export default defineSchema({
         source: v.optional(v.string()), // "zoom" | "manual" | "upload"
         createdAt: v.number(),
         updatedAt: v.number(),
-    }),
+    }).index("by_zoom_recording_id", ["zoomRecordingId"]),
 
     tags: defineTable({
         name: v.string(),

@@ -4,6 +4,18 @@ import crypto from 'crypto';
 import { convex } from '@/lib/convex';
 
 const ZOOM_WEBHOOK_SECRET = process.env.ZOOM_WEBHOOK_SECRET_TOKEN;
+const TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000; // 5 minutes
+
+// Validate that download URLs are from Zoom domains (SSRF prevention)
+function isValidZoomUrl(url: string): boolean {
+    try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'https:' &&
+            (parsed.hostname.endsWith('.zoom.us') || parsed.hostname.endsWith('.zoom.com'));
+    } catch {
+        return false;
+    }
+}
 
 export async function POST(req: Request) {
     const body = await req.text();
@@ -14,11 +26,18 @@ export async function POST(req: Request) {
     // --- 1. Signature verification ---
     if (!ZOOM_WEBHOOK_SECRET) {
         console.error('ZOOM_WEBHOOK_SECRET_TOKEN is not configured');
-        return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
 
     if (!timestamp || !signature) {
-        return NextResponse.json({ error: 'Missing verification headers' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
+
+    // Replay attack prevention: validate timestamp freshness
+    const timestampMs = parseInt(timestamp, 10) * 1000;
+    if (isNaN(timestampMs) || Math.abs(Date.now() - timestampMs) > TIMESTAMP_TOLERANCE_MS) {
+        console.error('Zoom webhook timestamp out of tolerance');
+        return NextResponse.json({ error: 'Request expired' }, { status: 401 });
     }
 
     const message = `v0:${timestamp}:${body}`;
@@ -28,19 +47,28 @@ export async function POST(req: Request) {
         .digest('hex');
     const expectedSignature = `v0=${hashForVerify}`;
 
-    if (signature !== expectedSignature) {
+    // Constant-time comparison to prevent timing attacks
+    const sigBuf = Buffer.from(signature);
+    const expectedBuf = Buffer.from(expectedSignature);
+    if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
         console.error('Zoom webhook signature verification failed');
-        return NextResponse.json({ error: 'Signature verification failed' }, { status: 401 });
+        return NextResponse.json({ error: 'Verification failed' }, { status: 401 });
     }
 
-    const payload = JSON.parse(body);
+    // Safe JSON parse
+    let payload;
+    try {
+        payload = JSON.parse(body);
+    } catch {
+        return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
 
     // --- 2. CRC Challenge Response ---
     // Zoom sends this when registering the webhook endpoint URL
     if (payload.event === 'endpoint.url_validation') {
         const plainToken = payload.payload?.plainToken;
         if (!plainToken) {
-            return NextResponse.json({ error: 'Missing plainToken' }, { status: 400 });
+            return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
         }
         const encryptedToken = crypto
             .createHmac('sha256', ZOOM_WEBHOOK_SECRET)
@@ -55,7 +83,13 @@ export async function POST(req: Request) {
     }
 
     // --- 4. Idempotency check ---
-    const eventId = `${payload.payload?.object?.uuid || ''}_${payload.event_ts || Date.now()}`;
+    const eventTs = payload.event_ts;
+    if (!eventTs) {
+        console.error('Missing event_ts in Zoom webhook payload');
+        return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
+    const eventId = `${payload.payload?.object?.uuid || ''}_${eventTs}`;
+
     try {
         const alreadyProcessed = await convex.query(
             "zoom:checkZoomEventProcessed" as any,
@@ -71,13 +105,13 @@ export async function POST(req: Request) {
     // --- 5. Extract recording data ---
     const { object } = payload.payload;
     const meetingId = String(object?.id || '');
-    const meetingTopic = object?.topic || 'Zoom Recording';
+    const meetingTopic = (object?.topic || 'Zoom Recording').slice(0, 200);
     const recordingFiles = object?.recording_files || [];
     const downloadToken = payload.download_token;
 
     if (!downloadToken) {
         console.error('No download_token in Zoom webhook payload');
-        return NextResponse.json({ error: 'Missing download_token' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
     // Select the largest MP4 file (best quality)
@@ -92,7 +126,17 @@ export async function POST(req: Request) {
 
     if (!mp4File) {
         console.error('No completed MP4 recording file found in Zoom payload');
-        return NextResponse.json({ error: 'No MP4 file found' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
+
+    // SSRF prevention: validate download URLs are from Zoom domains
+    if (!isValidZoomUrl(mp4File.download_url)) {
+        console.error('Invalid MP4 download URL domain:', mp4File.download_url);
+        return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
+    if (vttFile && !isValidZoomUrl(vttFile.download_url)) {
+        console.error('Invalid VTT download URL domain:', vttFile.download_url);
+        return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
     const mp4Url = `${mp4File.download_url}?access_token=${downloadToken}`;
@@ -106,14 +150,14 @@ export async function POST(req: Request) {
         duration = (new Date(mp4File.recording_end).getTime() - new Date(mp4File.recording_start).getTime()) / 1000;
     }
 
-    // --- 6. Create draft video in Convex ---
+    // --- 6. Create draft video + mark event as processed (atomic in mutation) ---
     try {
         await convex.mutation("zoom:createZoomDraftVideo" as any, {
             meetingId,
             meetingTopic,
             mp4DownloadUrl: mp4Url,
             vttDownloadUrl: vttUrl,
-            recordingFileId: mp4File.id || `${meetingId}_${Date.now()}`,
+            recordingFileId: mp4File.id || `${meetingId}_${eventTs}`,
             duration,
             eventId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
@@ -121,17 +165,6 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error('Error creating Zoom draft video:', error);
         return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
-    }
-
-    // --- 7. Mark event as processed ---
-    try {
-        await convex.mutation("zoom:markZoomEventProcessed" as any, {
-            eventId,
-            eventType: payload.event,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
-        });
-    } catch (error) {
-        console.error('Failed to mark Zoom event as processed:', error);
     }
 
     return NextResponse.json({ received: true });
