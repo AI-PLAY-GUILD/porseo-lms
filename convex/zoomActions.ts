@@ -6,6 +6,17 @@ import { v } from "convex/values";
 import Mux from "@mux/mux-node";
 import { GoogleGenAI } from "@google/genai";
 
+// Validate that URLs are from Zoom domains (defense-in-depth SSRF prevention)
+function isValidZoomUrl(url: string): boolean {
+    try {
+        const parsed = new URL(url);
+        return parsed.protocol === "https:" &&
+            (parsed.hostname.endsWith(".zoom.us") || parsed.hostname.endsWith(".zoom.com"));
+    } catch {
+        return false;
+    }
+}
+
 // ============================
 // Mux Ingestion from Zoom Recording URL
 // ============================
@@ -24,6 +35,17 @@ export const ingestToMux = internalAction({
             await ctx.runMutation(internal.zoom.updateVideoError, {
                 videoId: args.videoId,
                 error: "Mux credentials not configured",
+            });
+            return;
+        }
+
+        // Defense-in-depth: re-validate URLs even though webhook handler already checked
+        const mp4BaseUrl = args.mp4DownloadUrl.split("?")[0];
+        if (!isValidZoomUrl(mp4BaseUrl)) {
+            console.error("Invalid MP4 URL domain in ingestToMux:", mp4BaseUrl);
+            await ctx.runMutation(internal.zoom.updateVideoError, {
+                videoId: args.videoId,
+                error: "Invalid MP4 download URL domain",
             });
             return;
         }
@@ -56,6 +78,11 @@ export const ingestToMux = internalAction({
 
             // 3. Download VTT transcription if available
             if (args.vttDownloadUrl) {
+                const vttBaseUrl = args.vttDownloadUrl.split("?")[0];
+                if (!isValidZoomUrl(vttBaseUrl)) {
+                    console.error("Invalid VTT URL domain in ingestToMux:", vttBaseUrl);
+                    // Non-fatal: skip VTT but don't fail the whole ingestion
+                } else
                 try {
                     const vttResponse = await fetch(args.vttDownloadUrl);
                     if (vttResponse.ok) {

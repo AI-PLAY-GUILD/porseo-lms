@@ -1,16 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
-
-// Constant-time string comparison (same pattern as convex/users.ts)
-function safeCompare(a: string, b: string): boolean {
-    const len = Math.max(a.length, b.length);
-    let result = a.length ^ b.length;
-    for (let i = 0; i < len; i++) {
-        result |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
-    }
-    return result === 0;
-}
+import { safeCompare } from "./lib/safeCompare";
 
 // ============================
 // Idempotency: Check if event already processed
