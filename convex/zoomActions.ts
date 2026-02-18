@@ -32,7 +32,7 @@ export const ingestToMux = internalAction({
 
         if (!tokenId || !tokenSecret) {
             console.error("MUX_TOKEN_ID or MUX_TOKEN_SECRET not set");
-            await ctx.runMutation(internal.zoom.updateVideoError, {
+            await ctx.runMutation((internal as any).zoom.updateVideoError, {
                 videoId: args.videoId,
                 error: "Mux credentials not configured",
             });
@@ -43,7 +43,7 @@ export const ingestToMux = internalAction({
         const mp4BaseUrl = args.mp4DownloadUrl.split("?")[0];
         if (!isValidZoomUrl(mp4BaseUrl)) {
             console.error("Invalid MP4 URL domain in ingestToMux:", mp4BaseUrl);
-            await ctx.runMutation(internal.zoom.updateVideoError, {
+            await ctx.runMutation((internal as any).zoom.updateVideoError, {
                 videoId: args.videoId,
                 error: "Invalid MP4 download URL domain",
             });
@@ -70,7 +70,7 @@ export const ingestToMux = internalAction({
             const playbackId = asset.playback_ids?.[0]?.id || "";
 
             // 2. Save Mux info to Convex
-            await ctx.runMutation(internal.zoom.updateVideoMuxInfo, {
+            await ctx.runMutation((internal as any).zoom.updateVideoMuxInfo, {
                 videoId: args.videoId,
                 muxAssetId: asset.id,
                 muxPlaybackId: playbackId,
@@ -88,7 +88,7 @@ export const ingestToMux = internalAction({
                     if (vttResponse.ok) {
                         const vttText = await vttResponse.text();
                         if (vttText && vttText.trim().length > 0) {
-                            await ctx.runMutation(internal.zoom.updateVideoTranscription, {
+                            await ctx.runMutation((internal as any).zoom.updateVideoTranscription, {
                                 videoId: args.videoId,
                                 transcription: vttText,
                             });
@@ -96,7 +96,7 @@ export const ingestToMux = internalAction({
                             // 4. Schedule AI metadata generation
                             await ctx.scheduler.runAfter(
                                 30_000, // 30 seconds delay
-                                internal.zoomActions.processAiMetadata,
+                                (internal as any).zoomActions.processAiMetadata,
                                 {
                                     videoId: args.videoId,
                                     transcription: vttText,
@@ -111,7 +111,7 @@ export const ingestToMux = internalAction({
             }
         } catch (error) {
             console.error("Mux ingest failed:", error);
-            await ctx.runMutation(internal.zoom.updateVideoError, {
+            await ctx.runMutation((internal as any).zoom.updateVideoError, {
                 videoId: args.videoId,
                 error: `Mux ingest failed: ${error instanceof Error ? error.message : "Unknown error"}`,
             });

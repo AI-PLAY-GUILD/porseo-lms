@@ -94,7 +94,7 @@ export const createZoomDraftVideo = mutation({
         });
 
         // Schedule async Mux ingestion
-        await ctx.scheduler.runAfter(0, internal.zoomActions.ingestToMux, {
+        await ctx.scheduler.runAfter(0, (internal as any).zoomActions.ingestToMux, {
             videoId,
             mp4DownloadUrl: args.mp4DownloadUrl,
             vttDownloadUrl: args.vttDownloadUrl,

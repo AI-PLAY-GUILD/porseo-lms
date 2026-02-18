@@ -4,6 +4,7 @@ import * as React from "react"
 import { useTheme } from "next-themes"
 import {
   BookOpen,
+  Bot,
   LayoutDashboard,
   Settings,
   User,
@@ -58,6 +59,18 @@ const data = {
           title: "ダッシュボード",
           url: "/dashboard",
           icon: LayoutDashboard,
+        },
+      ],
+    },
+    {
+      title: "AI",
+      url: "#",
+      icon: Bot,
+      items: [
+        {
+          title: "学習アシスタント",
+          url: "/ai-agent",
+          icon: Bot,
         },
       ],
     },

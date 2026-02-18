@@ -18,6 +18,7 @@ export default function EditVideoPage() {
     const updateVideo = useMutation(api.videos.updateVideo);
     const generateUploadUrl = useMutation(api.videos.generateUploadUrl);
     const generateMetadata = useAction(api.ai.generateVideoMetadata);
+    const indexTranscription = useAction(api.rag.indexVideoTranscription);
 
     const userData = useQuery(api.users.getUser);
     const allTags = useQuery(api.tags.getTags);
@@ -481,7 +482,64 @@ export default function EditVideoPage() {
                     </button>
                 </div>
 
+                <div className="border-t pt-6 mt-2">
+                    <h3 className="font-bold mb-2 flex items-center gap-2">
+                        <span className="text-xl">🔍</span> 検索用インデックス
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        文字起こしデータからベクトル検索用のインデックスを作成します。<br />
+                        AIアシスタントがこの動画の内容を検索・推薦できるようになります。
+                    </p>
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            if (!transcription || transcription.trim().length === 0) {
+                                alert("文字起こしデータを入力してください");
+                                return;
+                            }
+                            if (!confirm("検索用インデックスを作成しますか？（既存のインデックスは再作成されます）")) return;
 
+                            setIsIndexing(true);
+                            try {
+                                // まず文字起こしを保存
+                                await updateVideo({
+                                    videoId,
+                                    title,
+                                    description,
+                                    isPublished,
+                                    muxPlaybackId,
+                                    muxAssetId,
+                                    transcription,
+                                    summary,
+                                    chapters,
+                                });
+
+                                const result = await indexTranscription({ videoId });
+                                alert(`インデックス作成完了！(${result.chunksCreated} チャンク)`);
+                            } catch (error: any) {
+                                console.error(error);
+                                alert(`エラー: ${error.message}`);
+                            } finally {
+                                setIsIndexing(false);
+                            }
+                        }}
+                        disabled={isIndexing}
+                        className={`px-4 py-2 rounded-md transition-colors font-bold flex items-center gap-2 ${
+                            isIndexing
+                                ? "bg-gray-400 cursor-not-allowed text-gray-200"
+                                : "bg-green-600 text-white hover:bg-green-700"
+                        }`}
+                    >
+                        {isIndexing ? (
+                            <>
+                                <span className="animate-spin text-xl">↻</span>
+                                インデックス作成中...
+                            </>
+                        ) : (
+                            "検索用インデックスを作成"
+                        )}
+                    </button>
+                </div>
 
                 <div className="flex gap-4 pt-4 border-t mt-4">
                     <button

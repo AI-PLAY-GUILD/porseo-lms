@@ -20,6 +20,20 @@ export const saveChunks = internalMutation({
     },
 });
 
+export const deleteChunksByVideoId = internalMutation({
+    args: { videoId: v.id("videos") },
+    handler: async (ctx, args) => {
+        const chunks = await ctx.db
+            .query("transcription_chunks")
+            .withIndex("by_video_id", (q) => q.eq("videoId", args.videoId))
+            .collect();
+        for (const chunk of chunks) {
+            await ctx.db.delete(chunk._id);
+        }
+        return chunks.length;
+    },
+});
+
 // Security: Added auth check to prevent unauthenticated access to transcript data (Issue #18)
 export const getChunk = query({
     args: { id: v.id("transcription_chunks") },
