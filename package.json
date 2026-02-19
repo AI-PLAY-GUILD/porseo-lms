@@ -21,7 +21,6 @@
     "@discordjs/rest": "^2.6.0",
     "@google/genai": "^1.35.0",
     "@gsap/react": "^2.1.2",
-    "@mastra/core": "^1.4.0",
     "@mux/mux-node": "^12.8.1",
     "@mux/mux-player-react": "^3.10.1",
     "@mux/mux-uploader-react": "^1.4.1",
