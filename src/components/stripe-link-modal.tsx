@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAction, useConvex } from "convex/react";
-import { useClerk, useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,19 +21,29 @@ export function StripeLinkModal() {
     const [open, setOpen] = useState(false);
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
-    // const linkStripeCustomer = useAction(api.stripe.linkStripeCustomerByEmail); // Removed for security
-    const convex = useConvex();
-    const { openSignIn } = useClerk();
-    const { user } = useUser();
-    const router = useRouter();
-
-    useEffect(() => {
-        // Feature disabled
-    }, []);
+    const linkStripeCustomer = useAction(api.stripe.linkStripeCustomerByEmail);
 
     const handleLink = async () => {
-        toast.error("現在、セキュリティ強化のため自動連携機能を停止しています。連携希望の方はDiscordで運営にお問い合わせください。");
-        setOpen(false);
+        if (!email.trim()) {
+            toast.error("メールアドレスを入力してください");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const result = await linkStripeCustomer({ email: email.trim() });
+            if (result.success) {
+                toast.success(result.message);
+                setOpen(false);
+                setEmail("");
+            } else {
+                toast.error(result.message);
+            }
+        } catch (error: any) {
+            toast.error(error.message || "連携中にエラーが発生しました");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -49,14 +57,41 @@ export function StripeLinkModal() {
                 <DialogHeader>
                     <DialogTitle>既存アカウントの連携</DialogTitle>
                     <DialogDescription className="text-gray-400">
-                        現在、セキュリティ強化のため自動連携機能を停止しています。
-                        <br />
-                        お手数ですが、Discordにて運営までお問い合わせください。
+                        以前「AIで遊ぼう」コミュニティでご利用いただいていた方は、
+                        登録時のメールアドレスを入力してください。
+                        既存のサブスクリプションを引き継ぎます。
                     </DialogDescription>
                 </DialogHeader>
-                <DialogFooter>
-                    <Button onClick={() => setOpen(false)} className="bg-gray-600 hover:bg-gray-500 text-white">
-                        閉じる
+                <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="email" className="text-white">メールアドレス</Label>
+                        <Input
+                            id="email"
+                            type="email"
+                            placeholder="example@email.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") handleLink();
+                            }}
+                            className="bg-white/10 border-white/20 text-white placeholder:text-gray-500"
+                        />
+                    </div>
+                </div>
+                <DialogFooter className="gap-2">
+                    <Button
+                        onClick={() => setOpen(false)}
+                        variant="outline"
+                        className="border-white/20 text-white hover:bg-white/10"
+                    >
+                        キャンセル
+                    </Button>
+                    <Button
+                        onClick={handleLink}
+                        disabled={loading || !email.trim()}
+                        className="bg-blue-600 hover:bg-blue-500 text-white"
+                    >
+                        {loading ? "連携中..." : "連携する"}
                     </Button>
                 </DialogFooter>
             </DialogContent>

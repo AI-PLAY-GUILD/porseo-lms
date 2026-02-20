@@ -120,8 +120,82 @@ export const createCustomer = action({
     },
 });
 
-// linkStripeCustomerByEmail has been removed due to security risks (CWE-285). 
-// See security_diagnosis_report.md for details.
+// Re-implemented with security: requires auth + email must match the logged-in user's email
+import { v } from "convex/values";
+
+export const linkStripeCustomerByEmail = action({
+    args: { email: v.string() },
+    handler: async (ctx, args): Promise<{ success: boolean; message: string }> => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Unauthenticated");
+        }
+
+        const user = await ctx.runQuery(api.users.getUserByClerkIdQuery, {
+            clerkId: identity.subject,
+        });
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        // Security: verify the email matches the authenticated user's email
+        const inputEmail = args.email.trim().toLowerCase();
+        const userEmail = (user.email || "").trim().toLowerCase();
+        if (inputEmail !== userEmail) {
+            throw new Error(
+                "入力されたメールアドレスがアカウントのメールアドレスと一致しません"
+            );
+        }
+
+        // Already linked
+        if (user.stripeCustomerId) {
+            return { success: true, message: "既にStripeアカウントと連携済みです" };
+        }
+
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+            apiVersion: "2025-12-15.clover",
+        });
+
+        // Search Stripe for existing customer
+        const existingCustomers = await stripe.customers.list({
+            email: inputEmail,
+            limit: 1,
+        });
+
+        if (existingCustomers.data.length === 0) {
+            return {
+                success: false,
+                message: "このメールアドレスに紐づくStripe顧客が見つかりませんでした",
+            };
+        }
+
+        const customerId = existingCustomers.data[0].id;
+
+        // Check for active subscription
+        const subscriptions = await stripe.subscriptions.list({
+            customer: customerId,
+            status: "active",
+            limit: 1,
+        });
+
+        await ctx.runMutation(internal.internal.setStripeCustomerId, {
+            userId: user._id,
+            stripeCustomerId: customerId,
+        });
+
+        if (subscriptions.data.length > 0) {
+            return {
+                success: true,
+                message: "Stripeアカウントと連携し、アクティブなサブスクリプションを確認しました！",
+            };
+        }
+
+        return {
+            success: true,
+            message: "Stripeアカウントと連携しました（アクティブなサブスクリプションはありません）",
+        };
+    },
+});
 
 // Security fix: Save Discord roles server-side only, return sync status (not raw role IDs)
 export const getDiscordRolesV2 = action({
