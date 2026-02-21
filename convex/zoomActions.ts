@@ -32,6 +32,7 @@ export const ingestToMux = internalAction({
 
         if (!tokenId || !tokenSecret) {
             console.error("MUX_TOKEN_ID or MUX_TOKEN_SECRET not set");
+            // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
             await ctx.runMutation((internal as any).zoom.updateVideoError, {
                 videoId: args.videoId,
                 error: "Mux credentials not configured",
@@ -43,6 +44,7 @@ export const ingestToMux = internalAction({
         const mp4BaseUrl = args.mp4DownloadUrl.split("?")[0];
         if (!isValidZoomUrl(mp4BaseUrl)) {
             console.error("Invalid MP4 URL domain in ingestToMux:", mp4BaseUrl);
+            // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
             await ctx.runMutation((internal as any).zoom.updateVideoError, {
                 videoId: args.videoId,
                 error: "Invalid MP4 download URL domain",
@@ -54,22 +56,28 @@ export const ingestToMux = internalAction({
             // 1. Create Mux asset from Zoom recording URL
             const mux = new Mux({ tokenId, tokenSecret });
 
-            const assetConfig: any = {
-                input: [{ url: args.mp4DownloadUrl }],
-                playback_policy: ["public"],
-            };
+            const inputEntry: {
+                url: string;
+                generated_subtitles?: Array<{ language_code: string; name: string }>;
+            } = { url: args.mp4DownloadUrl };
 
             // If no VTT provided, enable Mux auto-subtitles for Japanese
             if (!args.vttDownloadUrl) {
-                assetConfig.input[0].generated_subtitles = [
+                inputEntry.generated_subtitles = [
                     { language_code: "ja", name: "Japanese" },
                 ];
             }
+
+            const assetConfig = {
+                input: [inputEntry],
+                playback_policy: ["public" as const],
+            };
 
             const asset = await mux.video.assets.create(assetConfig);
             const playbackId = asset.playback_ids?.[0]?.id || "";
 
             // 2. Save Mux info to Convex
+            // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
             await ctx.runMutation((internal as any).zoom.updateVideoMuxInfo, {
                 videoId: args.videoId,
                 muxAssetId: asset.id,
@@ -88,6 +96,7 @@ export const ingestToMux = internalAction({
                     if (vttResponse.ok) {
                         const vttText = await vttResponse.text();
                         if (vttText && vttText.trim().length > 0) {
+                            // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
                             await ctx.runMutation((internal as any).zoom.updateVideoTranscription, {
                                 videoId: args.videoId,
                                 transcription: vttText,
@@ -96,6 +105,7 @@ export const ingestToMux = internalAction({
                             // 4. Schedule AI metadata generation
                             await ctx.scheduler.runAfter(
                                 30_000, // 30 seconds delay
+                                // biome-ignore lint/suspicious/noExplicitAny: zoomActions module not yet in generated API types
                                 (internal as any).zoomActions.processAiMetadata,
                                 {
                                     videoId: args.videoId,
@@ -111,6 +121,7 @@ export const ingestToMux = internalAction({
             }
         } catch (error) {
             console.error("Mux ingest failed:", error);
+            // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
             await ctx.runMutation((internal as any).zoom.updateVideoError, {
                 videoId: args.videoId,
                 error: `Mux ingest failed: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -174,7 +185,7 @@ ${args.transcription}
             });
 
             let responseText = "";
-            const textOrFunc = (response as any).text;
+            const textOrFunc = (response as Record<string, unknown>).text;
             if (typeof textOrFunc === "function") {
                 responseText = textOrFunc();
             } else if (textOrFunc) {

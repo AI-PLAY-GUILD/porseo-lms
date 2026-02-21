@@ -39,6 +39,7 @@ export async function POST(req: Request) {
         }
 
         // 1. Get user from Convex
+        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
         const user = await convex.query("users:getUserByClerkIdServer" as any, {
             clerkId: userId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
@@ -103,6 +104,7 @@ export async function POST(req: Request) {
 
         if (roles.includes(roleId)) {
             // 3. Update Subscription Status
+            // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
             await convex.mutation("users:updateSubscriptionStatus" as any, {
                 discordId: user.discordId,
                 subscriptionStatus: 'active',
@@ -114,9 +116,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ status: 'inactive' });
         }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         // Issue #56: Handle timeout errors
-        if (error.name === 'AbortError') {
+        if (error instanceof DOMException && error.name === 'AbortError') {
             return NextResponse.json({ error: 'External service timeout' }, { status: 504 });
         }
         console.error("Error checking subscription:", error);

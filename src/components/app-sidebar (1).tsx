@@ -120,8 +120,8 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
                                         <SidebarMenuButton asChild tooltip={item.title}>
                                             <a
                                                 href={item.url}
-                                                target={(item as any).external ? "_blank" : undefined}
-                                                rel={(item as any).external ? "noopener noreferrer" : undefined}
+                                                target={"external" in item && item.external ? "_blank" : undefined}
+                                                rel={"external" in item && item.external ? "noopener noreferrer" : undefined}
                                             >
                                                 <item.icon />
                                                 <span>{item.title}</span>

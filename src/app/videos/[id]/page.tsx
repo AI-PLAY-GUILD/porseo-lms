@@ -68,7 +68,7 @@ export default function VideoPage() {
     }
 
     const handleSeek = (time: number) => {
-        const videoEl = document.querySelector('mux-player') as any;
+        const videoEl = document.querySelector('mux-player') as (HTMLElement & { currentTime: number; play: () => void }) | null;
         if (videoEl) {
             videoEl.currentTime = time;
             videoEl.play();

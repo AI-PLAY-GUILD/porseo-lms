@@ -16,6 +16,7 @@ export async function POST(req: Request) {
         }
 
         // Get user from Convex to find Stripe Customer ID
+        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
         const user = await convex.query("users:getUserByClerkIdServer" as any, {
             clerkId: userId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json({ url: session.url });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error creating portal session:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }

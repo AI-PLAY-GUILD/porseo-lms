@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 
 // Input length limits
 const MAX_TITLE_LENGTH = 200;
@@ -111,7 +112,7 @@ export const getPublishedVideos = query({
 
         // Helper to strip sensitive data from videos the user can't access
         // Security fix (Issue #14): Hide muxPlaybackId for role-restricted videos
-        const sanitizeVideo = (video: any, hasAccess: boolean) => {
+        const sanitizeVideo = (video: Doc<"videos">, hasAccess: boolean) => {
             if (hasAccess) return video;
             // Return metadata only, hide playback info
             const { muxPlaybackId, muxAssetId, transcription, ...safe } = video;

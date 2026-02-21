@@ -128,8 +128,8 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
                     <SidebarMenuButton asChild tooltip={item.title} className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto">
                       <a
                         href={item.url}
-                        target={(item as any).external ? "_blank" : undefined}
-                        rel={(item as any).external ? "noopener noreferrer" : undefined}
+                        target={"external" in item && item.external ? "_blank" : undefined}
+                        rel={"external" in item && item.external ? "noopener noreferrer" : undefined}
                         className="flex items-center gap-3 font-bold"
                       >
                         <item.icon className="w-5 h-5" />

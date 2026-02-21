@@ -181,7 +181,7 @@ export default function UserAnalyticsPage() {
     );
 }
 
-function PopularContentTable({ dateArgs }: { dateArgs: any }) {
+function PopularContentTable({ dateArgs }: { dateArgs: { startDate?: number; endDate?: number } }) {
     const contentPerformance = useQuery(api.admin.getContentPerformance, dateArgs);
 
     if (!contentPerformance) {

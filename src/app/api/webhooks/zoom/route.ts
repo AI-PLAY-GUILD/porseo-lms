@@ -6,6 +6,17 @@ import { convex } from '@/lib/convex';
 const ZOOM_WEBHOOK_SECRET = process.env.ZOOM_WEBHOOK_SECRET_TOKEN;
 const TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000; // 5 minutes
 
+interface ZoomRecordingFile {
+    id?: string;
+    file_type?: string;
+    status?: string;
+    file_size?: number;
+    recording_type?: string;
+    download_url: string;
+    recording_start?: string;
+    recording_end?: string;
+}
+
 // Validate that download URLs are from Zoom domains (SSRF prevention)
 function isValidZoomUrl(url: string): boolean {
     try {
@@ -92,6 +103,7 @@ export async function POST(req: Request) {
 
     try {
         const alreadyProcessed = await convex.query(
+            // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
             "zoom:checkZoomEventProcessed" as any,
             { eventId, secret: process.env.CONVEX_INTERNAL_SECRET || "" }
         );
@@ -106,7 +118,7 @@ export async function POST(req: Request) {
     const { object } = payload.payload;
     const meetingId = String(object?.id || '');
     const meetingTopic = (object?.topic || 'Zoom Recording').slice(0, 200);
-    const recordingFiles = object?.recording_files || [];
+    const recordingFiles: ZoomRecordingFile[] = object?.recording_files || [];
     const downloadToken = payload.download_token;
 
     if (!downloadToken) {
@@ -116,12 +128,12 @@ export async function POST(req: Request) {
 
     // Select the largest MP4 file (best quality)
     const mp4File = recordingFiles
-        .filter((f: any) => f.file_type === 'MP4' && f.status === 'completed')
-        .sort((a: any, b: any) => (b.file_size || 0) - (a.file_size || 0))[0];
+        .filter((f: ZoomRecordingFile) => f.file_type === 'MP4' && f.status === 'completed')
+        .sort((a: ZoomRecordingFile, b: ZoomRecordingFile) => (b.file_size || 0) - (a.file_size || 0))[0];
 
     // VTT transcript file
     const vttFile = recordingFiles.find(
-        (f: any) => f.file_type === 'TRANSCRIPT' || f.recording_type === 'audio_transcript'
+        (f: ZoomRecordingFile) => f.file_type === 'TRANSCRIPT' || f.recording_type === 'audio_transcript'
     );
 
     if (!mp4File) {
@@ -152,6 +164,7 @@ export async function POST(req: Request) {
 
     // --- 6. Create draft video + mark event as processed (atomic in mutation) ---
     try {
+        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
         await convex.mutation("zoom:createZoomDraftVideo" as any, {
             meetingId,
             meetingTopic,
@@ -162,7 +175,7 @@ export async function POST(req: Request) {
             eventId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error creating Zoom draft video:', error);
         return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
     }

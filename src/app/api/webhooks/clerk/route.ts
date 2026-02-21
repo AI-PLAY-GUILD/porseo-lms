@@ -66,6 +66,7 @@ export async function POST(req: Request) {
         const name = `${first_name || ''} ${last_name || ''}`.trim() || 'Anonymous'
 
         try {
+            // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
             await convex.mutation("users:webhookSyncUser" as any, {
                 clerkId: id,
                 email: email,

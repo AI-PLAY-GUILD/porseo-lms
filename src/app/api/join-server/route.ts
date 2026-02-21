@@ -16,11 +16,11 @@ export async function POST(req: Request) {
             (acc) => acc.provider === 'oauth_discord' || acc.provider === 'discord'
         );
 
-        if (!discordAccount || !(discordAccount as any).providerUserId) {
+        if (!discordAccount || !discordAccount.externalId) {
             return NextResponse.json({ error: 'Discord account not linked' }, { status: 400 });
         }
 
-        const discordUserId = (discordAccount as any).providerUserId;
+        const discordUserId = discordAccount.externalId;
 
         // 2. Get Discord Access Token
         const response = await client.users.getUserOauthAccessToken(userId, 'oauth_discord');
@@ -71,9 +71,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Failed to join Discord server' }, { status: 502 });
         }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         // Issue #56: Handle timeout errors
-        if (error.name === 'AbortError') {
+        if (error instanceof DOMException && error.name === 'AbortError') {
             return NextResponse.json({ error: 'External service timeout' }, { status: 504 });
         }
         console.error("Error joining server:", error);

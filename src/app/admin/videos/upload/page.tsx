@@ -44,7 +44,7 @@ export default function VideoUploadPage() {
         }
     };
 
-    const handleUploadSuccess = (event: any) => {
+    const handleUploadSuccess = (_event: unknown) => {
         setUploadSuccess(true);
         setIsUploading(false);
     };

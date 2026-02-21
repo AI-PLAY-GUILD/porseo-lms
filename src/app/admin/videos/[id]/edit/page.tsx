@@ -458,9 +458,9 @@ export default function EditVideoPage() {
                                 }
 
                                 alert("AI分析が完了しました！");
-                            } catch (error: any) {
+                            } catch (error: unknown) {
                                 console.error(error);
-                                alert(`エラーが発生しました: ${error.message} `);
+                                alert(`エラーが発生しました: ${error instanceof Error ? error.message : String(error)} `);
                             } finally {
                                 setIsAnalyzing(false);
                             }
@@ -516,9 +516,9 @@ export default function EditVideoPage() {
 
                                 const result = await indexTranscription({ videoId });
                                 alert(`インデックス作成完了！(${result.chunksCreated} チャンク)`);
-                            } catch (error: any) {
+                            } catch (error: unknown) {
                                 console.error(error);
-                                alert(`エラー: ${error.message}`);
+                                alert(`エラー: ${error instanceof Error ? error.message : String(error)}`);
                             } finally {
                                 setIsIndexing(false);
                             }

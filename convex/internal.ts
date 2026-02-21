@@ -64,9 +64,9 @@ export const batchMigrateUsers = internalMutation({
                     });
                 }
                 results.success++;
-            } catch (error: any) {
+            } catch (error: unknown) {
                 results.failed++;
-                results.errors.push(`Failed to migrate ${user.email}: ${error.message}`);
+                results.errors.push(`Failed to migrate ${user.email}: ${error instanceof Error ? error.message : String(error)}`);
             }
         }
 

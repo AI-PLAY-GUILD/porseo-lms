@@ -35,6 +35,7 @@ export async function POST(req: Request) {
     }
 
     // サブスクリプション確認
+    // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
     const user = await convex.query("users:getUserByClerkIdQuery" as any, {
         clerkId: userId,
     });
@@ -68,32 +69,33 @@ export async function POST(req: Request) {
                         process.env.CONVEX_INTERNAL_SECRET || "";
                     try {
                         const results = await convex.action(
+                            // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
                             "rag:searchTranscriptions" as any,
                             { query, secret, limit: limit || 8 }
                         );
-                        if (!results || (results as any[]).length === 0) {
+                        if (!results || !Array.isArray(results) || results.length === 0) {
                             return {
-                                results: [] as any[],
+                                results: [] as Array<Record<string, unknown>>,
                                 message:
                                     "関連する動画が見つかりませんでした。",
                             };
                         }
                         return {
-                            results: (results as any[]).map((r: any) => ({
+                            results: (results as Array<Record<string, unknown>>).map((r: Record<string, unknown>) => ({
                                 videoTitle: r.videoTitle,
                                 videoId: r.videoId,
                                 muxPlaybackId: r.muxPlaybackId,
                                 text: r.text,
-                                startTime: Math.floor(r.startTime),
-                                endTime: Math.floor(r.endTime),
+                                startTime: Math.floor(r.startTime as number),
+                                endTime: Math.floor(r.endTime as number),
                                 relevanceScore: r.score,
                             })),
                         };
-                    } catch (error: any) {
+                    } catch (error: unknown) {
                         console.error("Video search error:", error);
                         return {
-                            results: [] as any[],
-                            error: `検索エラー: ${error.message}`,
+                            results: [] as Array<Record<string, unknown>>,
+                            error: `検索エラー: ${error instanceof Error ? error.message : String(error)}`,
                         };
                     }
                 },

@@ -100,7 +100,7 @@ export default function AllVideosPage() {
                                         <Card className="h-full overflow-hidden hover:shadow-none transition-all duration-300 hover:translate-x-1 hover:translate-y-1 border-4 border-black bg-white brutal-shadow rounded-xl">
                                             <div className="aspect-video bg-muted relative overflow-hidden border-b-4 border-black">
                                                 <img
-                                                    src={(video as any).thumbnailUrl || `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=640&height=360&fit_mode=smart`}
+                                                    src={video.thumbnailUrl || `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=640&height=360&fit_mode=smart`}
                                                     alt={video.title}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                 />
@@ -151,7 +151,7 @@ export default function AllVideosPage() {
                                     <Card className="h-full overflow-hidden hover:shadow-none transition-all duration-300 hover:translate-x-1 hover:translate-y-1 border-4 border-black bg-white brutal-shadow rounded-xl">
                                         <div className="aspect-video bg-muted relative overflow-hidden border-b-4 border-black">
                                             <img
-                                                src={(video as any).thumbnailUrl || `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=640&height=360&fit_mode=smart`}
+                                                src={video.thumbnailUrl || `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=640&height=360&fit_mode=smart`}
                                                 alt={video.title}
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                             />

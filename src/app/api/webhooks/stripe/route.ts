@@ -33,13 +33,14 @@ export async function POST(req: Request) {
             signature,
             process.env.STRIPE_WEBHOOK_SECRET
         );
-    } catch (error: any) {
-        console.error(`Webhook signature verification failed: ${error.message}`);
+    } catch (error: unknown) {
+        console.error(`Webhook signature verification failed: ${error instanceof Error ? error.message : String(error)}`);
         return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 });
     }
 
     // Idempotency check (Issue #53): Skip already-processed events
     try {
+        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
         const alreadyProcessed = await convex.query("users:checkStripeEventProcessed" as any, {
             eventId: event.id,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
@@ -71,13 +72,14 @@ export async function POST(req: Request) {
             default:
                 console.log(`Unhandled event type ${event.type}`);
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error(`Error handling event ${event.type}:`, error);
         return NextResponse.json({ error: 'Error handling event' }, { status: 500 });
     }
 
     // Mark event as processed (Issue #53)
     try {
+        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
         await convex.mutation("users:markStripeEventProcessed" as any, {
             eventId: event.id,
             eventType: event.type,
@@ -107,6 +109,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     // Security fix (Issue #48): Fetch discordId from DB instead of trusting metadata
     let discordId: string | undefined;
     try {
+        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
         const user = await convex.query("users:getUserByClerkIdServer" as any, {
             clerkId: clerkUserId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
@@ -130,6 +133,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     const lineItem = fullSession.line_items?.data[0];
     const subscriptionName = lineItem?.description || 'Premium Membership';
 
+    // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
     await convex.mutation("users:updateSubscriptionStatus" as any, {
         discordId,
         stripeCustomerId: customerId,
@@ -154,6 +158,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     if (!customerId) return;
 
     // Action: Update Convex DB
+    // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
     await convex.mutation("users:updateSubscriptionStatusByCustomerId" as any, {
         stripeCustomerId: customerId,
         subscriptionStatus: 'past_due',
@@ -162,6 +167,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
     // Issue #58: Send Discord DM to notify user about payment failure
     try {
+        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
         const user = await convex.query("users:getUserByStripeCustomerId" as any, {
             stripeCustomerId: customerId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
@@ -197,6 +203,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     if (!customerId) return;
 
     // Action: Update Convex DB
+    // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
     await convex.mutation("users:updateSubscriptionStatusByCustomerId" as any, {
         stripeCustomerId: customerId,
         subscriptionStatus: 'canceled',
@@ -206,6 +213,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     // Remove Discord Role using user's discordId from Convex
 
     try {
+        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
         const user = await convex.query("users:getUserByStripeCustomerId" as any, {
             stripeCustomerId: customerId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",

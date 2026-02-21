@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
         const user = await convex.query("users:getUserByClerkIdServer" as any, {
             clerkId: userId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest) {
                         name: "Japanese",
                     },
                 ],
+                // biome-ignore lint/suspicious/noExplicitAny: Mux SDK AssetOptions type does not include generated_subtitles on new_asset_settings
             } as any,
             cors_origin: allowedOrigin,
         };

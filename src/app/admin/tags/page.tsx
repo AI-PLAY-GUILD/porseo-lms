@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +28,7 @@ export default function TagsPage() {
         }
     };
 
-    const handleDelete = async (tagId: any) => {
+    const handleDelete = async (tagId: Id<"tags">) => {
         if (!confirm("このタグを削除しますか？")) return;
         try {
             await deleteTag({ tagId });

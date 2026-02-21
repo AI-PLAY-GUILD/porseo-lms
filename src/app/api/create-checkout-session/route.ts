@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { convex } from '@/lib/convex';
 import { auth } from '@clerk/nextjs/server';
+import type Stripe from 'stripe';
 
 export async function POST(req: Request) {
     try {
@@ -20,6 +21,7 @@ export async function POST(req: Request) {
         let discordId: string | undefined;
 
         try {
+            // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
             const user = await convex.query("users:getUserByClerkIdServer" as any, {
                 clerkId: userId,
                 secret: process.env.CONVEX_INTERNAL_SECRET || "",
@@ -37,7 +39,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Discord account not linked. Please link your account first.' }, { status: 400 });
         }
 
-        const sessionParams: any = {
+        const sessionParams: Stripe.Checkout.SessionCreateParams = {
             payment_method_types: ['card'],
             line_items: [
                 {
@@ -52,16 +54,13 @@ export async function POST(req: Request) {
                 discordId: discordId, // Use trusted Discord ID from DB
                 userId: userId || '',
             },
+            ...(stripeCustomerId ? { customer: stripeCustomerId } : {}),
         };
-
-        if (stripeCustomerId) {
-            sessionParams.customer = stripeCustomerId;
-        }
 
         const session = await stripe.checkout.sessions.create(sessionParams);
 
         return NextResponse.json({ url: session.url });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error creating checkout session:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }

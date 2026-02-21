@@ -21,6 +21,7 @@ async function main() {
         console.log(`Migrating batch ${i / BATCH_SIZE + 1} (${batch.length} users)...`);
 
         try {
+            // biome-ignore lint/suspicious/noExplicitAny: Convex API type - migration_action is dynamically registered and not in generated types
             await client.action((api as any).migration_action.runBatchMigrate, { users: batch });
             console.log(`Batch ${i / BATCH_SIZE + 1} complete.`);
         } catch (e) {

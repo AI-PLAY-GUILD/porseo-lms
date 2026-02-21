@@ -1,11 +1,13 @@
 import { mutation, query, internalMutation } from "./_generated/server";
+import type { MutationCtx, DatabaseReader } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { safeCompare } from "./lib/safeCompare";
 
 // Issue #59: Audit log helper — records user mutations for compliance
 async function writeAuditLog(
-    ctx: any,
-    userId: any,
+    ctx: MutationCtx,
+    userId: Id<"users">,
     action: string,
     targetType: string,
     targetId?: string,
@@ -156,10 +158,10 @@ export const checkAccess = query({
     },
 });
 
-export const getUserByClerkId = async (ctx: any, clerkId: string) => {
+export const getUserByClerkId = async (ctx: { db: DatabaseReader }, clerkId: string) => {
     return await ctx.db
         .query("users")
-        .withIndex("by_clerk_id", (q: any) => q.eq("clerkId", clerkId))
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkId))
         .first();
 };
 // Server-to-server query: Clerk IDでユーザーを取得（ConvexHttpClientから呼び出し用）
@@ -230,7 +232,13 @@ export const updateSubscriptionStatus = mutation({
             newRoles = [...newRoles, args.roleId];
         }
 
-        const patchData: any = {
+        const patchData: {
+            subscriptionStatus: string;
+            discordRoles: string[];
+            updatedAt: number;
+            subscriptionName?: string;
+            stripeCustomerId?: string;
+        } = {
             subscriptionStatus: args.subscriptionStatus,
             discordRoles: newRoles,
             updatedAt: Date.now(),

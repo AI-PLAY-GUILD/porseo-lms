@@ -19,6 +19,7 @@ export async function POST(req: Request) {
         }
 
         // 1. Get user from Convex to check subscription and Discord ID
+        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
         const user = await convex.query("users:getUserByClerkIdServer" as any, {
             clerkId: userId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
@@ -41,10 +42,11 @@ export async function POST(req: Request) {
             try {
                 await rest.put(Routes.guildMemberRole(guildId, user.discordId, roleId));
                 return NextResponse.json({ success: true });
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error('Failed to add Discord role:', error);
                 // 404 means user is not in the server
-                if (error.status === 404) {
+                const status = error instanceof Error && 'status' in error ? (error as { status: number }).status : undefined;
+                if (status === 404) {
                     return NextResponse.json({ error: 'User not in Discord server. Please join first.' }, { status: 404 });
                 }
                 return NextResponse.json({ error: 'Failed to assign role' }, { status: 500 });
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Discord configuration missing' }, { status: 500 });
         }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error syncing role:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }

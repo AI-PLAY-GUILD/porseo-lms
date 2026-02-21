@@ -1,9 +1,10 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import type { QueryCtx } from "./_generated/server";
 import { getUserByClerkId } from "./users";
 
 // Helper to check if user is admin
-async function checkAdmin(ctx: any) {
+async function checkAdmin(ctx: QueryCtx) {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
         throw new Error("Unauthorized");

@@ -39,8 +39,8 @@ export function StripeLinkModal() {
             } else {
                 toast.error(result.message);
             }
-        } catch (error: any) {
-            toast.error(error.message || "連携中にエラーが発生しました");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "連携中にエラーが発生しました");
         } finally {
             setLoading(false);
         }

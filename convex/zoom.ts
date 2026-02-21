@@ -94,6 +94,7 @@ export const createZoomDraftVideo = mutation({
         });
 
         // Schedule async Mux ingestion
+        // biome-ignore lint/suspicious/noExplicitAny: zoomActions module not yet in generated API types
         await ctx.scheduler.runAfter(0, (internal as any).zoomActions.ingestToMux, {
             videoId,
             mp4DownloadUrl: args.mp4DownloadUrl,

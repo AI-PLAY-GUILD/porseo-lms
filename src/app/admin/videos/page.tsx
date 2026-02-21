@@ -87,12 +87,12 @@ function VideoList() {
                                     <a href={`/videos/${video._id}`} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
                                         {video.title}
                                     </a>
-                                    {(video as any).source === "zoom" && (
+                                    {video.source === "zoom" && (
                                         <Badge variant="outline" className="text-xs border-blue-500 text-blue-600">
                                             Zoom
                                         </Badge>
                                     )}
-                                    {!(video as any).muxAssetId && (
+                                    {!video.muxAssetId && (
                                         <Badge variant="outline" className="text-xs border-orange-400 text-orange-500">
                                             処理中...
                                         </Badge>

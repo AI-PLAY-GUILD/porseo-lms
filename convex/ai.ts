@@ -93,7 +93,7 @@ ${subtitleText}
             let responseText = "";
 
             // 3. レスポンスの取得 (修正ポイント: 関数として呼び出す)
-            const textOrFunc = (response as any).text;
+            const textOrFunc = (response as Record<string, unknown>).text;
             if (typeof textOrFunc === 'function') {
                 responseText = textOrFunc();
             } else if (textOrFunc) {
@@ -142,13 +142,13 @@ ${subtitleText}
 
             return aiData;
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Gemini API Error:", error);
             // エラー時もJSON構造を保って返す
             return {
                 summary: "",
                 chapters: [],
-                error: `AI分析中にエラーが発生しました: ${error.message || "Unknown error"}`,
+                error: `AI分析中にエラーが発生しました: ${error instanceof Error ? error.message : "Unknown error"}`,
             };
         }
     },
