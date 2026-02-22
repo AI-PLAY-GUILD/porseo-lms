@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import AdminLayoutClient from "./AdminLayoutClient";
 
 export const metadata: Metadata = {
-    title: "管理者コンソール | AI PLAY GUILD",
+    title: "プロフィール | AI PLAY GUILD",
 };
 
 export default function Layout({
@@ -10,5 +9,5 @@ export default function Layout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    return <AdminLayoutClient>{children}</AdminLayoutClient>;
+    return <>{children}</>;
 }
