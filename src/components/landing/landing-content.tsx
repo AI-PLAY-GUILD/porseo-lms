@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Video, Code, Users, Calendar, Sparkles } from "lucide-react";
+import { BookOpen, Calendar, Code, Sparkles, Users, Video } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 const contentItems = [
@@ -9,35 +9,35 @@ const contentItems = [
         description: "体系的に学べる動画講座。基礎から応用まで、自分のペースで学習できます。",
         icon: Video,
         className: "md:col-span-2 md:row-span-2",
-        bg: "bg-gradient-to-br from-blue-500/20 to-violet-500/20"
+        bg: "bg-gradient-to-br from-blue-500/20 to-violet-500/20",
     },
     {
         title: "Hands-on Workshops",
         description: "週末開催のハンズオン。実際に手を動かしながら技術を習得します。",
         icon: Calendar,
         className: "md:col-span-1 md:row-span-1",
-        bg: "bg-white/5"
+        bg: "bg-white/5",
     },
     {
         title: "Project Reviews",
         description: "プロのエンジニアによるコードレビュー。実践的なフィードバックが得られます。",
         icon: Code,
         className: "md:col-span-1 md:row-span-1",
-        bg: "bg-white/5"
+        bg: "bg-white/5",
     },
     {
         title: "Tech Articles",
         description: "最新技術の解説記事。深い洞察と技術的な詳細を学べます。",
         icon: BookOpen,
         className: "md:col-span-1 md:row-span-1",
-        bg: "bg-white/5"
+        bg: "bg-white/5",
     },
     {
         title: "Community Events",
         description: "LT会やハッカソンなど、メンバー同士が交流できるイベントを定期開催。",
         icon: Users,
         className: "md:col-span-1 md:row-span-1",
-        bg: "bg-white/5"
+        bg: "bg-white/5",
     },
     {
         id: "showcase",
@@ -45,8 +45,8 @@ const contentItems = [
         description: "活気あふれるコミュニティの様子",
         icon: Sparkles,
         className: "md:col-span-2 md:row-span-1",
-        bg: "bg-gradient-to-r from-fuchsia-500/20 to-purple-500/20"
-    }
+        bg: "bg-gradient-to-r from-fuchsia-500/20 to-purple-500/20",
+    },
 ];
 
 const showcaseImages = [
@@ -116,7 +116,7 @@ export function LandingContent() {
                                         className="scroller relative flex-1 w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_10%,white_90%,transparent)]"
                                     >
                                         <div className="scroller-inner flex gap-4 py-2 w-max animate-scroll">
-                                            {showcaseImages.map((src, idx) => (
+                                            {showcaseImages.map((_src, idx) => (
                                                 <div
                                                     key={idx}
                                                     className="relative w-[120px] h-[80px] rounded-lg overflow-hidden border border-white/10 bg-gray-800 shrink-0"
@@ -137,9 +137,7 @@ export function LandingContent() {
                                             <item.icon className="w-5 h-5 text-white" />
                                         </div>
                                         <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
-                                        <p className="text-gray-400 text-sm leading-relaxed">
-                                            {item.description}
-                                        </p>
+                                        <p className="text-gray-400 text-sm leading-relaxed">{item.description}</p>
                                     </div>
                                 </div>
                             )}

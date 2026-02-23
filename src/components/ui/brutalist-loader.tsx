@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function BrutalistLoader() {
     return (
         <div className="flex flex-col items-center justify-center gap-8 p-8">
@@ -10,9 +8,7 @@ export function BrutalistLoader() {
                     <div className="w-8 h-8 bg-pop-purple border-2 border-black brutal-shadow-sm rotate-45"></div>
                 </div>
             </div>
-            <div className="text-xl font-black tracking-widest animate-pulse">
-                NOW LOADING...
-            </div>
+            <div className="text-xl font-black tracking-widest animate-pulse">NOW LOADING...</div>
         </div>
     );
 }

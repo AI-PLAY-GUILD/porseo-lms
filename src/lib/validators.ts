@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import type { z } from "zod";
 
 /**
  * Issue #55: Validate request body against a Zod schema.
@@ -7,16 +7,13 @@ import { NextResponse } from 'next/server';
  */
 export function validateBody<T>(
     schema: z.ZodSchema<T>,
-    body: unknown
+    body: unknown,
 ): { success: true; data: T } | { success: false; response: NextResponse } {
     const result = schema.safeParse(body);
     if (!result.success) {
         return {
             success: false,
-            response: NextResponse.json(
-                { error: 'Invalid request body' },
-                { status: 400 }
-            ),
+            response: NextResponse.json({ error: "Invalid request body" }, { status: 400 }),
         };
     }
     return { success: true, data: result.data };

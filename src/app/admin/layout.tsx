@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-
-import { AdminSidebar } from "@/components/admin-sidebar";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { AdminSidebar } from "@/components/admin-sidebar";
 import { BrutalistLoader } from "@/components/ui/brutalist-loader";
+import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { api } from "../../../convex/_generated/api";
 
 export default function AdminLayout({
     children,
@@ -39,7 +37,9 @@ export default function AdminLayout({
 
     return (
         <SidebarProvider>
-            <AdminSidebar user={userData ? { name: userData.name, email: userData.email, avatar: userData.imageUrl } : undefined} />
+            <AdminSidebar
+                user={userData ? { name: userData.name, email: userData.email, avatar: userData.imageUrl } : undefined}
+            />
             <SidebarInset className="bg-cream">
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 w-full bg-cream px-4 border-b-2 border-black">
                     <div className="flex items-center gap-2">
@@ -48,9 +48,7 @@ export default function AdminLayout({
                         <span className="font-black text-black">管理者コンソール</span>
                     </div>
                 </header>
-                <div className="flex flex-1 flex-col gap-6 p-6 pt-6">
-                    {children}
-                </div>
+                <div className="flex flex-1 flex-col gap-6 p-6 pt-6">{children}</div>
             </SidebarInset>
         </SidebarProvider>
     );

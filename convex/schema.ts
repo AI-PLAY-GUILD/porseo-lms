@@ -36,8 +36,8 @@ export default defineSchema({
                     title: v.string(),
                     startTime: v.number(),
                     description: v.optional(v.string()),
-                })
-            )
+                }),
+            ),
         ),
         requiredRoles: v.optional(v.array(v.string())),
         duration: v.optional(v.number()),

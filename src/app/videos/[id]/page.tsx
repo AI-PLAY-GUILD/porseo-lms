@@ -1,21 +1,19 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
-import { useRef } from "react";
 import { SignOutButton } from "@clerk/nextjs";
-import { api } from "../../../../convex/_generated/api";
-import { useParams } from "next/navigation";
-import Link from "next/link";
 import MuxPlayer from "@mux/mux-player-react";
-import { Id } from "../../../../convex/_generated/dataModel";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useMutation, useQuery } from "convex/react";
+import { ArrowLeft, Calendar, FileText, LogOut } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useRef } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Calendar, FileText, List, LogOut } from "lucide-react";
 import { BrutalistLoader } from "@/components/ui/brutalist-loader";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 
 export default function VideoPage() {
     const params = useParams();
@@ -58,9 +56,7 @@ export default function VideoPage() {
                         <CardTitle className="text-destructive">アクセス権限がありません</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">
-                            この動画を視聴するには、特定のDiscordロールが必要です。
-                        </p>
+                        <p className="text-muted-foreground">この動画を視聴するには、特定のDiscordロールが必要です。</p>
                     </CardContent>
                 </Card>
             </div>
@@ -68,11 +64,13 @@ export default function VideoPage() {
     }
 
     const handleSeek = (time: number) => {
-        const videoEl = document.querySelector('mux-player') as (HTMLElement & { currentTime: number; play: () => void }) | null;
+        const videoEl = document.querySelector("mux-player") as
+            | (HTMLElement & { currentTime: number; play: () => void })
+            | null;
         if (videoEl) {
             videoEl.currentTime = time;
             videoEl.play();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: "smooth" });
         }
     };
 
@@ -88,7 +86,11 @@ export default function VideoPage() {
                         </Link>
                     </Button>
                     <SignOutButton>
-                        <Button variant="outline" size="sm" className="font-bold border-2 border-black bg-white hover:bg-gray-100 brutal-shadow-sm">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="font-bold border-2 border-black bg-white hover:bg-gray-100 brutal-shadow-sm"
+                        >
                             <LogOut className="mr-2 h-4 w-4" />
                             ログアウト
                         </Button>
@@ -136,14 +138,16 @@ export default function VideoPage() {
                             const now = Date.now();
                             if (lastLoggedTimeRef.current > 0) {
                                 const diff = (now - lastLoggedTimeRef.current) / 1000 / 60; // minutes
-                                if (diff > 0 && diff < 1) { // Ignore large jumps (e.g. pause/resume after long time)
+                                if (diff > 0 && diff < 1) {
+                                    // Ignore large jumps (e.g. pause/resume after long time)
                                     accumulatedTimeRef.current += diff;
                                 }
                             }
                             lastLoggedTimeRef.current = now;
 
                             // Sync to server every 30 seconds or if accumulated > 1 minute
-                            if (accumulatedTimeRef.current >= 0.5) { // 30 seconds
+                            if (accumulatedTimeRef.current >= 0.5) {
+                                // 30 seconds
                                 logLearningTime({ minutesWatched: accumulatedTimeRef.current });
                                 accumulatedTimeRef.current = 0;
                             }
@@ -172,7 +176,6 @@ export default function VideoPage() {
                             }
                             lastLoggedTimeRef.current = 0;
                         }}
-
                     />
                 </div>
             </Card>
@@ -201,22 +204,16 @@ export default function VideoPage() {
                         <CardContent className="space-y-8 pt-6">
                             {video.summary && (
                                 <div className="space-y-3">
-                                    <h3 className="font-semibold flex items-center gap-2">
-                                        要約
-                                    </h3>
+                                    <h3 className="font-semibold flex items-center gap-2">要約</h3>
                                     <div className="bg-background/50 p-4 rounded-lg border border-border/50">
-                                        <p className="text-muted-foreground leading-relaxed">
-                                            {video.summary}
-                                        </p>
+                                        <p className="text-muted-foreground leading-relaxed">{video.summary}</p>
                                     </div>
                                 </div>
                             )}
 
                             {video.chapters && video.chapters.length > 0 && (
                                 <div className="space-y-3">
-                                    <h3 className="font-semibold flex items-center gap-2">
-                                        チャプター
-                                    </h3>
+                                    <h3 className="font-semibold flex items-center gap-2">チャプター</h3>
                                     <div className="bg-background/50 rounded-lg border border-border/50 overflow-hidden">
                                         <ScrollArea className="h-[300px]">
                                             <div className="p-2 space-y-1">
@@ -227,8 +224,13 @@ export default function VideoPage() {
                                                         className="w-full text-left group hover:bg-accent rounded-lg p-2 transition-colors duration-200"
                                                     >
                                                         <div className="flex items-start gap-3">
-                                                            <Badge variant="secondary" className="font-mono shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                                                                {new Date(chapter.startTime * 1000).toISOString().substr(11, 8)}
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="font-mono shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                                                            >
+                                                                {new Date(chapter.startTime * 1000)
+                                                                    .toISOString()
+                                                                    .substr(11, 8)}
                                                             </Badge>
                                                             <div className="space-y-1">
                                                                 <p className="font-medium text-sm leading-none group-hover:text-primary transition-colors">

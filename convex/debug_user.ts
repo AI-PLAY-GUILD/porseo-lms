@@ -1,4 +1,3 @@
-
 import { query } from "./_generated/server";
 import { getUserByClerkId } from "./users";
 

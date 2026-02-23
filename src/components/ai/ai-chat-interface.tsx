@@ -2,10 +2,10 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useRef, useEffect, useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Send, Square, Bot, User, Sparkles } from "lucide-react";
+import { Bot, Send, Sparkles, Square, User } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { Button } from "@/components/ui/button";
 
 const SUGGESTIONS = [
     "最新の動画について教えて",
@@ -23,10 +23,7 @@ function getMessageText(message: { parts?: Array<{ type: string; text?: string }
 }
 
 export function AiChatInterface() {
-    const transport = useMemo(
-        () => new DefaultChatTransport({ api: "/api/chat" }),
-        []
-    );
+    const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
 
     const { messages, sendMessage, stop, status } = useChat({ transport });
 
@@ -39,7 +36,7 @@ export function AiChatInterface() {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, []);
 
     useEffect(() => {
         inputRef.current?.focus();
@@ -67,19 +64,14 @@ export function AiChatInterface() {
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)]">
             {/* Messages Area */}
-            <div
-                ref={scrollRef}
-                className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4"
-            >
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
                 {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full gap-6">
                         <div className="w-20 h-20 rounded-2xl bg-pop-purple border-3 border-black brutal-shadow flex items-center justify-center">
                             <Sparkles className="w-10 h-10 text-white" />
                         </div>
                         <div className="text-center max-w-md">
-                            <h2 className="text-2xl font-black text-black mb-2">
-                                学習アシスタント
-                            </h2>
+                            <h2 className="text-2xl font-black text-black mb-2">学習アシスタント</h2>
                             <p className="text-gray-600 font-bold text-sm">
                                 動画コンテンツの内容について質問してみましょう。
                                 AIが最適な動画とタイムスタンプを提案します。
@@ -89,9 +81,7 @@ export function AiChatInterface() {
                             {SUGGESTIONS.map((suggestion) => (
                                 <button
                                     key={suggestion}
-                                    onClick={() =>
-                                        handleSuggestionClick(suggestion)
-                                    }
+                                    onClick={() => handleSuggestionClick(suggestion)}
                                     className="text-left px-4 py-3 rounded-xl border-2 border-black bg-white hover:bg-pop-yellow/30 hover:translate-y-[-2px] transition-all duration-200 brutal-shadow-sm font-bold text-sm text-black"
                                 >
                                     {suggestion}
@@ -106,11 +96,7 @@ export function AiChatInterface() {
                         return (
                             <div
                                 key={message.id}
-                                className={`flex gap-3 ${
-                                    message.role === "user"
-                                        ? "justify-end"
-                                        : "justify-start"
-                                }`}
+                                className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                             >
                                 {message.role === "assistant" && (
                                     <div className="w-8 h-8 rounded-lg bg-pop-purple border-2 border-black brutal-shadow-sm flex items-center justify-center shrink-0 mt-1">
@@ -137,26 +123,23 @@ export function AiChatInterface() {
                         );
                     })
                 )}
-                {isLoading &&
-                    messages[messages.length - 1]?.role !== "assistant" && (
-                        <div className="flex gap-3 justify-start">
-                            <div className="w-8 h-8 rounded-lg bg-pop-purple border-2 border-black brutal-shadow-sm flex items-center justify-center shrink-0">
-                                <Bot className="w-4 h-4 text-white" />
-                            </div>
-                            <div className="rounded-xl px-4 py-3 border-2 border-black bg-white brutal-shadow-sm">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex gap-1">
-                                        <span className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:0ms]" />
-                                        <span className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:150ms]" />
-                                        <span className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:300ms]" />
-                                    </div>
-                                    <span className="text-sm font-bold text-gray-500">
-                                        検索中...
-                                    </span>
+                {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
+                    <div className="flex gap-3 justify-start">
+                        <div className="w-8 h-8 rounded-lg bg-pop-purple border-2 border-black brutal-shadow-sm flex items-center justify-center shrink-0">
+                            <Bot className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="rounded-xl px-4 py-3 border-2 border-black bg-white brutal-shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <div className="flex gap-1">
+                                    <span className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:0ms]" />
+                                    <span className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:150ms]" />
+                                    <span className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:300ms]" />
                                 </div>
+                                <span className="text-sm font-bold text-gray-500">検索中...</span>
                             </div>
                         </div>
-                    )}
+                    </div>
+                )}
             </div>
 
             {/* Input Area */}

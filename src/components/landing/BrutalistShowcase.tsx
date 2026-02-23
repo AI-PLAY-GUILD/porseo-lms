@@ -1,11 +1,11 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
 import { PlayCircle } from "lucide-react";
-import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Image from "next/image";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { WaveButton } from "@/components/ui/wave-button";
+import { api } from "../../../convex/_generated/api";
 
 export function BrutalistShowcase() {
     const videos = useQuery(api.videos.getPublishedVideos);
@@ -27,11 +27,15 @@ export function BrutalistShowcase() {
                     {/* Content Column - Now full width but constrained by max-width for readability if needed, 
                         or allowed to overlap with the background image as per request "文字も被ってよく" */}
                     <div className="w-full lg:w-2/3 text-left lg:pl-32">
-                        <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-black tracking-tighter mb-6 leading-tight" style={{ fontFamily: 'var(--font-jp)' }}>
+                        <h2
+                            className="text-3xl sm:text-5xl md:text-6xl font-black text-black tracking-tighter mb-6 leading-tight"
+                            style={{ fontFamily: "var(--font-jp)" }}
+                        >
                             豊富な講座アーカイブ
                         </h2>
                         <p className="text-lg sm:text-xl font-bold text-black mb-8 max-w-2xl">
-                            過去のハンズオン動画が見放題！<br />
+                            過去のハンズオン動画が見放題！
+                            <br />
                             見ながらすぐに実践して、AIを遊び倒そう！
                         </p>
 
@@ -48,7 +52,9 @@ export function BrutalistShowcase() {
                                 </DialogTrigger>
                                 <DialogContent className="w-[95vw] md:w-full max-w-5xl max-h-[85vh] overflow-y-auto bg-[#FFFDF5] border-4 border-black p-5 sm:p-10 rounded-2xl sm:rounded-3xl focus:outline-none">
                                     <DialogHeader>
-                                        <DialogTitle className="text-2xl sm:text-3xl font-black mb-6 border-b-4 border-black pb-4 inline-block">アーカイブ例</DialogTitle>
+                                        <DialogTitle className="text-2xl sm:text-3xl font-black mb-6 border-b-4 border-black pb-4 inline-block">
+                                            アーカイブ例
+                                        </DialogTitle>
                                     </DialogHeader>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -56,7 +62,10 @@ export function BrutalistShowcase() {
                                             <div key={video._id} className="group relative cursor-pointer">
                                                 <div className="bg-white rounded-xl border-4 border-black overflow-hidden aspect-video relative brutal-shadow group-hover:translate-x-1 group-hover:translate-y-1 group-hover:shadow-none transition-all duration-200">
                                                     <img
-                                                        src={video.thumbnailUrl || `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=400&height=225&fit_mode=smart`}
+                                                        src={
+                                                            video.thumbnailUrl ||
+                                                            `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=400&height=225&fit_mode=smart`
+                                                        }
                                                         alt={video.title}
                                                         className="w-full h-full object-cover"
                                                     />

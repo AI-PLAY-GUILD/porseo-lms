@@ -1,7 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
+import { internalMutation, mutation, query } from "./_generated/server";
 
 // Input length limits
 const MAX_TITLE_LENGTH = 200;
@@ -24,8 +24,10 @@ export const createVideo = mutation({
         if (!identity) throw new Error("Unauthorized");
 
         // Input length validation
-        if (args.title.length > MAX_TITLE_LENGTH) throw new Error(`Title must be ${MAX_TITLE_LENGTH} characters or less`);
-        if (args.description && args.description.length > MAX_DESCRIPTION_LENGTH) throw new Error(`Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`);
+        if (args.title.length > MAX_TITLE_LENGTH)
+            throw new Error(`Title must be ${MAX_TITLE_LENGTH} characters or less`);
+        if (args.description && args.description.length > MAX_DESCRIPTION_LENGTH)
+            throw new Error(`Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`);
 
         const user = await ctx.db
             .query("users")
@@ -78,19 +80,19 @@ export const getVideos = query({
         const videos = await ctx.db.query("videos").order("desc").collect();
         const progress = await ctx.db.query("videoProgress").collect();
 
-        return await Promise.all(videos.map(async (video) => {
-            const tags = video.tags
-                ? await Promise.all(video.tags.map((tagId) => ctx.db.get(tagId)))
-                : [];
+        return await Promise.all(
+            videos.map(async (video) => {
+                const tags = video.tags ? await Promise.all(video.tags.map((tagId) => ctx.db.get(tagId))) : [];
 
-            const views = progress.filter(p => p.videoId === video._id).length;
+                const views = progress.filter((p) => p.videoId === video._id).length;
 
-            return {
-                ...video,
-                tags: tags.filter((t) => t !== null),
-                views,
-            };
-        }));
+                return {
+                    ...video,
+                    tags: tags.filter((t) => t !== null),
+                    views,
+                };
+            }),
+        );
     },
 });
 
@@ -122,14 +124,16 @@ export const getPublishedVideos = query({
 
         // 2. If not logged in, return videos but hide role-restricted content
         if (!identity) {
-            return await Promise.all(videos.map(async (v) => {
-                const hasAccess = !v.requiredRoles || v.requiredRoles.length === 0;
-                return {
-                    ...sanitizeVideo(v, hasAccess),
-                    userProgress: null,
-                    thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId)
-                };
-            }));
+            return await Promise.all(
+                videos.map(async (v) => {
+                    const hasAccess = !v.requiredRoles || v.requiredRoles.length === 0;
+                    return {
+                        ...sanitizeVideo(v, hasAccess),
+                        userProgress: null,
+                        thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId),
+                    };
+                }),
+            );
         }
 
         const user = await ctx.db
@@ -138,14 +142,16 @@ export const getPublishedVideos = query({
             .first();
 
         if (!user) {
-            return await Promise.all(videos.map(async (v) => {
-                const hasAccess = !v.requiredRoles || v.requiredRoles.length === 0;
-                return {
-                    ...sanitizeVideo(v, hasAccess),
-                    userProgress: null,
-                    thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId)
-                };
-            }));
+            return await Promise.all(
+                videos.map(async (v) => {
+                    const hasAccess = !v.requiredRoles || v.requiredRoles.length === 0;
+                    return {
+                        ...sanitizeVideo(v, hasAccess),
+                        userProgress: null,
+                        thumbnailUrl: await resolveThumbnail(v.customThumbnailStorageId),
+                    };
+                }),
+            );
         }
 
         // 3. Get user's progress for all videos
@@ -154,24 +160,28 @@ export const getPublishedVideos = query({
             .withIndex("by_user_id", (q) => q.eq("userId", user._id))
             .collect();
 
-        const progressMap = new Map(progressRecords.map(p => [p.videoId, p]));
+        const progressMap = new Map(progressRecords.map((p) => [p.videoId, p]));
 
         // 4. Merge progress, resolve thumbnail, and check role access
-        return await Promise.all(videos.map(async (video) => {
-            const thumbnailUrl = await resolveThumbnail(video.customThumbnailStorageId);
+        return await Promise.all(
+            videos.map(async (video) => {
+                const thumbnailUrl = await resolveThumbnail(video.customThumbnailStorageId);
 
-            // Admin can see everything
-            const isAdmin = user.isAdmin;
-            const hasRequiredRole = !video.requiredRoles || video.requiredRoles.length === 0 ||
-                video.requiredRoles.some((role: string) => user.discordRoles?.includes(role));
-            const hasAccess = isAdmin || hasRequiredRole;
+                // Admin can see everything
+                const isAdmin = user.isAdmin;
+                const hasRequiredRole =
+                    !video.requiredRoles ||
+                    video.requiredRoles.length === 0 ||
+                    video.requiredRoles.some((role: string) => user.discordRoles?.includes(role));
+                const hasAccess = isAdmin || hasRequiredRole;
 
-            return {
-                ...sanitizeVideo(video, hasAccess),
-                userProgress: progressMap.get(video._id) || null,
-                thumbnailUrl
-            };
-        }));
+                return {
+                    ...sanitizeVideo(video, hasAccess),
+                    userProgress: progressMap.get(video._id) || null,
+                    thumbnailUrl,
+                };
+            }),
+        );
     },
 });
 
@@ -190,7 +200,7 @@ export const getById = query({
                 .query("users")
                 .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
                 .first();
-            if (user && user.isAdmin) {
+            if (user?.isAdmin) {
                 isAdmin = true;
             }
 
@@ -204,9 +214,7 @@ export const getById = query({
                 // 2. Role check
                 if (video.requiredRoles && video.requiredRoles.length > 0) {
                     if (!user) return null; // Logged in but no user record?!
-                    const hasRequiredRole = video.requiredRoles.some(role =>
-                        user.discordRoles?.includes(role)
-                    );
+                    const hasRequiredRole = video.requiredRoles.some((role) => user.discordRoles?.includes(role));
                     if (!hasRequiredRole) {
                         return null; // Hide the video completely or return metadata only if needed (for now, safe default is null)
                     }
@@ -270,8 +278,8 @@ export const updateVideo = mutation({
                     title: v.string(),
                     startTime: v.number(),
                     description: v.optional(v.string()),
-                })
-            )
+                }),
+            ),
         ),
     },
     handler: async (ctx, args) => {
@@ -279,10 +287,14 @@ export const updateVideo = mutation({
         if (!identity) throw new Error("Unauthorized");
 
         // Input length validation
-        if (args.title && args.title.length > MAX_TITLE_LENGTH) throw new Error(`Title must be ${MAX_TITLE_LENGTH} characters or less`);
-        if (args.description && args.description.length > MAX_DESCRIPTION_LENGTH) throw new Error(`Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`);
-        if (args.summary && args.summary.length > MAX_SUMMARY_LENGTH) throw new Error(`Summary must be ${MAX_SUMMARY_LENGTH} characters or less`);
-        if (args.transcription && args.transcription.length > MAX_TRANSCRIPTION_LENGTH) throw new Error(`Transcription must be ${MAX_TRANSCRIPTION_LENGTH} characters or less`);
+        if (args.title && args.title.length > MAX_TITLE_LENGTH)
+            throw new Error(`Title must be ${MAX_TITLE_LENGTH} characters or less`);
+        if (args.description && args.description.length > MAX_DESCRIPTION_LENGTH)
+            throw new Error(`Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`);
+        if (args.summary && args.summary.length > MAX_SUMMARY_LENGTH)
+            throw new Error(`Summary must be ${MAX_SUMMARY_LENGTH} characters or less`);
+        if (args.transcription && args.transcription.length > MAX_TRANSCRIPTION_LENGTH)
+            throw new Error(`Transcription must be ${MAX_TRANSCRIPTION_LENGTH} characters or less`);
 
         const user = await ctx.db
             .query("users")
@@ -324,7 +336,7 @@ export const updateVideoAiMetadata = internalMutation({
                 title: v.string(),
                 startTime: v.number(),
                 description: v.optional(v.string()),
-            })
+            }),
         ),
     },
     handler: async (ctx, args) => {

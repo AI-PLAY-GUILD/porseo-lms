@@ -1,7 +1,7 @@
 "use node";
 
-import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { action } from "./_generated/server";
 
 // Security fix: Save Discord roles server-side only, return sync status (not raw role IDs)
 export const getDiscordRolesV2 = action({
@@ -30,7 +30,7 @@ export const getDiscordRolesV2 = action({
                     headers: {
                         Authorization: `Bearer ${clerkSecretKey}`,
                     },
-                }
+                },
             );
 
             if (!clerkResponse.ok) {
@@ -46,14 +46,11 @@ export const getDiscordRolesV2 = action({
             const accessToken = clerkData[0].token;
 
             // 2. Discord API: Get Current User Guild Member
-            const discordResponse = await fetch(
-                `https://discord.com/api/users/@me/guilds/${guildId}/member`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                    },
-                }
-            );
+            const discordResponse = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
 
             if (!discordResponse.ok) {
                 if (discordResponse.status === 404) {

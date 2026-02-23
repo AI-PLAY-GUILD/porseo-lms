@@ -1,17 +1,19 @@
 "use node";
 
-import { internalAction } from "./_generated/server";
-import { internal } from "./_generated/api";
-import { v } from "convex/values";
-import Mux from "@mux/mux-node";
 import { GoogleGenAI } from "@google/genai";
+import Mux from "@mux/mux-node";
+import { v } from "convex/values";
+import { internal } from "./_generated/api";
+import { internalAction } from "./_generated/server";
 
 // Validate that URLs are from Zoom domains (defense-in-depth SSRF prevention)
 function isValidZoomUrl(url: string): boolean {
     try {
         const parsed = new URL(url);
-        return parsed.protocol === "https:" &&
-            (parsed.hostname.endsWith(".zoom.us") || parsed.hostname.endsWith(".zoom.com"));
+        return (
+            parsed.protocol === "https:" &&
+            (parsed.hostname.endsWith(".zoom.us") || parsed.hostname.endsWith(".zoom.com"))
+        );
     } catch {
         return false;
     }
@@ -81,33 +83,33 @@ export const ingestToMux = internalAction({
                     console.error("Invalid VTT URL domain in ingestToMux:", vttBaseUrl);
                     // Non-fatal: skip VTT but don't fail the whole ingestion
                 } else
-                try {
-                    const vttResponse = await fetch(args.vttDownloadUrl);
-                    if (vttResponse.ok) {
-                        const vttText = await vttResponse.text();
-                        if (vttText && vttText.trim().length > 0) {
-                            // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
-                            await ctx.runMutation((internal as any).zoom.updateVideoTranscription, {
-                                videoId: args.videoId,
-                                transcription: vttText,
-                            });
-
-                            // 4. Schedule AI metadata generation
-                            await ctx.scheduler.runAfter(
-                                30_000, // 30 seconds delay
-                                // biome-ignore lint/suspicious/noExplicitAny: zoomActions module not yet in generated API types
-                                (internal as any).zoomActions.processAiMetadata,
-                                {
+                    try {
+                        const vttResponse = await fetch(args.vttDownloadUrl);
+                        if (vttResponse.ok) {
+                            const vttText = await vttResponse.text();
+                            if (vttText && vttText.trim().length > 0) {
+                                // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
+                                await ctx.runMutation((internal as any).zoom.updateVideoTranscription, {
                                     videoId: args.videoId,
                                     transcription: vttText,
-                                }
-                            );
+                                });
+
+                                // 4. Schedule AI metadata generation
+                                await ctx.scheduler.runAfter(
+                                    30_000, // 30 seconds delay
+                                    // biome-ignore lint/suspicious/noExplicitAny: zoomActions module not yet in generated API types
+                                    (internal as any).zoomActions.processAiMetadata,
+                                    {
+                                        videoId: args.videoId,
+                                        transcription: vttText,
+                                    },
+                                );
+                            }
                         }
+                    } catch (vttError) {
+                        console.error("Failed to fetch VTT transcription:", vttError);
+                        // Non-fatal: admin can add transcription manually later
                     }
-                } catch (vttError) {
-                    console.error("Failed to fetch VTT transcription:", vttError);
-                    // Non-fatal: admin can add transcription manually later
-                }
             }
         } catch (error) {
             console.error("Mux ingest failed:", error);

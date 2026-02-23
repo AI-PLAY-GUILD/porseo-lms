@@ -1,40 +1,40 @@
-import { NextResponse } from 'next/server';
-import { convex } from '@/lib/convex';
-import { REST } from '@discordjs/rest';
-import { Routes } from 'discord-api-types/v10';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from "@clerk/nextjs/server";
+import { REST } from "@discordjs/rest";
+import { Routes } from "discord-api-types/v10";
+import { NextResponse } from "next/server";
+import { convex } from "@/lib/convex";
+import { api } from "../../../../convex/_generated/api";
 
 const discordToken = process.env.DISCORD_BOT_TOKEN;
 const guildId = process.env.DISCORD_GUILD_ID;
 const roleId = process.env.DISCORD_ROLE_ID;
 
 // Issue #56: Add timeout to Discord REST client
-const rest = new REST({ version: '10', timeout: 10_000 }).setToken(discordToken || '');
+const rest = new REST({ version: "10", timeout: 10_000 }).setToken(discordToken || "");
 
-export async function POST(req: Request) {
+export async function POST(_req: Request) {
     try {
         const { userId } = await auth();
         if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         // 1. Get user from Convex to check subscription and Discord ID
-        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
-        const user = await convex.query("users:getUserByClerkIdServer" as any, {
+        const user = await convex.query(api.users.getUserByClerkIdServer, {
             clerkId: userId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
         });
 
         if (!user) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        if (user.subscriptionStatus !== 'active') {
-            return NextResponse.json({ error: 'Subscription not active' }, { status: 403 });
+        if (user.subscriptionStatus !== "active") {
+            return NextResponse.json({ error: "Subscription not active" }, { status: 403 });
         }
 
         if (!user.discordId) {
-            return NextResponse.json({ error: 'Discord ID not linked' }, { status: 400 });
+            return NextResponse.json({ error: "Discord ID not linked" }, { status: 400 });
         }
 
         // 2. Try to add role
@@ -43,20 +43,23 @@ export async function POST(req: Request) {
                 await rest.put(Routes.guildMemberRole(guildId, user.discordId, roleId));
                 return NextResponse.json({ success: true });
             } catch (error: unknown) {
-                console.error('Failed to add Discord role:', error);
+                console.error("Failed to add Discord role:", error);
                 // 404 means user is not in the server
-                const status = error instanceof Error && 'status' in error ? (error as { status: number }).status : undefined;
+                const status =
+                    error instanceof Error && "status" in error ? (error as { status: number }).status : undefined;
                 if (status === 404) {
-                    return NextResponse.json({ error: 'User not in Discord server. Please join first.' }, { status: 404 });
+                    return NextResponse.json(
+                        { error: "User not in Discord server. Please join first." },
+                        { status: 404 },
+                    );
                 }
-                return NextResponse.json({ error: 'Failed to assign role' }, { status: 500 });
+                return NextResponse.json({ error: "Failed to assign role" }, { status: 500 });
             }
         } else {
-            return NextResponse.json({ error: 'Discord configuration missing' }, { status: 500 });
+            return NextResponse.json({ error: "Discord configuration missing" }, { status: 500 });
         }
-
     } catch (error: unknown) {
-        console.error('Error syncing role:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        console.error("Error syncing role:", error);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

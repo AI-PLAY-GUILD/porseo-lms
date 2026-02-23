@@ -1,23 +1,15 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { CalendarDateRangePicker } from "@/components/date-range-picker";
-import { Users, Clock, CheckCircle } from "lucide-react";
-import { AnalyticsView } from "@/components/admin/analytics-view";
-
-import { useState } from "react";
-import { DateRange } from "react-day-picker";
 import { addDays } from "date-fns";
+import { CheckCircle, Clock, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { DateRange } from "react-day-picker";
+import { AnalyticsView } from "@/components/admin/analytics-view";
+import { CalendarDateRangePicker } from "@/components/date-range-picker";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { api } from "../../../convex/_generated/api";
 
 export default function AdminDashboard() {
     const userData = useQuery(api.users.getUser);
@@ -28,10 +20,13 @@ export default function AdminDashboard() {
         to: new Date(),
     });
 
-    const dateArgs = date?.from && date?.to ? {
-        startDate: date.from.getTime(),
-        endDate: date.to.getTime(),
-    } : {};
+    const dateArgs =
+        date?.from && date?.to
+            ? {
+                  startDate: date.from.getTime(),
+                  endDate: date.to.getTime(),
+              }
+            : {};
 
     const adminStats = useQuery(api.admin.getAdminStats, dateArgs);
     const userGrowth = useQuery(api.admin.getUserGrowth, dateArgs);
@@ -72,9 +67,7 @@ export default function AdminDashboard() {
                         </CardHeader>
                         <CardContent className="pt-4">
                             <div className="text-3xl font-black text-black">{adminStats?.totalUsers ?? 0}</div>
-                            <p className="text-xs font-bold text-gray-500 mt-1">
-                                登録済みユーザー
-                            </p>
+                            <p className="text-xs font-bold text-gray-500 mt-1">登録済みユーザー</p>
                         </CardContent>
                     </Card>
                     <Card className="bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
@@ -86,21 +79,22 @@ export default function AdminDashboard() {
                         </CardHeader>
                         <CardContent className="pt-4">
                             <div className="text-3xl font-black text-black">{adminStats?.activeUsers ?? 0}</div>
-                            <p className="text-xs font-bold text-gray-500 mt-1">
-                                過去30日のアクティブ
-                            </p>
+                            <p className="text-xs font-bold text-gray-500 mt-1">過去30日のアクティブ</p>
                         </CardContent>
                     </Card>
                     <Card className="bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-pop-purple/20 border-b-2 border-black">
-                            <CardTitle className="text-sm font-black text-black uppercase tracking-wider">総視聴時間</CardTitle>
+                            <CardTitle className="text-sm font-black text-black uppercase tracking-wider">
+                                総視聴時間
+                            </CardTitle>
                             <Clock className="h-5 w-5 text-black" />
                         </CardHeader>
                         <CardContent className="pt-4">
-                            <div className="text-3xl font-black text-black">{adminStats?.totalWatchTimeHours ?? 0}<span className="text-lg font-bold text-gray-600 ml-1">時間</span></div>
-                            <p className="text-xs font-bold text-gray-500 mt-1">
-                                コンテンツ総消費時間
-                            </p>
+                            <div className="text-3xl font-black text-black">
+                                {adminStats?.totalWatchTimeHours ?? 0}
+                                <span className="text-lg font-bold text-gray-600 ml-1">時間</span>
+                            </div>
+                            <p className="text-xs font-bold text-gray-500 mt-1">コンテンツ総消費時間</p>
                         </CardContent>
                     </Card>
                     <Card className="bg-white border-4 border-black brutal-shadow rounded-xl overflow-hidden">
@@ -112,18 +106,13 @@ export default function AdminDashboard() {
                         </CardHeader>
                         <CardContent className="pt-4">
                             <div className="text-3xl font-black text-black">{adminStats?.completedVideos ?? 0}</div>
-                            <p className="text-xs font-bold text-gray-500 mt-1">
-                                動画完了総数
-                            </p>
+                            <p className="text-xs font-bold text-gray-500 mt-1">動画完了総数</p>
                         </CardContent>
                     </Card>
                 </div>
 
                 {userGrowth && contentPerformance ? (
-                    <AnalyticsView
-                        userGrowth={userGrowth}
-                        contentPerformance={contentPerformance}
-                    />
+                    <AnalyticsView userGrowth={userGrowth} contentPerformance={contentPerformance} />
                 ) : (
                     <div className="font-bold p-4">分析データを読み込み中...</div>
                 )}
@@ -131,4 +120,3 @@ export default function AdminDashboard() {
         </div>
     );
 }
-

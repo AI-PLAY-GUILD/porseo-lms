@@ -20,16 +20,16 @@ export async function getZoomAccessToken(): Promise<string> {
         throw new Error("Missing Zoom OAuth credentials (ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET)");
     }
 
-    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
-    const response = await fetch('https://zoom.us/oauth/token', {
-        method: 'POST',
+    const response = await fetch("https://zoom.us/oauth/token", {
+        method: "POST",
         headers: {
-            'Authorization': `Basic ${credentials}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Basic ${credentials}`,
+            "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
-            grant_type: 'account_credentials',
+            grant_type: "account_credentials",
             account_id: accountId,
         }),
     });
@@ -42,7 +42,7 @@ export async function getZoomAccessToken(): Promise<string> {
     const data = await response.json();
     cachedToken = {
         token: data.access_token,
-        expiresAt: Date.now() + (data.expires_in * 1000),
+        expiresAt: Date.now() + data.expires_in * 1000,
     };
 
     return data.access_token;

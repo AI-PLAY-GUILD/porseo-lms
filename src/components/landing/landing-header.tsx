@@ -1,11 +1,11 @@
 "use client";
 
+import { Menu } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 interface LandingHeaderProps {
     isSignedIn: boolean;
@@ -33,7 +33,7 @@ export function LandingHeader({ isSignedIn, isMember }: LandingHeaderProps) {
         <header
             className={cn(
                 "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-transparent",
-                isScrolled ? "bg-black/50 backdrop-blur-md border-white/10 py-3" : "bg-transparent py-5"
+                isScrolled ? "bg-black/50 backdrop-blur-md border-white/10 py-3" : "bg-transparent py-5",
             )}
         >
             <div className="container mx-auto px-4 flex items-center justify-between">
@@ -61,7 +61,11 @@ export function LandingHeader({ isSignedIn, isMember }: LandingHeaderProps) {
 
                 <div className="hidden md:flex items-center gap-4">
                     {isSignedIn ? (
-                        <Button asChild variant="outline" className="border-white/20 hover:bg-white/10 hover:text-white">
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="border-white/20 hover:bg-white/10 hover:text-white"
+                        >
                             <Link href="/dashboard">Dashboard</Link>
                         </Button>
                     ) : (

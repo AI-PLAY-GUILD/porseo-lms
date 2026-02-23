@@ -1,17 +1,17 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
+import MuxUploader from "@mux/mux-uploader-react";
+import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import MuxUploader from "@mux/mux-uploader-react";
+import { api } from "../../../../../convex/_generated/api";
 
 export default function VideoUploadPage() {
     const userData = useQuery(api.users.getUser);
     const createVideo = useMutation(api.videos.createVideo);
     const router = useRouter();
 
-    const [isUploading, setIsUploading] = useState(false);
+    const [_isUploading, setIsUploading] = useState(false);
     const [isManualMode, setIsManualMode] = useState(false);
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [videoTitle, setVideoTitle] = useState("");
@@ -73,7 +73,6 @@ export default function VideoUploadPage() {
             setMuxPlaybackId("");
             setUploadUrl(null);
             setError(null);
-
         } catch (error) {
             console.error("Failed to create video:", error);
             alert("動画の登録に失敗しました。");
@@ -88,11 +87,7 @@ export default function VideoUploadPage() {
             <h1 className="text-2xl font-bold mb-6">動画アップロード</h1>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border shadow-sm">
-                {error && (
-                    <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-md">
-                        {error}
-                    </div>
-                )}
+                {error && <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-md">{error}</div>}
 
                 <div className="flex justify-center mb-6">
                     <div className="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg inline-flex">
@@ -101,10 +96,11 @@ export default function VideoUploadPage() {
                                 setIsManualMode(false);
                                 setUploadSuccess(false);
                             }}
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${!isManualMode
-                                ? "bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white"
-                                : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                                }`}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                                !isManualMode
+                                    ? "bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white"
+                                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                            }`}
                         >
                             ファイルアップロード
                         </button>
@@ -113,10 +109,11 @@ export default function VideoUploadPage() {
                                 setIsManualMode(true);
                                 setUploadSuccess(true); // 手動モードは即座にフォーム表示
                             }}
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${isManualMode
-                                ? "bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white"
-                                : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                                }`}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                                isManualMode
+                                    ? "bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white"
+                                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                            }`}
                         >
                             Mux ID 手動入力
                         </button>
@@ -124,32 +121,28 @@ export default function VideoUploadPage() {
                 </div>
 
                 {!uploadSuccess && !isManualMode ? (
-                    <>
-                        {!uploadUrl ? (
-                            <div className="text-center py-8">
-                                <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    新しい動画をアップロードするためのURLを発行します。
-                                </p>
-                                <button
-                                    onClick={prepareUpload}
-                                    className="bg-blue-600 text-white px-6 py-3 rounded-full font-bold hover:bg-blue-700 transition-colors"
-                                >
-                                    アップロードを開始する
-                                </button>
-                            </div>
-                        ) : (
-                            <>
-                                <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    動画ファイルを選択してください。
-                                </p>
-                                <MuxUploader
-                                    endpoint={uploadUrl} // ここに直接URLを渡す
-                                    onUploadStart={() => setIsUploading(true)}
-                                    onSuccess={handleUploadSuccess}
-                                />
-                            </>
-                        )}
-                    </>
+                    !uploadUrl ? (
+                        <div className="text-center py-8">
+                            <p className="mb-4 text-gray-600 dark:text-gray-300">
+                                新しい動画をアップロードするためのURLを発行します。
+                            </p>
+                            <button
+                                onClick={prepareUpload}
+                                className="bg-blue-600 text-white px-6 py-3 rounded-full font-bold hover:bg-blue-700 transition-colors"
+                            >
+                                アップロードを開始する
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <p className="mb-4 text-gray-600 dark:text-gray-300">動画ファイルを選択してください。</p>
+                            <MuxUploader
+                                endpoint={uploadUrl} // ここに直接URLを渡す
+                                onUploadStart={() => setIsUploading(true)}
+                                onSuccess={handleUploadSuccess}
+                            />
+                        </>
+                    )
                 ) : (
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         {!isManualMode && (

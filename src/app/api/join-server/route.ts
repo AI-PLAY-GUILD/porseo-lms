@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
+export async function POST(_req: Request) {
     try {
         const { userId } = await auth();
         if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const client = await clerkClient();
@@ -13,20 +13,20 @@ export async function POST(req: Request) {
         // 1. Get User to find Discord ID
         const user = await client.users.getUser(userId);
         const discordAccount = user.externalAccounts.find(
-            (acc) => acc.provider === 'oauth_discord' || acc.provider === 'discord'
+            (acc) => acc.provider === "oauth_discord" || acc.provider === "discord",
         );
 
         if (!discordAccount || !discordAccount.externalId) {
-            return NextResponse.json({ error: 'Discord account not linked' }, { status: 400 });
+            return NextResponse.json({ error: "Discord account not linked" }, { status: 400 });
         }
 
         const discordUserId = discordAccount.externalId;
 
         // 2. Get Discord Access Token
-        const response = await client.users.getUserOauthAccessToken(userId, 'oauth_discord');
+        const response = await client.users.getUserOauthAccessToken(userId, "oauth_discord");
 
         if (!response.data || response.data.length === 0) {
-            return NextResponse.json({ error: 'No Discord access token found' }, { status: 400 });
+            return NextResponse.json({ error: "No Discord access token found" }, { status: 400 });
         }
 
         const accessToken = response.data[0].token;
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
         if (!guildId || !botToken) {
             console.error("Missing Discord env vars");
-            return NextResponse.json({ error: 'Configuration error' }, { status: 500 });
+            return NextResponse.json({ error: "Configuration error" }, { status: 500 });
         }
 
         // Discord API: PUT /guilds/{guild.id}/members/{user.id}
@@ -48,10 +48,10 @@ export async function POST(req: Request) {
         let discordRes: Response;
         try {
             discordRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${discordUserId}`, {
-                method: 'PUT',
+                method: "PUT",
                 headers: {
-                    'Authorization': `Bot ${botToken}`,
-                    'Content-Type': 'application/json',
+                    Authorization: `Bot ${botToken}`,
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                     access_token: accessToken,
@@ -68,15 +68,14 @@ export async function POST(req: Request) {
             const errorText = await discordRes.text();
             console.error("Discord API Error:", errorText);
             // Issue #57: Sanitize error response — don't expose Discord error details to client
-            return NextResponse.json({ error: 'Failed to join Discord server' }, { status: 502 });
+            return NextResponse.json({ error: "Failed to join Discord server" }, { status: 502 });
         }
-
     } catch (error: unknown) {
         // Issue #56: Handle timeout errors
-        if (error instanceof DOMException && error.name === 'AbortError') {
-            return NextResponse.json({ error: 'External service timeout' }, { status: 504 });
+        if (error instanceof DOMException && error.name === "AbortError") {
+            return NextResponse.json({ error: "External service timeout" }, { status: 504 });
         }
         console.error("Error joining server:", error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

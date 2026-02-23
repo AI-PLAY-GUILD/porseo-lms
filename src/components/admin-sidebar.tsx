@@ -1,13 +1,10 @@
 "use client";
 
-import * as React from "react";
-import {
-    LayoutDashboard,
-    Settings,
-    LogOut,
-    User,
-} from "lucide-react";
-
+import { SignOutButton } from "@clerk/nextjs";
+import { LayoutDashboard, LogOut, Settings, User } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type * as React from "react";
 import {
     Sidebar,
     SidebarContent,
@@ -18,11 +15,10 @@ import {
     SidebarMenuItem,
     SidebarRail,
 } from "@/components/ui/sidebar";
-import { SignOutButton } from "@clerk/nextjs";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 
-export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar> & { user?: { name: string; email: string; avatar?: string } }) {
+export function AdminSidebar({
+    ...props
+}: React.ComponentProps<typeof Sidebar> & { user?: { name: string; email: string; avatar?: string } }) {
     const pathname = usePathname();
 
     return (
@@ -47,7 +43,11 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar> 
             <SidebarContent className="bg-cream p-2 gap-4">
                 <SidebarMenu className="gap-2">
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild isActive={pathname === "/admin"} className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto">
+                        <SidebarMenuButton
+                            asChild
+                            isActive={pathname === "/admin"}
+                            className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto"
+                        >
                             <Link href="/admin" className="flex items-center gap-3 font-bold">
                                 <LayoutDashboard className="w-5 h-5" />
                                 <span>分析</span>
@@ -61,7 +61,11 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar> 
                         </div>
                         <SidebarMenu className="gap-1">
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={pathname === "/admin/users"} className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto">
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname === "/admin/users"}
+                                    className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto"
+                                >
                                     <Link href="/admin/users" className="flex items-center gap-3 font-bold">
                                         <div className="flex w-6 items-center justify-center">
                                             <div className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -71,7 +75,11 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar> 
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={pathname === "/admin/users/analytics"} className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto">
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname === "/admin/users/analytics"}
+                                    className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto"
+                                >
                                     <Link href="/admin/users/analytics" className="flex items-center gap-3 font-bold">
                                         <div className="flex w-6 items-center justify-center">
                                             <div className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -89,7 +97,11 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar> 
                         </div>
                         <SidebarMenu className="gap-1">
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={pathname === "/admin/videos"} className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto">
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname === "/admin/videos"}
+                                    className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto"
+                                >
                                     <Link href="/admin/videos" className="flex items-center gap-3 font-bold">
                                         <div className="flex w-6 items-center justify-center">
                                             <div className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -99,7 +111,11 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar> 
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={pathname === "/admin/videos/upload"} className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto">
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname === "/admin/videos/upload"}
+                                    className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto"
+                                >
                                     <Link href="/admin/videos/upload" className="flex items-center gap-3 font-bold">
                                         <div className="flex w-6 items-center justify-center">
                                             <div className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -109,7 +125,11 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar> 
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={pathname === "/admin/tags"} className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto">
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname === "/admin/tags"}
+                                    className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto"
+                                >
                                     <Link href="/admin/tags" className="flex items-center gap-3 font-bold">
                                         <div className="flex w-6 items-center justify-center">
                                             <div className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -120,13 +140,15 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar> 
                             </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarMenuItem>
-
                 </SidebarMenu>
             </SidebarContent>
             <SidebarFooter className="bg-cream p-4 gap-2">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild className="text-black hover:bg-gray-100 border-2 border-transparent hover:border-black hover:brutal-shadow-sm transition-all rounded-lg">
+                        <SidebarMenuButton
+                            asChild
+                            className="text-black hover:bg-gray-100 border-2 border-transparent hover:border-black hover:brutal-shadow-sm transition-all rounded-lg"
+                        >
                             <Link href="/dashboard">
                                 <User className="w-4 h-4" />
                                 <span className="font-bold">ユーザー画面へ戻る</span>
@@ -144,6 +166,6 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar> 
                 </SidebarMenu>
             </SidebarFooter>
             <SidebarRail />
-        </Sidebar >
+        </Sidebar>
     );
 }

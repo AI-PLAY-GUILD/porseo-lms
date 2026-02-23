@@ -1,35 +1,35 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 export default function SuccessPage() {
     const searchParams = useSearchParams();
-    const sessionId = searchParams.get('session_id');
-    const [syncStatus, setSyncStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-    const [errorMessage, setErrorMessage] = useState('');
+    const sessionId = searchParams.get("session_id");
+    const [_syncStatus, setSyncStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+    const [_errorMessage, setErrorMessage] = useState("");
 
     // Replace this with your actual Discord Invite URL or Server URL
     // You can also add NEXT_PUBLIC_DISCORD_INVITE_URL to your .env.local
     const discordUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.com/app";
 
-    const handleSyncRole = async () => {
-        setSyncStatus('loading');
-        setErrorMessage('');
+    const _handleSyncRole = async () => {
+        setSyncStatus("loading");
+        setErrorMessage("");
         try {
-            const res = await fetch('/api/sync-role', { method: 'POST' });
+            const res = await fetch("/api/sync-role", { method: "POST" });
             const data = await res.json();
 
             if (res.ok) {
-                setSyncStatus('success');
+                setSyncStatus("success");
             } else {
-                setSyncStatus('error');
-                setErrorMessage(data.error || 'Failed to sync role');
+                setSyncStatus("error");
+                setErrorMessage(data.error || "Failed to sync role");
             }
-        } catch (e) {
-            setSyncStatus('error');
-            setErrorMessage('An error occurred');
+        } catch (_e) {
+            setSyncStatus("error");
+            setErrorMessage("An error occurred");
         }
     };
 
@@ -43,14 +43,10 @@ export default function SuccessPage() {
                 </div>
 
                 <h1 className="text-3xl font-bold">Payment Successful!</h1>
-                <p className="text-neutral-400">
-                    Thank you for joining. Your membership is now active.
-                </p>
+                <p className="text-neutral-400">Thank you for joining. Your membership is now active.</p>
 
                 {sessionId && (
-                    <p className="text-xs text-neutral-600 font-mono">
-                        Session ID: {sessionId.slice(0, 10)}...
-                    </p>
+                    <p className="text-xs text-neutral-600 font-mono">Session ID: {sessionId.slice(0, 10)}...</p>
                 )}
 
                 <div className="flex flex-col gap-3">

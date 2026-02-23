@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
 import type { QueryCtx } from "./_generated/server";
+import { query } from "./_generated/server";
 import { getUserByClerkId } from "./users";
 
 // Helper to check if user is admin
@@ -25,7 +25,7 @@ export const getAdminStats = query({
         await checkAdmin(ctx);
 
         const users = await ctx.db.query("users").collect();
-        const videos = await ctx.db.query("videos").collect();
+        const _videos = await ctx.db.query("videos").collect();
         const progress = await ctx.db.query("videoProgress").collect();
         const logs = await ctx.db.query("dailyLearningLogs").collect();
 
@@ -42,21 +42,21 @@ export const getAdminStats = query({
             const startStr = new Date(args.startDate + JST_OFFSET).toISOString().split("T")[0];
             const endStr = new Date(args.endDate + JST_OFFSET).toISOString().split("T")[0];
 
-            filteredLogs = logs.filter(l => l.date >= startStr && l.date <= endStr);
+            filteredLogs = logs.filter((l) => l.date >= startStr && l.date <= endStr);
 
             // For progress, we use lastWatchedAt
-            filteredProgress = progress.filter(p =>
-                p.lastWatchedAt >= args.startDate! && p.lastWatchedAt <= args.endDate!
+            filteredProgress = progress.filter(
+                (p) => p.lastWatchedAt >= args.startDate! && p.lastWatchedAt <= args.endDate!,
             );
         } else {
             // Default to last 30 days for active users if no range
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
-            filteredLogs = logs.filter(l => l.date >= thirtyDaysAgoStr);
+            filteredLogs = logs.filter((l) => l.date >= thirtyDaysAgoStr);
         }
 
-        const activeUserIds = new Set(filteredLogs.map(l => l.userId));
+        const activeUserIds = new Set(filteredLogs.map((l) => l.userId));
         const activeUsers = activeUserIds.size;
 
         // Total watch time (minutes) within range
@@ -66,7 +66,7 @@ export const getAdminStats = query({
         // Completed videos count within range
         // Note: completed videos are filtered by lastWatchedAt in range, which is an approximation
         // ideally we'd have completedAt, but lastWatchedAt is close enough for "recently completed"
-        const completedVideos = filteredProgress.filter(p => p.completed).length;
+        const completedVideos = filteredProgress.filter((p) => p.completed).length;
 
         return {
             totalUsers, // Total users is always all users
@@ -110,9 +110,9 @@ export const getUserGrowth = query({
             });
         }
 
-        const growthData = dateRange.map(date => {
+        const growthData = dateRange.map((date) => {
             // Count users created on this date (in JST)
-            const count = users.filter(u => {
+            const count = users.filter((u) => {
                 const uDateJst = new Date(u.createdAt + JST_OFFSET).toISOString().split("T")[0];
                 return uDateJst === date;
             }).length;
@@ -139,18 +139,18 @@ export const getContentPerformance = query({
         const videos = await ctx.db.query("videos").collect();
         const progress = await ctx.db.query("videoProgress").collect();
 
-        const stats = videos.map(video => {
-            let videoProgress = progress.filter(p => p.videoId === video._id);
+        const stats = videos.map((video) => {
+            let videoProgress = progress.filter((p) => p.videoId === video._id);
 
             // Filter by date range if provided
             if (args.startDate && args.endDate) {
-                videoProgress = videoProgress.filter(p =>
-                    p.lastWatchedAt >= args.startDate! && p.lastWatchedAt <= args.endDate!
+                videoProgress = videoProgress.filter(
+                    (p) => p.lastWatchedAt >= args.startDate! && p.lastWatchedAt <= args.endDate!,
                 );
             }
 
             const views = videoProgress.length;
-            const completions = videoProgress.filter(p => p.completed).length;
+            const completions = videoProgress.filter((p) => p.completed).length;
 
             // Calculate average completion rate
             let totalCompletionRate = 0;
@@ -193,18 +193,18 @@ export const getUserBehaviorAnalytics = query({
         if (args.startDate && args.endDate) {
             const startStr = new Date(args.startDate + JST_OFFSET).toISOString().split("T")[0];
             const endStr = new Date(args.endDate + JST_OFFSET).toISOString().split("T")[0];
-            filteredLogs = logs.filter(l => l.date >= startStr && l.date <= endStr);
+            filteredLogs = logs.filter((l) => l.date >= startStr && l.date <= endStr);
         } else {
             // Default to last 30 days
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
-            filteredLogs = logs.filter(l => l.date >= thirtyDaysAgoStr);
+            filteredLogs = logs.filter((l) => l.date >= thirtyDaysAgoStr);
         }
 
         // 1. Daily Activity (Total minutes watched per day)
         const dailyActivityMap = new Map<string, number>();
-        filteredLogs.forEach(log => {
+        filteredLogs.forEach((log) => {
             const current = dailyActivityMap.get(log.date) || 0;
             dailyActivityMap.set(log.date, current + log.minutesWatched);
         });
@@ -215,14 +215,14 @@ export const getUserBehaviorAnalytics = query({
 
         // 2. Top Learners (Users with most watch time in range)
         const userWatchTimeMap = new Map<string, number>();
-        filteredLogs.forEach(log => {
+        filteredLogs.forEach((log) => {
             const current = userWatchTimeMap.get(log.userId) || 0;
             userWatchTimeMap.set(log.userId, current + log.minutesWatched);
         });
 
         const topLearners = Array.from(userWatchTimeMap.entries())
             .map(([userId, minutes]) => {
-                const user = users.find(u => u._id === userId);
+                const user = users.find((u) => u._id === userId);
                 return {
                     userId,
                     name: user?.name || "Unknown",
@@ -254,12 +254,11 @@ export const getAuditLogs = query({
             .take(args.limit ?? 50);
 
         const users = await ctx.db.query("users").collect();
-        const userMap = new Map(users.map(u => [u._id, u]));
+        const userMap = new Map(users.map((u) => [u._id, u]));
 
-        return logs.map(log => ({
+        return logs.map((log) => ({
             ...log,
             userName: log.userId ? (userMap.get(log.userId)?.name ?? "Unknown") : "System",
         }));
     },
 });
-

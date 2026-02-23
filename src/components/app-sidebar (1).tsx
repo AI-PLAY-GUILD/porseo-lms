@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useTheme } from "next-themes"
-import { SignOutButton } from "@clerk/nextjs"
+import { SignOutButton } from "@clerk/nextjs";
 import {
     BookOpen,
     LayoutDashboard,
-    Settings,
     LogOut,
-    User,
-    Video,
-    Moon,
-    Sun,
-    Users,
     MessageCircle,
-} from "lucide-react"
-
+    Moon,
+    Settings,
+    Sun,
+    User,
+    Users,
+    Video,
+} from "lucide-react";
+import { useTheme } from "next-themes";
+import type * as React from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     Sidebar,
     SidebarContent,
@@ -28,8 +28,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarRail,
-} from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "@/components/ui/sidebar";
 
 // This is sample data.
 const data = {
@@ -90,11 +89,14 @@ const data = {
             ],
         },
     ],
-}
+};
 
-export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user?: { name?: string; email?: string; avatar?: string } }) {
+export function AppSidebar({
+    user,
+    ...props
+}: React.ComponentProps<typeof Sidebar> & { user?: { name?: string; email?: string; avatar?: string } }) {
     const userData = user || data.user;
-    const { setTheme, theme } = useTheme()
+    const { setTheme, theme } = useTheme();
 
     return (
         <Sidebar {...props}>
@@ -121,7 +123,11 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
                                             <a
                                                 href={item.url}
                                                 target={"external" in item && item.external ? "_blank" : undefined}
-                                                rel={"external" in item && item.external ? "noopener noreferrer" : undefined}
+                                                rel={
+                                                    "external" in item && item.external
+                                                        ? "noopener noreferrer"
+                                                        : undefined
+                                                }
                                             >
                                                 <item.icon />
                                                 <span>{item.title}</span>
@@ -148,7 +154,9 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
                             </div>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-semibold">テーマ切り替え</span>
-                                <span className="truncate text-xs">{theme === "dark" ? "ダークモード" : "ライトモード"}</span>
+                                <span className="truncate text-xs">
+                                    {theme === "dark" ? "ダークモード" : "ライトモード"}
+                                </span>
                             </div>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -173,5 +181,5 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
             </SidebarFooter>
             <SidebarRail />
         </Sidebar>
-    )
+    );
 }

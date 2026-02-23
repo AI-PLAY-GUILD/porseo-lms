@@ -1,13 +1,11 @@
-
 import { ConvexHttpClient } from "convex/browser";
-import { api } from "./convex/_generated/api";
 
 // Hardcoded Prod URL
 const PROD_URL = "https://agile-egret-492.convex.cloud";
 
-async function main() {
+async function _main() {
     console.log(`Checking for duplicates in Production: ${PROD_URL}`);
-    const client = new ConvexHttpClient(PROD_URL);
+    const _client = new ConvexHttpClient(PROD_URL);
 
     // We can't fetch all users easily without an admin query.
     // But we can try to use `api.users.getAllUsers` if we can auth?

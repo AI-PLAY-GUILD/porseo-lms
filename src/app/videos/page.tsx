@@ -1,32 +1,26 @@
 "use client";
 
+import { SignOutButton, useUser } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
+import { Calendar, Lock, LogOut, PlayCircle } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useQuery } from "convex/react";
-import { SignOutButton, useUser } from "@clerk/nextjs";
-import { api } from "../../../convex/_generated/api";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { PlayCircle, Calendar, Lock, Clock, LogOut } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
-import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 import {
     Breadcrumb,
     BreadcrumbItem,
-    BreadcrumbLink,
     BreadcrumbList,
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-
 import { BrutalistLoader } from "@/components/ui/brutalist-loader";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { api } from "../../../convex/_generated/api";
 
 export default function AllVideosPage() {
     const router = useRouter();
@@ -43,8 +37,8 @@ export default function AllVideosPage() {
     useEffect(() => {
         if (isMounted && stats) {
             const status = stats.subscriptionStatus;
-            if (status !== 'active' && status !== 'past_due') {
-                router.push('/join');
+            if (status !== "active" && status !== "past_due") {
+                router.push("/join");
             }
         }
     }, [isMounted, stats, router]);
@@ -59,7 +53,17 @@ export default function AllVideosPage() {
 
     return (
         <SidebarProvider>
-            <AppSidebar user={stats ? { name: stats.userName, email: user?.emailAddresses?.[0]?.emailAddress, avatar: stats.userAvatar } : undefined} />
+            <AppSidebar
+                user={
+                    stats
+                        ? {
+                              name: stats.userName,
+                              email: user?.emailAddresses?.[0]?.emailAddress,
+                              avatar: stats.userAvatar,
+                          }
+                        : undefined
+                }
+            />
             <SidebarInset className="bg-cream">
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 w-full bg-cream px-4">
                     <div className="flex items-center gap-2">
@@ -79,7 +83,11 @@ export default function AllVideosPage() {
                     </div>
                     <div className="ml-auto">
                         <SignOutButton>
-                            <Button variant="outline" size="sm" className="font-bold border-2 border-black bg-white hover:bg-gray-100 brutal-shadow-sm">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="font-bold border-2 border-black bg-white hover:bg-gray-100 brutal-shadow-sm"
+                            >
                                 <LogOut className="mr-2 h-4 w-4" />
                                 ログアウト
                             </Button>
@@ -91,7 +99,9 @@ export default function AllVideosPage() {
                     {stats?.inProgressVideos && stats.inProgressVideos.length > 0 && (
                         <div className="space-y-4">
                             <h2 className="text-3xl font-black tracking-tight flex items-center gap-2 text-black">
-                                <span className="bg-pop-yellow px-2 border-2 border-black transform -rotate-1 inline-block brutal-shadow-sm text-lg align-middle mr-2 text-black">CONTINUE</span>
+                                <span className="bg-pop-yellow px-2 border-2 border-black transform -rotate-1 inline-block brutal-shadow-sm text-lg align-middle mr-2 text-black">
+                                    CONTINUE
+                                </span>
                                 学習中
                             </h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -100,14 +110,21 @@ export default function AllVideosPage() {
                                         <Card className="h-full overflow-hidden hover:shadow-none transition-all duration-300 hover:translate-x-1 hover:translate-y-1 border-4 border-black bg-white brutal-shadow rounded-xl">
                                             <div className="aspect-video bg-muted relative overflow-hidden border-b-4 border-black">
                                                 <img
-                                                    src={video.thumbnailUrl || `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=640&height=360&fit_mode=smart`}
+                                                    src={
+                                                        video.thumbnailUrl ||
+                                                        `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=640&height=360&fit_mode=smart`
+                                                    }
                                                     alt={video.title}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                 />
                                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform scale-90 group-hover:scale-100">
                                                     <div className="bg-pop-red rounded-full p-3 border-2 border-black brutal-shadow-sm">
-                                                        <PlayCircle className="w-8 h-8 text-white" fill="currentColor" fillOpacity={0.2} />
+                                                        <PlayCircle
+                                                            className="w-8 h-8 text-white"
+                                                            fill="currentColor"
+                                                            fillOpacity={0.2}
+                                                        />
                                                     </div>
                                                 </div>
                                                 <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-200 border-t-2 border-black">
@@ -123,14 +140,19 @@ export default function AllVideosPage() {
                                                 </div>
                                             </div>
                                             <CardHeader className="p-4 pb-2">
-                                                <CardTitle className="line-clamp-2 text-lg font-black text-black group-hover:text-pop-purple transition-colors duration-300 leading-tight" title={video.title}>
+                                                <CardTitle
+                                                    className="line-clamp-2 text-lg font-black text-black group-hover:text-pop-purple transition-colors duration-300 leading-tight"
+                                                    title={video.title}
+                                                >
                                                     {video.title}
                                                 </CardTitle>
                                             </CardHeader>
                                             <CardContent className="p-4 pt-0">
                                                 <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mt-2">
                                                     <Calendar className="w-3 h-3" />
-                                                    <span>最終視聴: {new Date(video.lastWatchedAt).toLocaleDateString()}</span>
+                                                    <span>
+                                                        最終視聴: {new Date(video.lastWatchedAt).toLocaleDateString()}
+                                                    </span>
                                                 </div>
                                             </CardContent>
                                         </Card>
@@ -151,19 +173,29 @@ export default function AllVideosPage() {
                                     <Card className="h-full overflow-hidden hover:shadow-none transition-all duration-300 hover:translate-x-1 hover:translate-y-1 border-4 border-black bg-white brutal-shadow rounded-xl">
                                         <div className="aspect-video bg-muted relative overflow-hidden border-b-4 border-black">
                                             <img
-                                                src={video.thumbnailUrl || `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=640&height=360&fit_mode=smart`}
+                                                src={
+                                                    video.thumbnailUrl ||
+                                                    `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=640&height=360&fit_mode=smart`
+                                                }
                                                 alt={video.title}
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                             />
                                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform scale-90 group-hover:scale-100">
                                                 <div className="bg-pop-purple rounded-full p-3 border-2 border-black brutal-shadow-sm">
-                                                    <PlayCircle className="w-8 h-8 text-white" fill="currentColor" fillOpacity={0.2} />
+                                                    <PlayCircle
+                                                        className="w-8 h-8 text-white"
+                                                        fill="currentColor"
+                                                        fillOpacity={0.2}
+                                                    />
                                                 </div>
                                             </div>
                                             {video.requiredRoles && video.requiredRoles.length > 0 && (
                                                 <div className="absolute top-2 right-2 z-10">
-                                                    <Badge variant="secondary" className="bg-gray-900 text-white border-2 border-white/20 backdrop-blur-sm shadow-sm gap-1 font-bold">
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="bg-gray-900 text-white border-2 border-white/20 backdrop-blur-sm shadow-sm gap-1 font-bold"
+                                                    >
                                                         <Lock className="w-3 h-3" />
                                                         限定公開
                                                     </Badge>
@@ -183,7 +215,10 @@ export default function AllVideosPage() {
                                             </div>
                                         </div>
                                         <CardHeader className="p-4 pb-2">
-                                            <CardTitle className="line-clamp-2 text-lg font-black text-black group-hover:text-pop-purple transition-colors duration-300 leading-tight" title={video.title}>
+                                            <CardTitle
+                                                className="line-clamp-2 text-lg font-black text-black group-hover:text-pop-purple transition-colors duration-300 leading-tight"
+                                                title={video.title}
+                                            >
                                                 {video.title}
                                             </CardTitle>
                                         </CardHeader>

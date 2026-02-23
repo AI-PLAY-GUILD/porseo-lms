@@ -1,13 +1,12 @@
 "use client";
 
-import { useQuery } from "convex/react";
 import { SignOutButton } from "@clerk/nextjs";
-import { api } from "../../../convex/_generated/api";
+import { useQuery } from "convex/react";
+import { CreditCard, LogOut, Mail, Shield, User } from "lucide-react";
+import { useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
-import {
-    SidebarInset,
-    SidebarProvider,
-} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -16,14 +15,11 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BrutalistLoader } from "@/components/ui/brutalist-loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CreditCard, User, Shield, Mail, LogOut } from "lucide-react";
-import { useState } from "react";
-
-import { BrutalistLoader } from "@/components/ui/brutalist-loader";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { api } from "../../../convex/_generated/api";
 
 export default function ProfilePage() {
     const userData = useQuery(api.users.getUser);
@@ -32,8 +28,8 @@ export default function ProfilePage() {
     const handleManageSubscription = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/create-portal-session', {
-                method: 'POST',
+            const res = await fetch("/api/create-portal-session", {
+                method: "POST",
             });
             const data = await res.json();
             if (data.url) {
@@ -61,7 +57,7 @@ export default function ProfilePage() {
         return <div>ユーザー情報の取得に失敗しました。</div>;
     }
 
-    const isPremium = userData.subscriptionStatus === 'active';
+    const isPremium = userData.subscriptionStatus === "active";
 
     return (
         <SidebarProvider>
@@ -83,7 +79,11 @@ export default function ProfilePage() {
                     </div>
                     <div className="ml-auto">
                         <SignOutButton>
-                            <Button variant="outline" size="sm" className="font-bold border-2 border-black bg-white hover:bg-gray-100 brutal-shadow-sm">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="font-bold border-2 border-black bg-white hover:bg-gray-100 brutal-shadow-sm"
+                            >
                                 <LogOut className="mr-2 h-4 w-4" />
                                 ログアウト
                             </Button>
@@ -91,7 +91,6 @@ export default function ProfilePage() {
                     </div>
                 </header>
                 <div className="flex flex-1 flex-col gap-8 p-8 max-w-4xl mx-auto w-full">
-
                     {/* Header Section */}
                     <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
                         <Avatar className="h-24 w-24 border-4 border-muted">
@@ -113,7 +112,10 @@ export default function ProfilePage() {
                                         管理者
                                     </Badge>
                                 )}
-                                <Badge variant={isPremium ? "default" : "outline"} className={isPremium ? "bg-gradient-to-r from-blue-600 to-violet-600 border-0" : ""}>
+                                <Badge
+                                    variant={isPremium ? "default" : "outline"}
+                                    className={isPremium ? "bg-gradient-to-r from-blue-600 to-violet-600 border-0" : ""}
+                                >
                                     {isPremium ? "プレミアム会員" : "無料会員"}
                                 </Badge>
                             </div>
@@ -164,12 +166,15 @@ export default function ProfilePage() {
                                     <div className="space-y-4">
                                         <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-md text-sm text-yellow-800">
                                             <p className="font-bold mb-2">旧システムでご契約のお客様へ</p>
-                                            <p className="mb-2">
-                                                お手数ですが、以下の手順で解約をお願いいたします。
-                                            </p>
+                                            <p className="mb-2">お手数ですが、以下の手順で解約をお願いいたします。</p>
                                             <ol className="list-decimal list-inside space-y-1 ml-2">
                                                 <li>
-                                                    <a href="https://www.ai-porseo.com/" target="_blank" rel="noopener noreferrer" className="underline text-blue-600 hover:text-blue-800">
+                                                    <a
+                                                        href="https://www.ai-porseo.com/"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="underline text-blue-600 hover:text-blue-800"
+                                                    >
                                                         https://www.ai-porseo.com/
                                                     </a>
                                                     にアクセスしてログイン
@@ -213,9 +218,7 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-xs font-medium text-muted-foreground">Discord連携</label>
-                                    <p className="text-sm font-medium">
-                                        {userData.discordId ? "連携済み" : "未連携"}
-                                    </p>
+                                    <p className="text-sm font-medium">{userData.discordId ? "連携済み" : "未連携"}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-xs font-medium text-muted-foreground">会員ID</label>

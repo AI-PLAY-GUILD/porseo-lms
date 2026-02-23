@@ -1,15 +1,15 @@
 "use client";
 
 import { SignInButton, SignOutButton, useUser } from "@clerk/nextjs";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { ArrowRight, LayoutDashboard, ShieldCheck, CreditCard, Sparkles, Check } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
-import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { useMutation, useQuery } from "convex/react";
+import gsap from "gsap";
+import { ArrowRight, Check, CreditCard, LayoutDashboard, ShieldCheck, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { StripeLinkModal } from "@/components/stripe-link-modal";
+import { Button } from "@/components/ui/button";
+import { api } from "../../../convex/_generated/api";
 
 export default function JoinPage() {
     const { isSignedIn, user, isLoaded } = useUser();
@@ -24,18 +24,18 @@ export default function JoinPage() {
     const [isSynced, setIsSynced] = useState(false);
 
     // GSAP Animation
-    useGSAP(() => {
-        const tl = gsap.timeline({ defaults: { ease: "elastic.out(1, 0.5)" } });
-        tl.fromTo(titleRef.current,
-            { y: -50, opacity: 0 },
-            { y: 0, opacity: 1, duration: 1, delay: 0.2 }
-        )
-            .fromTo(cardRef.current,
+    useGSAP(
+        () => {
+            const tl = gsap.timeline({ defaults: { ease: "elastic.out(1, 0.5)" } });
+            tl.fromTo(titleRef.current, { y: -50, opacity: 0 }, { y: 0, opacity: 1, duration: 1, delay: 0.2 }).fromTo(
+                cardRef.current,
                 { y: 50, opacity: 0, scale: 0.9 },
                 { y: 0, opacity: 1, scale: 1, duration: 1 },
-                "-=0.8"
+                "-=0.8",
             );
-    }, { scope: containerRef });
+        },
+        { scope: containerRef },
+    );
 
     // Sync User & Auto-Join
     useEffect(() => {
@@ -44,9 +44,9 @@ export default function JoinPage() {
 
             try {
                 const discordAccount = user.externalAccounts.find(
-                    (acc) => (acc.provider as string) === 'oauth_discord' || (acc.provider as string) === 'discord'
+                    (acc) => (acc.provider as string) === "oauth_discord" || (acc.provider as string) === "discord",
                 );
-                const discordId = discordAccount?.providerUserId;
+                const _discordId = discordAccount?.providerUserId;
 
                 // Store User (discordId removed for security - Issue #16)
                 await storeUser({
@@ -58,14 +58,14 @@ export default function JoinPage() {
 
                 // Auto-join Discord Server
                 try {
-                    await fetch('/api/join-server', { method: 'POST' });
+                    await fetch("/api/join-server", { method: "POST" });
                 } catch (e) {
                     console.error("Failed to auto-join server:", e);
                 }
 
                 // Check Subscription (Role Sync)
                 try {
-                    await fetch('/api/check-subscription', { method: 'POST' });
+                    await fetch("/api/check-subscription", { method: "POST" });
                 } catch (e) {
                     console.error("Failed to check subscription:", e);
                 }
@@ -83,7 +83,7 @@ export default function JoinPage() {
         setCheckoutLoading(true);
         try {
             const discordAccount = user?.externalAccounts.find(
-                (acc) => (acc.provider as string) === 'oauth_discord' || (acc.provider as string) === 'discord'
+                (acc) => (acc.provider as string) === "oauth_discord" || (acc.provider as string) === "discord",
             );
             const discordId = discordAccount?.providerUserId;
 
@@ -93,9 +93,9 @@ export default function JoinPage() {
                 return;
             }
 
-            const res = await fetch('/api/create-checkout-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            const res = await fetch("/api/create-checkout-session", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     discordId,
                     userId: user?.id,
@@ -103,24 +103,30 @@ export default function JoinPage() {
             });
             const data = await res.json();
             if (!res.ok) {
-                throw new Error(data.error || 'Checkout failed');
+                throw new Error(data.error || "Checkout failed");
             }
             const { url } = data;
             if (url) window.location.href = url;
         } catch (error) {
-            console.error('Checkout error:', error);
+            console.error("Checkout error:", error);
             alert("決済セッションの作成に失敗しました。");
         } finally {
             setCheckoutLoading(false);
         }
     };
 
-    const isMember = userData?.subscriptionStatus === 'active';
+    const isMember = userData?.subscriptionStatus === "active";
 
     return (
-        <div ref={containerRef} className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden font-body text-black bg-cream">
+        <div
+            ref={containerRef}
+            className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden font-body text-black bg-cream"
+        >
             {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '30px 30px' }}></div>
+            <div
+                className="absolute inset-0 opacity-10 pointer-events-none"
+                style={{ backgroundImage: "radial-gradient(#000 2px, transparent 2px)", backgroundSize: "30px 30px" }}
+            ></div>
 
             {/* Floating Shapes */}
             <div className="absolute top-20 left-10 w-24 h-24 bg-pop-yellow rounded-full border-4 border-black brutal-shadow animate-blob animation-delay-2000 hidden md:block"></div>
@@ -143,13 +149,19 @@ export default function JoinPage() {
                     {isSignedIn ? (
                         <div className="flex flex-col items-center gap-6 w-full bg-white border-4 border-black p-8 rounded-3xl brutal-shadow-lg relative">
                             <div className="text-center space-y-2">
-                                <p className="text-sm font-black text-pop-purple uppercase tracking-wider">WELCOME BACK</p>
+                                <p className="text-sm font-black text-pop-purple uppercase tracking-wider">
+                                    WELCOME BACK
+                                </p>
                                 <p className="text-2xl font-black text-black">{userData?.name} さん</p>
                             </div>
 
                             <div className="flex flex-col gap-4 w-full">
                                 {isMember ? (
-                                    <Button asChild size="lg" className="w-full h-16 text-lg font-black bg-pop-green text-black border-4 border-black hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-200 rounded-xl brutal-shadow">
+                                    <Button
+                                        asChild
+                                        size="lg"
+                                        className="w-full h-16 text-lg font-black bg-pop-green text-black border-4 border-black hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-200 rounded-xl brutal-shadow"
+                                    >
                                         <Link href="/dashboard" className="flex items-center justify-center gap-2">
                                             <LayoutDashboard className="w-6 h-6" />
                                             学習を再開する
@@ -164,7 +176,9 @@ export default function JoinPage() {
                                             size="lg"
                                             className="w-full h-16 text-lg font-black bg-pop-purple text-white border-4 border-black hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-200 rounded-xl brutal-shadow"
                                         >
-                                            {checkoutLoading ? "Loading..." : (
+                                            {checkoutLoading ? (
+                                                "Loading..."
+                                            ) : (
                                                 <span className="flex items-center justify-center gap-2">
                                                     <CreditCard className="w-6 h-6" />
                                                     今すぐ参加する
@@ -178,7 +192,12 @@ export default function JoinPage() {
                                 )}
 
                                 {userData?.isAdmin && (
-                                    <Button asChild variant="outline" size="lg" className="w-full h-14 text-base font-bold border-4 border-black bg-white text-black hover:bg-gray-100 transition-all duration-200 rounded-xl brutal-shadow-sm">
+                                    <Button
+                                        asChild
+                                        variant="outline"
+                                        size="lg"
+                                        className="w-full h-14 text-base font-bold border-4 border-black bg-white text-black hover:bg-gray-100 transition-all duration-200 rounded-xl brutal-shadow-sm"
+                                    >
                                         <Link href="/admin" className="flex items-center justify-center gap-2">
                                             <ShieldCheck className="w-5 h-5" />
                                             管理者ダッシュボード
@@ -187,7 +206,10 @@ export default function JoinPage() {
                                 )}
 
                                 <SignOutButton>
-                                    <Button variant="ghost" className="w-full text-sm font-bold text-gray-500 hover:text-black hover:bg-black/5">
+                                    <Button
+                                        variant="ghost"
+                                        className="w-full text-sm font-bold text-gray-500 hover:text-black hover:bg-black/5"
+                                    >
                                         別のアカウントでログイン
                                     </Button>
                                 </SignOutButton>
@@ -206,7 +228,9 @@ export default function JoinPage() {
 
                                     <div>
                                         <div className="flex items-baseline justify-center gap-1 text-black">
-                                            <span className="text-5xl sm:text-6xl font-black tracking-tighter">¥4,000</span>
+                                            <span className="text-5xl sm:text-6xl font-black tracking-tighter">
+                                                ¥4,000
+                                            </span>
                                             <span className="text-xl text-gray-500 font-bold">/ month</span>
                                         </div>
                                         <p className="text-black text-sm mt-2 font-bold bg-pop-green/20 inline-block px-2 py-1 rounded-md border-2 border-transparent">
@@ -222,9 +246,12 @@ export default function JoinPage() {
                                             "独自学習管理システム利用権",
                                             "Discordコミュニティ参加権",
                                             "ハッカソンへの参加・フィードバック",
-                                            "メンバー限定のソースコード共有"
+                                            "メンバー限定のソースコード共有",
                                         ].map((feature, i) => (
-                                            <div key={i} className="flex items-center gap-3 text-base font-bold text-black">
+                                            <div
+                                                key={i}
+                                                className="flex items-center gap-3 text-base font-bold text-black"
+                                            >
                                                 <div className="w-6 h-6 rounded-full bg-pop-green border-2 border-black flex items-center justify-center flex-shrink-0">
                                                     <Check className="w-4 h-4 text-black" />
                                                 </div>
@@ -235,7 +262,10 @@ export default function JoinPage() {
                                 </div>
 
                                 <SignInButton mode="modal">
-                                    <Button size="lg" className="w-full h-20 text-xl font-black bg-pop-purple text-white border-4 border-black hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-200 rounded-2xl relative z-10 brutal-shadow mt-4 animate-brutal-pulse hover:animate-none">
+                                    <Button
+                                        size="lg"
+                                        className="w-full h-20 text-xl font-black bg-pop-purple text-white border-4 border-black hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-200 rounded-2xl relative z-10 brutal-shadow mt-4 animate-brutal-pulse hover:animate-none"
+                                    >
                                         <span className="flex items-center gap-2">
                                             今すぐ参加する
                                             <ArrowRight className="w-6 h-6" />
@@ -248,7 +278,11 @@ export default function JoinPage() {
                                 </p>
                             </div>
 
-                            <Button asChild variant="link" className="text-black font-bold hover:text-pop-red transition-colors">
+                            <Button
+                                asChild
+                                variant="link"
+                                className="text-black font-bold hover:text-pop-red transition-colors"
+                            >
                                 <Link href="/">
                                     <ArrowRight className="w-5 h-5 mr-2 rotate-180" />
                                     BACK TO HOME
@@ -257,11 +291,11 @@ export default function JoinPage() {
                         </>
                     )}
                 </div>
-            </main >
+            </main>
 
             <footer className="absolute bottom-6 text-[10px] font-black text-black z-10 uppercase tracking-widest">
                 © 2025 PORSEO AI Community Platform
             </footer>
-        </div >
+        </div>
     );
 }

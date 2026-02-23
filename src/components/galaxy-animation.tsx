@@ -62,7 +62,7 @@ export function GalaxyAnimation() {
                 if (sx < 0 || sx > width || sy < 0 || sy > height) return;
 
                 const radius = (1 - this.z / width) * 1.5;
-                const alpha = (1 - this.z / width);
+                const alpha = 1 - this.z / width;
 
                 ctx.beginPath();
                 ctx.arc(sx, sy, radius, 0, Math.PI * 2);

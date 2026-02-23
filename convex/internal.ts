@@ -1,5 +1,5 @@
-import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internalMutation } from "./_generated/server";
 
 // Note: getUserByStripeCustomerId, updateSubscriptionStatus, updateSubscriptionStatusByCustomerId
 // are defined in users.ts as public mutations with secret-based auth (for ConvexHttpClient access).
@@ -14,7 +14,7 @@ export const batchMigrateUsers = internalMutation({
                 stripeCustomerId: v.string(),
                 name: v.string(),
                 subscriptionStatus: v.optional(v.string()),
-            })
+            }),
         ),
     },
     handler: async (ctx, args) => {
@@ -66,14 +66,15 @@ export const batchMigrateUsers = internalMutation({
                 results.success++;
             } catch (error: unknown) {
                 results.failed++;
-                results.errors.push(`Failed to migrate ${user.email}: ${error instanceof Error ? error.message : String(error)}`);
+                results.errors.push(
+                    `Failed to migrate ${user.email}: ${error instanceof Error ? error.message : String(error)}`,
+                );
             }
         }
 
         return results;
     },
 });
-
 
 export const setStripeCustomerId = internalMutation({
     args: {
@@ -87,4 +88,3 @@ export const setStripeCustomerId = internalMutation({
         });
     },
 });
-

@@ -1,9 +1,9 @@
 "use node";
 
-import { action } from "./_generated/server";
-import { internal, api } from "./_generated/api";
-import Stripe from "stripe";
 import { v } from "convex/values";
+import Stripe from "stripe";
+import { api, internal } from "./_generated/api";
+import { action } from "./_generated/server";
 
 export const createCustomer = action({
     args: {},
@@ -37,7 +37,7 @@ export const createCustomer = action({
                         {
                             headers: { Authorization: `Bearer ${clerkSecretKey}` },
                             signal: clerkController.signal,
-                        }
+                        },
                     );
 
                     if (clerkResponse.ok) {
@@ -52,7 +52,7 @@ export const createCustomer = action({
                                     {
                                         headers: { Authorization: `Bearer ${accessToken}` },
                                         signal: discordController.signal,
-                                    }
+                                    },
                                 );
 
                                 if (discordResponse.ok) {
@@ -141,9 +141,7 @@ export const linkStripeCustomerByEmail = action({
         const inputEmail = args.email.trim().toLowerCase();
         const userEmail = (user.email || "").trim().toLowerCase();
         if (inputEmail !== userEmail) {
-            throw new Error(
-                "入力されたメールアドレスがアカウントのメールアドレスと一致しません"
-            );
+            throw new Error("入力されたメールアドレスがアカウントのメールアドレスと一致しません");
         }
 
         // Already linked
@@ -229,7 +227,7 @@ export const getDiscordRolesV2 = action({
                             Authorization: `Bearer ${clerkSecretKey}`,
                         },
                         signal: clerkController.signal,
-                    }
+                    },
                 );
             } finally {
                 clearTimeout(clerkTimeout);
@@ -252,15 +250,12 @@ export const getDiscordRolesV2 = action({
             const discordTimeout = setTimeout(() => discordController.abort(), 10000);
             let discordResponse: Response;
             try {
-                discordResponse = await fetch(
-                    `https://discord.com/api/users/@me/guilds/${guildId}/member`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                        },
-                        signal: discordController.signal,
-                    }
-                );
+                discordResponse = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                    signal: discordController.signal,
+                });
             } finally {
                 clearTimeout(discordTimeout);
             }

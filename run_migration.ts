@@ -1,6 +1,6 @@
 /**
  * Migration Script
- * 
+ *
  * Usage:
  * 1. Create a file named `migration_data.json` in the root directory.
  *    Format:
@@ -14,15 +14,15 @@
  *      },
  *      ...
  *    ]
- * 
+ *
  * 2. Run this script:
  *    npx tsx run_migration.ts
  */
 
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "./convex/_generated/api.js";
-import * as fs from "fs";
-import * as path from "path";
 
 // Manually load .env.local
 const envPath = path.resolve(process.cwd(), ".env.local");
@@ -70,7 +70,7 @@ async function main() {
         console.log(`Processing chunk ${i / CHUNK_SIZE + 1} (${chunk.length} users)...`);
 
         try {
-            // @ts-ignore
+            // @ts-expect-error
             const result = await client.mutation(api.internal.batchMigrateUsers, { users: chunk });
             console.log("Result:", result);
         } catch (error) {

@@ -1,12 +1,12 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("node:fs");
+const path = require("node:path");
 
 // Load env manually
-const envPath = path.resolve(__dirname, '../.env.local');
-const envConfig = fs.readFileSync(envPath, 'utf8');
+const envPath = path.resolve(__dirname, "../.env.local");
+const envConfig = fs.readFileSync(envPath, "utf8");
 const env = {};
-envConfig.split('\n').forEach(line => {
-    const [key, value] = line.split('=');
+envConfig.split("\n").forEach((line) => {
+    const [key, value] = line.split("=");
     if (key && value) {
         env[key.trim()] = value.trim();
     }
@@ -27,15 +27,14 @@ async function listModels() {
 
         console.log("Available Models:");
         if (data.models) {
-            data.models.forEach(m => {
-                if (m.name.includes('gemini')) {
+            data.models.forEach((m) => {
+                if (m.name.includes("gemini")) {
                     console.log(`- ${m.name} (${m.displayName})`);
                 }
             });
         } else {
             console.log(JSON.stringify(data, null, 2));
         }
-
     } catch (e) {
         console.error("Error listing models:", e);
     }

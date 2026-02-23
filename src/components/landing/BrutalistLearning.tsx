@@ -1,16 +1,15 @@
 "use client";
 
-import { WaveButton } from "@/components/ui/wave-button";
 import Image from "next/image";
-import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Check } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { WaveButton } from "@/components/ui/wave-button";
 
 export function BrutalistLearning() {
-    const features = [
+    const _features = [
         "学習進捗の可視化とトラッキング",
         "毎日の学習継続ランク機能",
         "獲得スキルと経験値のグラフ化",
-        "コミュニティ内ランキング表示"
+        "コミュニティ内ランキング表示",
     ];
 
     return (
@@ -28,7 +27,10 @@ export function BrutalistLearning() {
                 </div>
                 {/* Content aligned to the LEFT, allowing overlap */}
                 <div className="w-full lg:w-2/3 text-left lg:pl-32 relative z-20">
-                    <h2 className="text-3xl sm:text-5xl md:text-7xl font-black text-black tracking-tighter mb-6 leading-tight" style={{ fontFamily: 'var(--font-jp)' }}>
+                    <h2
+                        className="text-3xl sm:text-5xl md:text-7xl font-black text-black tracking-tighter mb-6 leading-tight"
+                        style={{ fontFamily: "var(--font-jp)" }}
+                    >
                         専用の学習ダッシュボード
                     </h2>
 
@@ -58,44 +60,56 @@ export function BrutalistLearning() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="bg-white border-2 border-black p-6 rounded-lg shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#000000] transition-all">
                                             <h4 className="font-black text-xl mb-3 flex items-center gap-2">
-                                                <span className="bg-sky-400 text-white w-8 h-8 flex items-center justify-center rounded-full border-2 border-black text-sm">01</span>
+                                                <span className="bg-sky-400 text-white w-8 h-8 flex items-center justify-center rounded-full border-2 border-black text-sm">
+                                                    01
+                                                </span>
                                                 学習ランクシステム
                                             </h4>
                                             <p className="font-bold text-gray-600 leading-relaxed">
-                                                動画を完了するたびにランクがアップ。<br />
+                                                動画を完了するたびにランクがアップ。
+                                                <br />
                                                 完了数に応じてビギナーからプラチナへ、成長を可視化。
                                             </p>
                                         </div>
 
                                         <div className="bg-white border-2 border-black p-6 rounded-lg shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#000000] transition-all">
                                             <h4 className="font-black text-xl mb-3 flex items-center gap-2">
-                                                <span className="bg-pink-400 text-white w-8 h-8 flex items-center justify-center rounded-full border-2 border-black text-sm">02</span>
+                                                <span className="bg-pink-400 text-white w-8 h-8 flex items-center justify-center rounded-full border-2 border-black text-sm">
+                                                    02
+                                                </span>
                                                 学習統計データ
                                             </h4>
                                             <p className="font-bold text-gray-600 leading-relaxed">
-                                                総視聴時間や完了した動画数を一目で確認。<br />
+                                                総視聴時間や完了した動画数を一目で確認。
+                                                <br />
                                                 自分の積み上げた成果を数字で実感できる。
                                             </p>
                                         </div>
 
                                         <div className="bg-white border-2 border-black p-6 rounded-lg shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#000000] transition-all">
                                             <h4 className="font-black text-xl mb-3 flex items-center gap-2">
-                                                <span className="bg-yellow-400 text-white w-8 h-8 flex items-center justify-center rounded-full border-2 border-black text-sm">03</span>
+                                                <span className="bg-yellow-400 text-white w-8 h-8 flex items-center justify-center rounded-full border-2 border-black text-sm">
+                                                    03
+                                                </span>
                                                 連続学習ストリーク
                                             </h4>
                                             <p className="font-bold text-gray-600 leading-relaxed">
-                                                毎日の学習継続日数を記録。<br />
+                                                毎日の学習継続日数を記録。
+                                                <br />
                                                 途切らせたくない心理を刺激し、日々の学習を習慣化。
                                             </p>
                                         </div>
 
                                         <div className="bg-white border-2 border-black p-6 rounded-lg shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#000000] transition-all">
                                             <h4 className="font-black text-xl mb-3 flex items-center gap-2">
-                                                <span className="bg-green-400 text-white w-8 h-8 flex items-center justify-center rounded-full border-2 border-black text-sm">04</span>
+                                                <span className="bg-green-400 text-white w-8 h-8 flex items-center justify-center rounded-full border-2 border-black text-sm">
+                                                    04
+                                                </span>
                                                 週間学習グラフ
                                             </h4>
                                             <p className="font-bold text-gray-600 leading-relaxed">
-                                                直近7日間の学習時間をグラフで分析。<br />
+                                                直近7日間の学習時間をグラフで分析。
+                                                <br />
                                                 学習ペースを把握し、無理のない計画を立てられる。
                                             </p>
                                         </div>
