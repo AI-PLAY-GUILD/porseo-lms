@@ -465,9 +465,12 @@ export default function EditVideoPage() {
 
                                 // 結果を即座にフォームに反映
                                 if (result) {
-                                    if (result.error) {
+                                    if ("error" in result && result.error) {
                                         console.error("AI Analysis Failed:", result.error);
-                                        console.error("Error Details:", result.details);
+                                        console.error(
+                                            "Error Details:",
+                                            (result as { error: string; details?: unknown }).details,
+                                        );
                                         alert(`${result.error}\n\n詳細は開発者ツールのコンソールを確認してください。`);
                                         return;
                                     }
