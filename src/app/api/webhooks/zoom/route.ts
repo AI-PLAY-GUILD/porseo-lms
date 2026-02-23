@@ -99,7 +99,8 @@ export async function POST(req: Request) {
     const eventId = `${payload.payload?.object?.uuid || ""}_${eventTs}`;
 
     try {
-        const alreadyProcessed = await convex.query(api.zoom.checkZoomEventProcessed, {
+        // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
+        const alreadyProcessed = await convex.query((api as any).zoom.checkZoomEventProcessed, {
             eventId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
         });
@@ -158,7 +159,8 @@ export async function POST(req: Request) {
 
     // --- 6. Create draft video + mark event as processed (atomic in mutation) ---
     try {
-        await convex.mutation(api.zoom.createZoomDraftVideo, {
+        // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
+        await convex.mutation((api as any).zoom.createZoomDraftVideo, {
             meetingId,
             meetingTopic,
             mp4DownloadUrl: mp4Url,
