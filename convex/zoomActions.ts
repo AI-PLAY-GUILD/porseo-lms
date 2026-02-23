@@ -56,20 +56,10 @@ export const ingestToMux = internalAction({
             // 1. Create Mux asset from Zoom recording URL
             const mux = new Mux({ tokenId, tokenSecret });
 
-            const inputEntry: {
-                url: string;
-                generated_subtitles?: Array<{ language_code: string; name: string }>;
-            } = { url: args.mp4DownloadUrl };
-
-            // If no VTT provided, enable Mux auto-subtitles for Japanese
-            if (!args.vttDownloadUrl) {
-                inputEntry.generated_subtitles = [
-                    { language_code: "ja", name: "Japanese" },
-                ];
-            }
+            const inputEntry: { url: string } = { url: args.mp4DownloadUrl };
 
             const assetConfig = {
-                input: [inputEntry],
+                inputs: [inputEntry],
                 playback_policy: ["public" as const],
             };
 
@@ -185,7 +175,7 @@ ${args.transcription}
             });
 
             let responseText = "";
-            const textOrFunc = (response as Record<string, unknown>).text;
+            const textOrFunc = (response as unknown as Record<string, unknown>).text;
             if (typeof textOrFunc === "function") {
                 responseText = textOrFunc();
             } else if (textOrFunc) {
