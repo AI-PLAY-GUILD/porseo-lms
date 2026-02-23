@@ -93,7 +93,7 @@ ${subtitleText}
             let responseText = "";
 
             // 3. レスポンスの取得 (修正ポイント: 関数として呼び出す)
-            const textOrFunc = (response as Record<string, unknown>).text;
+            const textOrFunc = (response as unknown as Record<string, unknown>).text;
             if (typeof textOrFunc === 'function') {
                 responseText = textOrFunc();
             } else if (textOrFunc) {

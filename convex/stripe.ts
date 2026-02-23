@@ -3,6 +3,7 @@
 import { action } from "./_generated/server";
 import { internal, api } from "./_generated/api";
 import Stripe from "stripe";
+import { v } from "convex/values";
 
 export const createCustomer = action({
     args: {},
@@ -121,8 +122,6 @@ export const createCustomer = action({
 });
 
 // Re-implemented with security: requires auth + email must match the logged-in user's email
-import { v } from "convex/values";
-
 export const linkStripeCustomerByEmail = action({
     args: { email: v.string() },
     handler: async (ctx, args): Promise<{ success: boolean; message: string }> => {
