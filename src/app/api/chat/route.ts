@@ -8,23 +8,29 @@ const SYSTEM_PROMPT = `あなたはPORSEOの学習アシスタントです。ユ
 
 ## 役割
 - ユーザーの質問に基づいて、関連する動画コンテンツを検索・推薦する
+- コミュニティの動画一覧を取得して紹介する
 - 動画の内容を要約し、どの部分が質問に関連するか説明する
 - 学習のアドバイスを提供する
 
+## 利用可能なツール
+- **listVideos**: コミュニティの動画一覧を取得する。「どんな動画がある？」「おすすめの動画は？」などの質問に使う
+- **searchVideos**: 動画の文字起こしをベクトル検索して、特定のトピックに関連する動画とタイムスタンプを見つける
+
 ## 行動規則
-1. ユーザーの質問を受けたら、まず searchVideos ツールを使って関連動画を検索してください
-2. 検索結果がある場合は、以下の形式で回答してください:
+1. 「動画一覧」「どんな動画があるか」「おすすめ」などの質問には listVideos ツールを使ってください
+2. 特定のトピックや内容を探す場合は searchVideos ツールを使ってください
+3. 検索結果がある場合は、以下の形式で回答してください:
    - 関連する動画のタイトルとタイムスタンプ
    - その部分の内容の要約
-3. 検索結果がない場合は、一般的な知識で回答し、「該当する動画は見つかりませんでした」と伝えてください
-4. 常に日本語で回答してください
-5. フレンドリーで丁寧な口調を心がけてください
+4. 検索結果がない場合は、一般的な知識で回答し、「該当する動画は見つかりませんでした」と伝えてください
+5. 常に日本語で回答してください
+6. フレンドリーで丁寧な口調を心がけてください
 
 ## 動画リンクのフォーマット
 動画を紹介する際は以下の形式を使用してください:
 - 動画タイトル: **[タイトル]**
-- 該当箇所: [開始時間] 〜 [終了時間]
-- 内容: [その部分の要約]
+- 概要: [動画の説明または要約]
+- 該当箇所（searchVideos使用時のみ）: [開始時間] 〜 [終了時間]
 
 時間は MM:SS 形式で表示してください（例: 3:45）。`;
 
@@ -58,6 +64,51 @@ export async function POST(req: Request) {
         system: SYSTEM_PROMPT,
         messages,
         tools: {
+            listVideos: tool({
+                description:
+                    "コミュニティで公開されている動画の一覧を取得します。どんな動画があるか聞かれたときや、おすすめを紹介するときに使います",
+                inputSchema: z.object({
+                    keyword: z
+                        .string()
+                        .optional()
+                        .describe("タイトルや概要を絞り込むキーワード（省略可）"),
+                }),
+                execute: async ({ keyword }) => {
+                    try {
+                        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
+                        const videos = await convex.query("videos:getPublishedVideos" as any, {});
+                        if (!videos || !Array.isArray(videos) || videos.length === 0) {
+                            return { videos: [], message: "現在公開されている動画はありません。" };
+                        }
+
+                        const list = (videos as Array<Record<string, unknown>>)
+                            .filter((v) => {
+                                if (!keyword) return true;
+                                const kw = keyword.toLowerCase();
+                                return (
+                                    String(v.title ?? "").toLowerCase().includes(kw) ||
+                                    String(v.description ?? "").toLowerCase().includes(kw) ||
+                                    String(v.summary ?? "").toLowerCase().includes(kw)
+                                );
+                            })
+                            .map((v) => ({
+                                videoId: v._id,
+                                title: v.title,
+                                description: v.description ?? null,
+                                summary: v.summary ?? null,
+                                duration: v.duration ?? null,
+                                isLocked: v.isLocked ?? false,
+                            }));
+
+                        return { videos: list, total: list.length };
+                    } catch (error: unknown) {
+                        return {
+                            videos: [],
+                            error: `動画一覧の取得に失敗しました: ${error instanceof Error ? error.message : String(error)}`,
+                        };
+                    }
+                },
+            }),
             searchVideos: tool({
                 description:
                     "動画の文字起こしデータをベクトル検索して、ユーザーの質問に関連する動画とタイムスタンプを見つけます",
@@ -105,7 +156,7 @@ export async function POST(req: Request) {
                 },
             }),
         },
-        stopWhen: stepCountIs(3),
+        stopWhen: stepCountIs(5),
     });
 
     return result.toUIMessageStreamResponse();
