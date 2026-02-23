@@ -31,8 +31,9 @@ export function BrutalistFooter() {
                     <div>
                         <h4 className="text-slate-900 font-medium mb-6 text-sm">法的情報</h4>
                         <ul className="space-y-4">
-                            <li><Link href="#" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">利用規約</Link></li>
-                            <li><Link href="#" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">プライバシーポリシー</Link></li>
+                            <li><Link href="/terms" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">利用規約</Link></li>
+                            <li><Link href="/privacy" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">プライバシーポリシー</Link></li>
+                            <li><Link href="/law" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">特定商取引法に基づく表記</Link></li>
                             <li><Link href="#" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">お問い合わせ</Link></li>
                         </ul>
                     </div>
