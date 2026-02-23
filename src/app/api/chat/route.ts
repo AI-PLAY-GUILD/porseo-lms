@@ -133,15 +133,17 @@ export async function POST(req: Request) {
                             };
                         }
                         return {
-                            results: (results as Array<Record<string, unknown>>).map((r: Record<string, unknown>) => ({
-                                videoTitle: r.videoTitle,
-                                videoId: r.videoId,
-                                muxPlaybackId: r.muxPlaybackId,
-                                text: r.text,
-                                startTime: Math.floor(r.startTime as number),
-                                endTime: Math.floor(r.endTime as number),
-                                relevanceScore: r.score,
-                            })),
+                            results: (results as unknown as Array<Record<string, unknown>>).map(
+                                (r: Record<string, unknown>) => ({
+                                    videoTitle: r.videoTitle,
+                                    videoId: r.videoId,
+                                    muxPlaybackId: r.muxPlaybackId,
+                                    text: r.text,
+                                    startTime: Math.floor(r.startTime as number),
+                                    endTime: Math.floor(r.endTime as number),
+                                    relevanceScore: r.score,
+                                }),
+                            ),
                         };
                     } catch (error: unknown) {
                         console.error("Video search error:", error);
