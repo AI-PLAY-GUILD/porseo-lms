@@ -133,6 +133,11 @@ export const updateVideoTranscription = internalMutation({
             transcription: args.transcription,
             updatedAt: Date.now(),
         });
+
+        // 文字起こし保存後、自動でベクトルインデックスを作成
+        await ctx.scheduler.runAfter(0, internal.rag.autoIndexVideoTranscription, {
+            videoId: args.videoId,
+        });
     },
 });
 

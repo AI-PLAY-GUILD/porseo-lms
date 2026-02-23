@@ -1,6 +1,6 @@
 "use node";
 
-import { action } from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { v } from "convex/values";
 import { GoogleGenAI } from "@google/genai";
@@ -196,6 +196,69 @@ export const indexVideoTranscription = action({
         }
 
         return { chunksCreated: chunks.length };
+    },
+});
+
+// ============================
+// 自動インデックス化 (サーバーサイドスケジューラから呼び出し用・認証不要)
+// ============================
+export const autoIndexVideoTranscription = internalAction({
+    args: {
+        videoId: v.id("videos"),
+    },
+    handler: async (ctx, args): Promise<void> => {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            console.error("[autoIndex] GEMINI_API_KEY is not set");
+            return;
+        }
+
+        const video = await ctx.runQuery(api.videos.getById, { videoId: args.videoId });
+        if (!video?.transcription) {
+            console.log("[autoIndex] No transcription found for video:", args.videoId);
+            return;
+        }
+
+        try {
+            const client = new GoogleGenAI({ apiKey });
+
+            await ctx.runMutation(internal.ragDb.deleteChunksByVideoId, {
+                videoId: args.videoId,
+            });
+
+            const transcription: string = video.transcription;
+            const isVtt: boolean = transcription.includes("-->") || transcription.startsWith("WEBVTT");
+            const chunks: TextChunk[] = isVtt
+                ? createChunks(parseVtt(transcription))
+                : createPlainTextChunks(transcription);
+
+            if (chunks.length === 0) {
+                console.warn("[autoIndex] No chunks generated for video:", args.videoId);
+                return;
+            }
+
+            const texts: string[] = chunks.map((c: TextChunk) => c.text);
+            const embeddings = await generateEmbeddings(client, texts);
+
+            const dbChunks = chunks.map((chunk: TextChunk, i: number) => ({
+                videoId: args.videoId,
+                text: chunk.text,
+                startTime: chunk.startTime,
+                endTime: chunk.endTime,
+                embedding: embeddings[i],
+            }));
+
+            const saveBatchSize = 50;
+            for (let i = 0; i < dbChunks.length; i += saveBatchSize) {
+                await ctx.runMutation(internal.ragDb.saveChunks, {
+                    chunks: dbChunks.slice(i, i + saveBatchSize),
+                });
+            }
+
+            console.log(`[autoIndex] Indexed ${chunks.length} chunks for video:`, args.videoId);
+        } catch (error) {
+            console.error("[autoIndex] Failed to index video:", args.videoId, error);
+        }
     },
 });
 

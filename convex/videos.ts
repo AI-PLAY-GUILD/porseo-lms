@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 
 // Input length limits
@@ -295,6 +296,13 @@ export const updateVideo = mutation({
             ...updates,
             updatedAt: Date.now(),
         });
+
+        // 文字起こしが更新された場合、自動でベクトルインデックスを再作成
+        if (args.transcription !== undefined) {
+            await ctx.scheduler.runAfter(0, internal.rag.autoIndexVideoTranscription, {
+                videoId,
+            });
+        }
 
         await ctx.db.insert("auditLogs", {
             userId: user._id,
