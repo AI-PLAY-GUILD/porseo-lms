@@ -1,6 +1,6 @@
 "use client";
 
-import { SignInButton } from "@clerk/nextjs";
+import { useClerk } from "@clerk/nextjs";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -17,6 +17,7 @@ interface BrutalistHeaderProps {
 
 export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHeaderProps) {
     const [isScrolled, setIsScrolled] = useState(false);
+    const { openSignIn } = useClerk();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -80,14 +81,13 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                         </div>
                     ) : (
                         <div className="flex gap-3">
-                            <SignInButton mode="modal" forceRedirectUrl="/join">
-                                <Button
-                                    variant="ghost"
-                                    className="rounded-full font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                                >
-                                    ログイン
-                                </Button>
-                            </SignInButton>
+                            <Button
+                                variant="ghost"
+                                className="rounded-full font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                                onClick={() => openSignIn({ redirectUrl: "/join" })}
+                            >
+                                ログイン
+                            </Button>
                             <WaveButton
                                 href="/join"
                                 text="今すぐ参加"
@@ -145,14 +145,13 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                                     </div>
                                 ) : (
                                     <div className="flex flex-col gap-4">
-                                        <SignInButton mode="modal" forceRedirectUrl="/join">
-                                            <Button
-                                                variant="ghost"
-                                                className="w-full rounded-full font-medium text-slate-600 hover:bg-slate-50 h-12 border border-slate-200"
-                                            >
-                                                ログイン
-                                            </Button>
-                                        </SignInButton>
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full rounded-full font-medium text-slate-600 hover:bg-slate-50 h-12 border border-slate-200"
+                                            onClick={() => openSignIn({ redirectUrl: "/join" })}
+                                        >
+                                            ログイン
+                                        </Button>
                                         <Button
                                             asChild
                                             className="w-full rounded-full bg-blue-600 text-white hover:bg-blue-500 h-12 font-medium shadow-lg shadow-blue-100"
