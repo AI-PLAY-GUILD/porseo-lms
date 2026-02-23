@@ -1,16 +1,16 @@
 "use client";
 
 import {
-    LineChart,
-    Line,
-    BarChart,
     Bar,
+    BarChart,
+    LabelList,
+    Legend,
+    Line,
+    LineChart,
+    ResponsiveContainer,
+    Tooltip,
     XAxis,
     YAxis,
-    Tooltip,
-    ResponsiveContainer,
-    Legend,
-    LabelList,
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -34,18 +34,14 @@ interface AnalyticsViewProps {
 
 export function AnalyticsView({ userGrowth, contentPerformance }: AnalyticsViewProps) {
     // Filter out videos with 0 views and take top 5
-    const topContent = contentPerformance
-        .filter(item => item.views > 0)
-        .slice(0, 5);
+    const topContent = contentPerformance.filter((item) => item.views > 0).slice(0, 5);
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
                 <CardHeader>
                     <CardTitle>ユーザー増加数 (過去30日)</CardTitle>
-                    <CardDescription>
-                        期間中の新規ユーザー登録推移
-                    </CardDescription>
+                    <CardDescription>期間中の新規ユーザー登録推移</CardDescription>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <ResponsiveContainer width="100%" height={350}>
@@ -69,8 +65,13 @@ export function AnalyticsView({ userGrowth, contentPerformance }: AnalyticsViewP
                                 allowDecimals={false}
                             />
                             <Tooltip
-                                contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                labelStyle={{ color: '#333' }}
+                                contentStyle={{
+                                    backgroundColor: "rgba(255, 255, 255, 0.8)",
+                                    borderRadius: "8px",
+                                    border: "none",
+                                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                                }}
+                                labelStyle={{ color: "#333" }}
                             />
                             <Line
                                 type="monotone"
@@ -89,13 +90,15 @@ export function AnalyticsView({ userGrowth, contentPerformance }: AnalyticsViewP
             <Card className="col-span-3">
                 <CardHeader>
                     <CardTitle>人気コンテンツ</CardTitle>
-                    <CardDescription>
-                        視聴回数と完了率の上位動画
-                    </CardDescription>
+                    <CardDescription>視聴回数と完了率の上位動画</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={350}>
-                        <BarChart data={topContent} layout="vertical" margin={{ left: 0, right: 20, top: 0, bottom: 0 }}>
+                        <BarChart
+                            data={topContent}
+                            layout="vertical"
+                            margin={{ left: 0, right: 20, top: 0, bottom: 0 }}
+                        >
                             <XAxis
                                 type="number"
                                 stroke="#888888"
@@ -109,11 +112,16 @@ export function AnalyticsView({ userGrowth, contentPerformance }: AnalyticsViewP
                                 type="category"
                                 width={100}
                                 tick={{ fontSize: 11 }}
-                                tickFormatter={(value) => value.length > 10 ? `${value.substring(0, 10)}...` : value}
+                                tickFormatter={(value) => (value.length > 10 ? `${value.substring(0, 10)}...` : value)}
                             />
                             <Tooltip
-                                cursor={{ fill: 'transparent' }}
-                                contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                cursor={{ fill: "transparent" }}
+                                contentStyle={{
+                                    backgroundColor: "rgba(255, 255, 255, 0.8)",
+                                    borderRadius: "8px",
+                                    border: "none",
+                                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                                }}
                             />
                             <Legend />
                             <Bar dataKey="views" fill="#adfa1d" radius={[0, 4, 4, 0]} name="視聴回数" barSize={20}>
@@ -121,7 +129,7 @@ export function AnalyticsView({ userGrowth, contentPerformance }: AnalyticsViewP
                                     dataKey="views"
                                     position="right"
                                     fontSize={10}
-                                    formatter={(value: number) => value > 0 ? value : ""}
+                                    formatter={(value: number) => (value > 0 ? value : "")}
                                 />
                             </Bar>
                             <Bar dataKey="completions" fill="#2563eb" radius={[0, 4, 4, 0]} name="完了数" barSize={20}>
@@ -129,7 +137,7 @@ export function AnalyticsView({ userGrowth, contentPerformance }: AnalyticsViewP
                                     dataKey="completions"
                                     position="right"
                                     fontSize={10}
-                                    formatter={(value: number) => value > 0 ? value : ""}
+                                    formatter={(value: number) => (value > 0 ? value : "")}
                                 />
                             </Bar>
                         </BarChart>

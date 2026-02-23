@@ -1,6 +1,5 @@
-
-import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internalMutation } from "./_generated/server";
 
 export const batchMigrateUsers = internalMutation({
     args: {
@@ -16,7 +15,7 @@ export const batchMigrateUsers = internalMutation({
                 subscriptionStatus: v.optional(v.string()),
                 subscriptionName: v.optional(v.string()),
                 isAdmin: v.optional(v.boolean()),
-            })
+            }),
         ),
     },
     handler: async (ctx, args) => {

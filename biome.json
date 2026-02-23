@@ -3,6 +3,7 @@
     "linter": {
         "enabled": true,
         "rules": {
+            "recommended": false,
             "suspicious": {
                 "noExplicitAny": "error"
             }
@@ -21,11 +22,11 @@
             "**/*.js",
             "**/*.jsx",
             "**/*.mjs",
-            "!convex/_generated/**",
-            "!.next/**",
-            "!node_modules/**",
-            "!out/**",
-            "!build/**"
+            "!convex/_generated",
+            "!.next",
+            "!node_modules",
+            "!out",
+            "!build"
         ]
     },
     "assist": {

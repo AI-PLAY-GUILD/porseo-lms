@@ -1,18 +1,12 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { api } from "../../../../convex/_generated/api";
 
 export default function UserListPage() {
     const userData = useQuery(api.users.getUser);
@@ -58,7 +52,21 @@ export default function UserListPage() {
     );
 }
 
-function UserList({ users }: { users: Array<{ _id: string; name?: string; email?: string; imageUrl?: string; isAdmin?: boolean; subscriptionStatus?: string; createdAt: number }> | undefined }) {
+function UserList({
+    users,
+}: {
+    users:
+        | Array<{
+              _id: string;
+              name?: string;
+              email?: string;
+              imageUrl?: string;
+              isAdmin?: boolean;
+              subscriptionStatus?: string;
+              createdAt: number;
+          }>
+        | undefined;
+}) {
     if (users === undefined) {
         return <div>読み込み中...</div>;
     }
@@ -81,7 +89,10 @@ function UserList({ users }: { users: Array<{ _id: string; name?: string; email?
                 </thead>
                 <tbody>
                     {users.map((user) => (
-                        <tr key={user._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <tr
+                            key={user._id}
+                            className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                        >
                             <td className="py-3 px-4">
                                 <div className="flex items-center gap-3">
                                     <Avatar>
@@ -91,12 +102,12 @@ function UserList({ users }: { users: Array<{ _id: string; name?: string; email?
                                     <span className="font-medium">{user.name}</span>
                                 </div>
                             </td>
-                            <td className="py-3 px-4 text-sm text-gray-500">
-                                {user.email}
-                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-500">{user.email}</td>
                             <td className="py-3 px-4">
                                 {user.isAdmin ? (
-                                    <Badge variant="default" className="bg-purple-600 hover:bg-purple-700">管理者</Badge>
+                                    <Badge variant="default" className="bg-purple-600 hover:bg-purple-700">
+                                        管理者
+                                    </Badge>
                                 ) : (
                                     <Badge variant="secondary">一般</Badge>
                                 )}
@@ -104,9 +115,13 @@ function UserList({ users }: { users: Array<{ _id: string; name?: string; email?
                             <td className="py-3 px-4">
                                 <Badge
                                     variant={user.subscriptionStatus === "active" ? "default" : "outline"}
-                                    className={user.subscriptionStatus === "active" ? "bg-green-600 hover:bg-green-700" : ""}
+                                    className={
+                                        user.subscriptionStatus === "active" ? "bg-green-600 hover:bg-green-700" : ""
+                                    }
                                 >
-                                    {user.subscriptionStatus === "active" ? "有効" : user.subscriptionStatus || "未加入"}
+                                    {user.subscriptionStatus === "active"
+                                        ? "有効"
+                                        : user.subscriptionStatus || "未加入"}
                                 </Badge>
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-500">

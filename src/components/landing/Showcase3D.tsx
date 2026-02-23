@@ -1,11 +1,21 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { ContactShadows, Environment, Float, PerspectiveCamera } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, PerspectiveCamera, Environment, ContactShadows, Text } from "@react-three/drei";
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
-function FloatingVideoCard({ position, rotation, color, delay }: { position: [number, number, number], rotation: [number, number, number], color: string, delay: number }) {
+function FloatingVideoCard({
+    position,
+    rotation,
+    color,
+    delay,
+}: {
+    position: [number, number, number];
+    rotation: [number, number, number];
+    color: string;
+    delay: number;
+}) {
     const meshRef = useRef<THREE.Mesh>(null);
 
     useFrame((state) => {
@@ -56,12 +66,7 @@ function CentralObject() {
         <Float speed={4} rotationIntensity={1} floatIntensity={1}>
             <mesh ref={meshRef} position={[0, 0, -2]}>
                 <icosahedronGeometry args={[2.5, 0]} />
-                <meshStandardMaterial
-                    color="#1a1a1a"
-                    wireframe={true}
-                    emissive="#0000ff"
-                    emissiveIntensity={0.8}
-                />
+                <meshStandardMaterial color="#1a1a1a" wireframe={true} emissive="#0000ff" emissiveIntensity={0.8} />
             </mesh>
         </Float>
     );
@@ -83,7 +88,12 @@ function Scene() {
             const color = colors[Math.floor(Math.random() * colors.length)];
             const delay = Math.random() * 10;
 
-            items.push({ position: [x, y, z] as [number, number, number], rotation: [rotX, rotY, rotZ] as [number, number, number], color, delay });
+            items.push({
+                position: [x, y, z] as [number, number, number],
+                rotation: [rotX, rotY, rotZ] as [number, number, number],
+                color,
+                delay,
+            });
         }
         return items;
     }, []);
@@ -116,7 +126,7 @@ function Scene() {
 export function Showcase3D() {
     return (
         <div className="w-full h-full relative min-h-[500px]">
-            <Canvas dpr={[1, 2]} gl={{ alpha: true }} style={{ width: '100%', height: '100%' }}>
+            <Canvas dpr={[1, 2]} gl={{ alpha: true }} style={{ width: "100%", height: "100%" }}>
                 <Scene />
             </Canvas>
             {/* Overlay Gradient for fade effect if needed */}

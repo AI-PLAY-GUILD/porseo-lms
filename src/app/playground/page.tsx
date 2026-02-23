@@ -1,12 +1,15 @@
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function PlaygroundPage() {
     return (
         <div className="min-h-screen bg-cream flex flex-col items-center justify-center p-4 relative overflow-hidden">
             {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '30px 30px' }}></div>
+            <div
+                className="absolute inset-0 opacity-10 pointer-events-none"
+                style={{ backgroundImage: "radial-gradient(#000 2px, transparent 2px)", backgroundSize: "30px 30px" }}
+            ></div>
 
             {/* Floating Shapes */}
             <div className="absolute top-20 left-10 w-24 h-24 bg-pop-yellow rounded-full border-4 border-black brutal-shadow animate-blob animation-delay-2000 hidden md:block"></div>
@@ -28,10 +31,12 @@ export default function PlaygroundPage() {
                     さあ、AIの可能性を遊び尽くそう。
                 </p>
 
-                <Button asChild size="lg" className="h-20 px-12 text-2xl font-black rounded-xl bg-black text-white border-4 border-transparent hover:border-black hover:bg-pop-green hover:text-black hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all shadow-[8px_8px_0px_0px_#000000]">
-                    <Link href="/dashboard">
-                        GO TO DASHBOARD 🚀
-                    </Link>
+                <Button
+                    asChild
+                    size="lg"
+                    className="h-20 px-12 text-2xl font-black rounded-xl bg-black text-white border-4 border-transparent hover:border-black hover:bg-pop-green hover:text-black hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all shadow-[8px_8px_0px_0px_#000000]"
+                >
+                    <Link href="/dashboard">GO TO DASHBOARD 🚀</Link>
                 </Button>
             </div>
         </div>

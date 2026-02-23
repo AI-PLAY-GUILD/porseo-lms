@@ -1,36 +1,36 @@
-import { Bot, Zap, Users, Code, Video, Globe } from "lucide-react";
+import { Bot, Code, Globe, Users, Video, Zap } from "lucide-react";
 
 const features = [
     {
         icon: Bot,
         title: "Latest AI Models",
-        description: "GPT-4, Claude 3, Geminiなど、最新のAIモデルの活用方法をいち早くキャッチアップできます。"
+        description: "GPT-4, Claude 3, Geminiなど、最新のAIモデルの活用方法をいち早くキャッチアップできます。",
     },
     {
         icon: Video,
         title: "Exclusive Content",
-        description: "メンバー限定の動画講座やチュートリアルで、実践的なスキルを効率的に習得できます。"
+        description: "メンバー限定の動画講座やチュートリアルで、実践的なスキルを効率的に習得できます。",
     },
     {
         icon: Users,
         title: "Active Community",
-        description: "同じ志を持つ仲間と交流し、知見を共有し合うことで、学習のモチベーションを維持できます。"
+        description: "同じ志を持つ仲間と交流し、知見を共有し合うことで、学習のモチベーションを維持できます。",
     },
     {
         icon: Code,
         title: "Hands-on Projects",
-        description: "実際のプロジェクトを通じて、AIをアプリケーションに組み込む実践的な開発スキルを磨けます。"
+        description: "実際のプロジェクトを通じて、AIをアプリケーションに組み込む実践的な開発スキルを磨けます。",
     },
     {
         icon: Zap,
         title: "Prompt Engineering",
-        description: "AIの可能性を最大限に引き出すための、高度なプロンプトエンジニアリング技術を学べます。"
+        description: "AIの可能性を最大限に引き出すための、高度なプロンプトエンジニアリング技術を学べます。",
     },
     {
         icon: Globe,
         title: "Global Trends",
-        description: "海外のAIトレンドや最新ニュースを翻訳・要約して提供。情報のキャッチアップを加速させます。"
-    }
+        description: "海外のAIトレンドや最新ニュースを翻訳・要約して提供。情報のキャッチアップを加速させます。",
+    },
 ];
 
 export function LandingFeatures() {
@@ -56,9 +56,7 @@ export function LandingFeatures() {
                                 <feature.icon className="w-6 h-6 text-blue-400" />
                             </div>
                             <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
-                            <p className="text-gray-400 leading-relaxed">
-                                {feature.description}
-                            </p>
+                            <p className="text-gray-400 leading-relaxed">{feature.description}</p>
                         </div>
                     ))}
                 </div>

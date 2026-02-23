@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface LandingPricingProps {
     handleCheckout: () => void;
@@ -16,7 +16,7 @@ export function LandingPricing({ handleCheckout, checkoutLoading }: LandingPrici
         "月1回のオンラインミートアップ",
         "ソースコードのダウンロード",
         "AIツールの割引特典",
-        "優先サポート"
+        "優先サポート",
     ];
 
     return (
@@ -26,9 +26,7 @@ export function LandingPricing({ handleCheckout, checkoutLoading }: LandingPrici
                     <div className="bg-black/80 backdrop-blur-xl rounded-[39px] p-6 md:p-16 text-center border border-white/10 relative overflow-hidden">
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-blue-500/10 to-transparent pointer-events-none" />
 
-                        <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 relative z-10">
-                            Simple Pricing
-                        </h2>
+                        <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 relative z-10">Simple Pricing</h2>
                         <p className="text-gray-400 mb-12 relative z-10">
                             追加料金なし。全ての機能にアクセスできます。
                         </p>
@@ -49,14 +47,14 @@ export function LandingPricing({ handleCheckout, checkoutLoading }: LandingPrici
                             ))}
                         </div>
 
-                        <Button asChild size="lg" className="w-full max-w-md h-16 text-xl font-bold rounded-full bg-white text-black hover:bg-gray-200 hover:scale-[1.02] transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)] relative z-10">
-                            <Link href="/join">
-                                Start Your Journey Now
-                            </Link>
+                        <Button
+                            asChild
+                            size="lg"
+                            className="w-full max-w-md h-16 text-xl font-bold rounded-full bg-white text-black hover:bg-gray-200 hover:scale-[1.02] transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)] relative z-10"
+                        >
+                            <Link href="/join">Start Your Journey Now</Link>
                         </Button>
-                        <p className="mt-4 text-sm text-gray-500 relative z-10">
-                            いつでもキャンセル可能です。
-                        </p>
+                        <p className="mt-4 text-sm text-gray-500 relative z-10">いつでもキャンセル可能です。</p>
                     </div>
                 </div>
             </div>

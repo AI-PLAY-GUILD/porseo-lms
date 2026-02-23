@@ -1,7 +1,7 @@
-import { mutation, query, internalMutation } from "./_generated/server";
-import type { MutationCtx, DatabaseReader } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import type { DatabaseReader, MutationCtx } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { safeCompare } from "./lib/safeCompare";
 
 // Issue #59: Audit log helper — records user mutations for compliance
@@ -11,7 +11,7 @@ async function writeAuditLog(
     action: string,
     targetType: string,
     targetId?: string,
-    details?: string
+    details?: string,
 ) {
     try {
         await ctx.db.insert("auditLogs", {
@@ -150,9 +150,7 @@ export const checkAccess = query({
         // 動画にロール制限がない場合はアクセス可能とする（要件によるが、今回は制限あり前提）
         if (!video.requiredRoles || video.requiredRoles.length === 0) return { hasAccess: true };
 
-        const hasRequiredRole = video.requiredRoles.some(role =>
-            user.discordRoles.includes(role)
-        );
+        const hasRequiredRole = video.requiredRoles.some((role) => user.discordRoles.includes(role));
 
         return { hasAccess: hasRequiredRole };
     },
@@ -252,9 +250,15 @@ export const updateSubscriptionStatus = mutation({
             patchData.stripeCustomerId = args.stripeCustomerId;
         }
 
-
         await ctx.db.patch(user._id, patchData);
-        await writeAuditLog(ctx, user._id, "subscription.update", "user", user._id, `status=${args.subscriptionStatus}`);
+        await writeAuditLog(
+            ctx,
+            user._id,
+            "subscription.update",
+            "user",
+            user._id,
+            `status=${args.subscriptionStatus}`,
+        );
     },
 });
 
@@ -277,14 +281,23 @@ export const updateSubscriptionStatusByCustomerId = mutation({
 
         if (!user) {
             // Issue #61: Log warning instead of silently returning
-            console.warn(`[updateSubscriptionStatusByCustomerId] User not found for stripeCustomerId: ${args.stripeCustomerId}`);
+            console.warn(
+                `[updateSubscriptionStatusByCustomerId] User not found for stripeCustomerId: ${args.stripeCustomerId}`,
+            );
             return;
         }
 
         await ctx.db.patch(user._id, {
             subscriptionStatus: args.subscriptionStatus,
         });
-        await writeAuditLog(ctx, user._id, "subscription.update_by_customer", "user", user._id, `status=${args.subscriptionStatus}`);
+        await writeAuditLog(
+            ctx,
+            user._id,
+            "subscription.update_by_customer",
+            "user",
+            user._id,
+            `status=${args.subscriptionStatus}`,
+        );
     },
 });
 
@@ -406,7 +419,7 @@ export const syncCurrentUser = mutation({
         const name = identity.name || identity.nickname || "Anonymous";
         const imageUrl = identity.pictureUrl;
 
-        let user = await ctx.db
+        const user = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkId))
             .first();

@@ -1,16 +1,10 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { api } from "../../../../convex/_generated/api";
 
 export default function VideoListPage() {
     const userData = useQuery(api.users.getUser);
@@ -39,9 +33,7 @@ export default function VideoListPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>動画一覧</CardTitle>
-                    <CardDescription>
-                        アップロードされた動画の管理・編集ができます。
-                    </CardDescription>
+                    <CardDescription>アップロードされた動画の管理・編集ができます。</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <VideoList />
@@ -81,10 +73,18 @@ function VideoList() {
                 </thead>
                 <tbody>
                     {videos.map((video) => (
-                        <tr key={video._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <tr
+                            key={video._id}
+                            className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                        >
                             <td className="py-3 px-4 font-medium">
                                 <div className="flex items-center gap-2">
-                                    <a href={`/videos/${video._id}`} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                                    <a
+                                        href={`/videos/${video._id}`}
+                                        className="text-blue-600 hover:underline"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
                                         {video.title}
                                     </a>
                                     {video.source === "zoom" && (
@@ -115,10 +115,11 @@ function VideoList() {
                             <td className="py-3 px-4">
                                 <button
                                     onClick={() => updateVideo({ videoId: video._id, isPublished: !video.isPublished })}
-                                    className={`px-3 py-1 rounded-full text-xs font-bold ${video.isPublished
-                                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                        : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                                        }`}
+                                    className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                        video.isPublished
+                                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                            : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                                    }`}
                                 >
                                     {video.isPublished ? "公開中" : "非公開"}
                                 </button>

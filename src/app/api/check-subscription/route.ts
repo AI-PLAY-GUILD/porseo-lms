@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
-import { convex } from '@/lib/convex';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import { convex } from "@/lib/convex";
+import { api } from "../../../../convex/_generated/api";
 
 const discordToken = process.env.DISCORD_BOT_TOKEN;
 const guildId = process.env.DISCORD_GUILD_ID;
@@ -31,37 +32,36 @@ function setCachedRoles(discordId: string, roles: string[]) {
     roleCache.set(discordId, { roles, cachedAt: Date.now() });
 }
 
-export async function POST(req: Request) {
+export async function POST(_req: Request) {
     try {
         const { userId } = await auth();
         if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         // 1. Get user from Convex
-        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
-        const user = await convex.query("users:getUserByClerkIdServer" as any, {
+        const user = await convex.query(api.users.getUserByClerkIdServer, {
             clerkId: userId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
         });
 
         if (!user) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
         // If already active, return success
-        if (user.subscriptionStatus === 'active') {
-            return NextResponse.json({ status: 'active' });
+        if (user.subscriptionStatus === "active") {
+            return NextResponse.json({ status: "active" });
         }
 
         if (!user.discordId) {
-            return NextResponse.json({ error: 'Discord ID not linked' }, { status: 400 });
+            return NextResponse.json({ error: "Discord ID not linked" }, { status: 400 });
         }
 
         // 2. Check Discord Roles
         if (!discordToken || !guildId || !roleId) {
             console.error("Missing Discord env vars");
-            return NextResponse.json({ error: 'Configuration error' }, { status: 500 });
+            return NextResponse.json({ error: "Configuration error" }, { status: 500 });
         }
 
         // Issue #62: Check cache first before calling Discord API
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
             try {
                 discordRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${user.discordId}`, {
                     headers: {
-                        'Authorization': `Bot ${discordToken}`,
+                        Authorization: `Bot ${discordToken}`,
                     },
                     signal: controller.signal,
                 });
@@ -91,10 +91,10 @@ export async function POST(req: Request) {
                 const errorText = await discordRes.text();
                 console.error("Discord API Error:", errorText);
                 if (discordRes.status === 404) {
-                    return NextResponse.json({ error: 'User not in Discord server' }, { status: 404 });
+                    return NextResponse.json({ error: "User not in Discord server" }, { status: 404 });
                 }
                 // Issue #57: Sanitize error response — don't expose Discord status code
-                return NextResponse.json({ error: 'Failed to fetch Discord member' }, { status: 502 });
+                return NextResponse.json({ error: "Failed to fetch Discord member" }, { status: 502 });
             }
 
             const member = await discordRes.json();
@@ -104,24 +104,22 @@ export async function POST(req: Request) {
 
         if (roles.includes(roleId)) {
             // 3. Update Subscription Status
-            // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
-            await convex.mutation("users:updateSubscriptionStatus" as any, {
+            await convex.mutation(api.users.updateSubscriptionStatus, {
                 discordId: user.discordId,
-                subscriptionStatus: 'active',
+                subscriptionStatus: "active",
                 roleId: roleId,
                 secret: process.env.CONVEX_INTERNAL_SECRET || "",
             });
-            return NextResponse.json({ status: 'active', updated: true });
+            return NextResponse.json({ status: "active", updated: true });
         } else {
-            return NextResponse.json({ status: 'inactive' });
+            return NextResponse.json({ status: "inactive" });
         }
-
     } catch (error: unknown) {
         // Issue #56: Handle timeout errors
-        if (error instanceof DOMException && error.name === 'AbortError') {
-            return NextResponse.json({ error: 'External service timeout' }, { status: 504 });
+        if (error instanceof DOMException && error.name === "AbortError") {
+            return NextResponse.json({ error: "External service timeout" }, { status: 504 });
         }
         console.error("Error checking subscription:", error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

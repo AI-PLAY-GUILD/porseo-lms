@@ -1,29 +1,15 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
+import { addDays } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import type { DateRange } from "react-day-picker";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { CalendarDateRangePicker } from "@/components/date-range-picker";
-import { DateRange } from "react-day-picker";
-import { addDays } from "date-fns";
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    Tooltip,
-    ResponsiveContainer,
-    CartesianGrid,
-} from "recharts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { api } from "../../../../../convex/_generated/api";
 
 export default function UserAnalyticsPage() {
     const userData = useQuery(api.users.getUser);
@@ -35,10 +21,13 @@ export default function UserAnalyticsPage() {
         to: new Date(),
     });
 
-    const dateArgs = date?.from && date?.to ? {
-        startDate: date.from.getTime(),
-        endDate: date.to.getTime(),
-    } : {};
+    const dateArgs =
+        date?.from && date?.to
+            ? {
+                  startDate: date.from.getTime(),
+                  endDate: date.to.getTime(),
+              }
+            : {};
 
     const analytics = useQuery(api.admin.getUserBehaviorAnalytics, dateArgs);
 
@@ -69,9 +58,7 @@ export default function UserAnalyticsPage() {
                 <Card className="col-span-4">
                     <CardHeader>
                         <CardTitle>日次学習活動量</CardTitle>
-                        <CardDescription>
-                            全ユーザーの合計視聴時間（分）の推移
-                        </CardDescription>
+                        <CardDescription>全ユーザーの合計視聴時間（分）の推移</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
                         {analytics ? (
@@ -97,8 +84,13 @@ export default function UserAnalyticsPage() {
                                         tickFormatter={(value) => `${value}分`}
                                     />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                        labelStyle={{ color: '#333' }}
+                                        contentStyle={{
+                                            backgroundColor: "rgba(255, 255, 255, 0.8)",
+                                            borderRadius: "8px",
+                                            border: "none",
+                                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                                        }}
+                                        labelStyle={{ color: "#333" }}
                                         formatter={(value: number) => [`${value}分`, "視聴時間"]}
                                     />
                                     <Line
@@ -123,9 +115,7 @@ export default function UserAnalyticsPage() {
                 <Card className="col-span-3">
                     <CardHeader>
                         <CardTitle>トップ学習者ランキング</CardTitle>
-                        <CardDescription>
-                            期間中の視聴時間が長いユーザー
-                        </CardDescription>
+                        <CardDescription>期間中の視聴時間が長いユーザー</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {analytics ? (
@@ -144,12 +134,10 @@ export default function UserAnalyticsPage() {
                                             </Avatar>
                                             <div className="ml-4 space-y-1">
                                                 <p className="text-sm font-medium leading-none">{learner.name}</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {learner.email}
-                                                </p>
+                                                <p className="text-xs text-muted-foreground">{learner.email}</p>
                                             </div>
                                             <div className="ml-auto font-medium">
-                                                {Math.round(learner.minutesWatched / 60 * 10) / 10}時間
+                                                {Math.round((learner.minutesWatched / 60) * 10) / 10}時間
                                             </div>
                                         </div>
                                     ))
@@ -168,9 +156,7 @@ export default function UserAnalyticsPage() {
                 <Card className="col-span-7">
                     <CardHeader>
                         <CardTitle>人気コンテンツ</CardTitle>
-                        <CardDescription>
-                            視聴回数と完了率が高い動画
-                        </CardDescription>
+                        <CardDescription>視聴回数と完了率が高い動画</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <PopularContentTable dateArgs={dateArgs} />
@@ -201,14 +187,20 @@ function PopularContentTable({ dateArgs }: { dateArgs: { startDate?: number; end
                 </thead>
                 <tbody>
                     {contentPerformance.map((content) => (
-                        <tr key={content.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <tr
+                            key={content.id}
+                            className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                        >
                             <td className="py-3 px-4 font-medium">{content.title}</td>
                             <td className="py-3 px-4">{content.views}</td>
                             <td className="py-3 px-4">{content.completions}</td>
                             <td className="py-3 px-4">
                                 <div className="flex items-center gap-2">
                                     <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 max-w-[100px]">
-                                        <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${content.avgCompletionRate}%` }}></div>
+                                        <div
+                                            className="bg-blue-600 h-2.5 rounded-full"
+                                            style={{ width: `${content.avgCompletionRate}%` }}
+                                        ></div>
                                     </div>
                                     <span className="text-sm text-gray-500">{content.avgCompletionRate}%</span>
                                 </div>
@@ -220,4 +212,3 @@ function PopularContentTable({ dateArgs }: { dateArgs: { startDate?: number; end
         </div>
     );
 }
-

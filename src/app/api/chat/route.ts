@@ -1,8 +1,9 @@
-import { streamText, stepCountIs, tool } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { z } from "zod";
 import { auth } from "@clerk/nextjs/server";
+import { stepCountIs, streamText, tool } from "ai";
+import { z } from "zod";
 import { convex } from "@/lib/convex";
+import { api } from "../../../../convex/_generated/api";
 
 const SYSTEM_PROMPT = `あなたはPORSEOの学習アシスタントです。ユーザーの学習を支援するAIエージェントです。
 
@@ -41,8 +42,7 @@ export async function POST(req: Request) {
     }
 
     // サブスクリプション確認
-    // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
-    const user = await convex.query("users:getUserByClerkIdQuery" as any, {
+    const user = await convex.query(api.users.getUserByClerkIdQuery, {
         clerkId: userId,
     });
     if (!user) {
@@ -68,15 +68,11 @@ export async function POST(req: Request) {
                 description:
                     "コミュニティで公開されている動画の一覧を取得します。どんな動画があるか聞かれたときや、おすすめを紹介するときに使います",
                 inputSchema: z.object({
-                    keyword: z
-                        .string()
-                        .optional()
-                        .describe("タイトルや概要を絞り込むキーワード（省略可）"),
+                    keyword: z.string().optional().describe("タイトルや概要を絞り込むキーワード（省略可）"),
                 }),
                 execute: async ({ keyword }) => {
                     try {
-                        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
-                        const videos = await convex.query("videos:getPublishedVideos" as any, {});
+                        const videos = await convex.query(api.videos.getPublishedVideos, {});
                         if (!videos || !Array.isArray(videos) || videos.length === 0) {
                             return { videos: [], message: "現在公開されている動画はありません。" };
                         }
@@ -86,9 +82,15 @@ export async function POST(req: Request) {
                                 if (!keyword) return true;
                                 const kw = keyword.toLowerCase();
                                 return (
-                                    String(v.title ?? "").toLowerCase().includes(kw) ||
-                                    String(v.description ?? "").toLowerCase().includes(kw) ||
-                                    String(v.summary ?? "").toLowerCase().includes(kw)
+                                    String(v.title ?? "")
+                                        .toLowerCase()
+                                        .includes(kw) ||
+                                    String(v.description ?? "")
+                                        .toLowerCase()
+                                        .includes(kw) ||
+                                    String(v.summary ?? "")
+                                        .toLowerCase()
+                                        .includes(kw)
                                 );
                             })
                             .map((v) => ({
@@ -114,25 +116,20 @@ export async function POST(req: Request) {
                     "動画の文字起こしデータをベクトル検索して、ユーザーの質問に関連する動画とタイムスタンプを見つけます",
                 inputSchema: z.object({
                     query: z.string().describe("検索クエリ"),
-                    limit: z
-                        .number()
-                        .default(8)
-                        .describe("返す結果の最大数"),
+                    limit: z.number().default(8).describe("返す結果の最大数"),
                 }),
                 execute: async ({ query, limit }) => {
-                    const secret =
-                        process.env.CONVEX_INTERNAL_SECRET || "";
+                    const secret = process.env.CONVEX_INTERNAL_SECRET || "";
                     try {
-                        const results = await convex.action(
-                            // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
-                            "rag:searchTranscriptions" as any,
-                            { query, secret, limit: limit || 8 }
-                        );
+                        const results = await convex.action(api.rag.searchTranscriptions, {
+                            query,
+                            secret,
+                            limit: limit || 8,
+                        });
                         if (!results || !Array.isArray(results) || results.length === 0) {
                             return {
                                 results: [] as Array<Record<string, unknown>>,
-                                message:
-                                    "関連する動画が見つかりませんでした。",
+                                message: "関連する動画が見つかりませんでした。",
                             };
                         }
                         return {

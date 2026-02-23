@@ -15,7 +15,9 @@ export default function PrivacyPage() {
                 <li>写真や動画</li>
                 <li>クレジットカード、銀行口座、電子マネー等のお客様の決済手段に関する情報</li>
                 <li>住所</li>
-                <li>外部サービスでお客様が利用するID、その他外部サービスのプライバシー設定によりお客様が連携先に開示を認めた情報</li>
+                <li>
+                    外部サービスでお客様が利用するID、その他外部サービスのプライバシー設定によりお客様が連携先に開示を認めた情報
+                </li>
                 <li>OSが生成するID、端末の種類、端末識別子等のお客様が利用するOSや端末に関する情報</li>
                 <li>Cookie(クッキー)を用いて生成された識別情報</li>
                 <li>当社ウェブサイトの滞在時間、入力履歴、購買履歴等の当社ウェブサイトにおけるお客様の行動履歴</li>
@@ -47,7 +49,8 @@ export default function PrivacyPage() {
 
             <h2>第三者提供</h2>
             <p>
-                当社は、お客様から取得する情報のうち、個人データ（個人情報保護法第１６条第３項）に該当するものついては、あらかじめお客様の同意を得ずに、第三者（日本国外にある者を含みます。）に提供しません。<br />
+                当社は、お客様から取得する情報のうち、個人データ（個人情報保護法第１６条第３項）に該当するものついては、あらかじめお客様の同意を得ずに、第三者（日本国外にある者を含みます。）に提供しません。
+                <br />
                 但し、次の場合は除きます。
             </p>
             <ul>
@@ -59,8 +62,16 @@ export default function PrivacyPage() {
 
             <h2>アクセス解析ツール</h2>
             <p>
-                当社は、お客様のアクセス解析のために、「Googleアナリティクス」を利用しています。Googleアナリティクスは、トラフィックデータの収集のためにCookieを使用しています。トラフィックデータは匿名で収集されており、個人を特定するものではありません。Cookieを無効にすれば、これらの情報の収集を拒否することができます。詳しくはお使いのブラウザの設定をご確認ください。Googleアナリティクスについて、詳しくは以下からご確認ください。<br />
-                <a href="https://marketingplatform.google.com/about/analytics/terms/jp/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://marketingplatform.google.com/about/analytics/terms/jp/</a>
+                当社は、お客様のアクセス解析のために、「Googleアナリティクス」を利用しています。Googleアナリティクスは、トラフィックデータの収集のためにCookieを使用しています。トラフィックデータは匿名で収集されており、個人を特定するものではありません。Cookieを無効にすれば、これらの情報の収集を拒否することができます。詳しくはお使いのブラウザの設定をご確認ください。Googleアナリティクスについて、詳しくは以下からご確認ください。
+                <br />
+                <a
+                    href="https://marketingplatform.google.com/about/analytics/terms/jp/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                >
+                    https://marketingplatform.google.com/about/analytics/terms/jp/
+                </a>
             </p>
 
             <h2>プライバシーポリシーの変更</h2>
@@ -70,8 +81,10 @@ export default function PrivacyPage() {
 
             <h2>お問い合わせ</h2>
             <p>
-                お客様の情報の開示、情報の訂正、利用停止、削除をご希望の場合は、以下のメールアドレスにご連絡ください。<br />
-                e-mail: taiyo.kimura.3w@stu.hosei.ac.jp<br />
+                お客様の情報の開示、情報の訂正、利用停止、削除をご希望の場合は、以下のメールアドレスにご連絡ください。
+                <br />
+                e-mail: taiyo.kimura.3w@stu.hosei.ac.jp
+                <br />
                 この場合、必ず、運転免許証のご提示等当社が指定する方法により、ご本人からのご請求であることの確認をさせていただきます。なお、情報の開示請求については、開示の有無に関わらず、ご申請時に一件あたり1,000円の事務手数料を申し受けます。
             </p>
 

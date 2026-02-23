@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import type { v } from "convex/values";
 import { query } from "./_generated/server";
 import { getUserByClerkId } from "./users";
 
@@ -47,7 +47,7 @@ export const getStats = query({
             const d = new Date(date);
             const month = d.getMonth() + 1;
             const day = d.getDate();
-            const weekday = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
+            const weekday = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
             const name = `${month}/${day} (${weekday})`;
             return {
                 name,
@@ -58,7 +58,7 @@ export const getStats = query({
         // 3. Rank Logic (Simple gamification)
         let rank = "ビギナー";
         let nextRank = "ブロンズ";
-        let progressToNext = 0;
+        const _progressToNext = 0;
         let itemsToNext = 3;
 
         if (completedCount >= 3) {
@@ -82,7 +82,7 @@ export const getStats = query({
         const sortedLogs = [...logs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         // Get unique dates
-        const uniqueDates = Array.from(new Set(sortedLogs.map(l => l.date)));
+        const uniqueDates = Array.from(new Set(sortedLogs.map((l) => l.date)));
 
         let streakDays = 0;
         const todayStr = new Date().toISOString().split("T")[0];
@@ -143,7 +143,7 @@ export const getStats = query({
                     lastWatchedAt: record.lastWatchedAt,
                     thumbnailUrl,
                 };
-            })
+            }),
         );
 
         // Filter out nulls (deleted videos) and sort by last watched

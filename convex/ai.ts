@@ -1,9 +1,9 @@
 "use node";
 
-import { ActionCtx, action } from "./_generated/server";
+import { GoogleGenAI } from "@google/genai";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-import { GoogleGenAI } from "@google/genai";
+import { action } from "./_generated/server";
 // Muxは使っていないため削除
 
 export const generateVideoMetadata = action({
@@ -37,7 +37,7 @@ export const generateVideoMetadata = action({
 
             if (!subtitleText) {
                 const video = await ctx.runQuery(api.videos.getById, { videoId: args.videoId });
-                if (video && video.transcription) {
+                if (video?.transcription) {
                     subtitleText = video.transcription;
                 }
             }
@@ -80,10 +80,8 @@ ${subtitleText}
                 contents: [
                     {
                         role: "user",
-                        parts: [
-                            { text: prompt }
-                        ]
-                    }
+                        parts: [{ text: prompt }],
+                    },
                 ],
                 config: {
                     responseMimeType: "application/json",
@@ -94,7 +92,7 @@ ${subtitleText}
 
             // 3. レスポンスの取得 (修正ポイント: 関数として呼び出す)
             const textOrFunc = (response as unknown as Record<string, unknown>).text;
-            if (typeof textOrFunc === 'function') {
+            if (typeof textOrFunc === "function") {
                 responseText = textOrFunc();
             } else if (textOrFunc) {
                 // プロパティの場合のフォールバック
@@ -102,7 +100,7 @@ ${subtitleText}
             } else if (response.candidates && response.candidates.length > 0) {
                 // candidatesからの取得フォールバック
                 const candidate = response.candidates[0];
-                if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+                if (candidate.content?.parts && candidate.content.parts.length > 0) {
                     responseText = candidate.content.parts[0].text || "";
                 }
             }
@@ -116,16 +114,16 @@ ${subtitleText}
             responseText = responseText.replace(/^```json\s*/, "").replace(/\s*```$/, "");
 
             // JSONパース
-            let aiData;
+            let aiData: { summary: string; chapters: { startTime: number; title: string; description: string }[] };
             try {
                 aiData = JSON.parse(responseText);
-            } catch (e) {
+            } catch (_e) {
                 // JSONオブジェクト部分だけを抽出する正規表現
                 const jsonMatch = responseText.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
                     try {
                         aiData = JSON.parse(jsonMatch[0]);
-                    } catch (e2) {
+                    } catch (_e2) {
                         throw new Error("AIからの応答をJSONとして解析できませんでした。");
                     }
                 } else {
@@ -141,7 +139,6 @@ ${subtitleText}
             });
 
             return aiData;
-
         } catch (error: unknown) {
             console.error("Gemini API Error:", error);
             // エラー時もJSON構造を保って返す

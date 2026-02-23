@@ -26,9 +26,7 @@ export const updateProgress = mutation({
 
         const existing = await ctx.db
             .query("videoProgress")
-            .withIndex("by_user_and_video", (q) =>
-                q.eq("userId", user._id).eq("videoId", args.videoId)
-            )
+            .withIndex("by_user_and_video", (q) => q.eq("userId", user._id).eq("videoId", args.videoId))
             .first();
 
         if (existing) {
@@ -67,9 +65,7 @@ export const getProgress = query({
 
         return await ctx.db
             .query("videoProgress")
-            .withIndex("by_user_and_video", (q) =>
-                q.eq("userId", user._id).eq("videoId", args.videoId)
-            )
+            .withIndex("by_user_and_video", (q) => q.eq("userId", user._id).eq("videoId", args.videoId))
             .first();
     },
 });
@@ -86,9 +82,7 @@ export const getUserProgress = query({
 
         if (!user) return [];
 
-        return await ctx.db
-            .query("videoProgress")
-            .withIndex("by_user_id", (q) => q.eq("userId", user._id))
+        return await ctx.db.query("videoProgress").withIndex("by_user_id", (q) => q.eq("userId", user._id));
     },
 });
 
@@ -119,9 +113,7 @@ export const logLearningTime = mutation({
 
         const existingLog = await ctx.db
             .query("dailyLearningLogs")
-            .withIndex("by_user_date", (q) =>
-                q.eq("userId", user._id).eq("date", dateStr)
-            )
+            .withIndex("by_user_date", (q) => q.eq("userId", user._id).eq("date", dateStr))
             .first();
 
         if (existingLog) {
@@ -137,6 +129,3 @@ export const logLearningTime = mutation({
         }
     },
 });
-
-
-

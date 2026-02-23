@@ -1,28 +1,28 @@
+import { auth } from "@clerk/nextjs/server";
 import Mux from "@mux/mux-node";
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from '@clerk/nextjs/server';
-import { convex } from '@/lib/convex';
+import { type NextRequest, NextResponse } from "next/server";
+import { convex } from "@/lib/convex";
+import { api } from "../../../../../convex/_generated/api";
 
 const mux = new Mux({
     tokenId: process.env.MUX_TOKEN_ID,
     tokenSecret: process.env.MUX_TOKEN_SECRET,
 });
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
     try {
         // Security: Verify authentication and admin access
         const { userId } = await auth();
         if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // biome-ignore lint/suspicious/noExplicitAny: ConvexHttpClient requires string function reference
-        const user = await convex.query("users:getUserByClerkIdServer" as any, {
+        const user = await convex.query(api.users.getUserByClerkIdServer, {
             clerkId: userId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
         });
         if (!user?.isAdmin) {
-            return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+            return NextResponse.json({ error: "Admin access required" }, { status: 403 });
         }
 
         const allowedOrigin = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
@@ -50,14 +50,11 @@ export async function POST(req: NextRequest) {
         });
     } catch (error) {
         console.error("Error creating upload URL:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
 
-export async function OPTIONS(req: NextRequest) {
+export async function OPTIONS(_req: NextRequest) {
     const allowedOrigin = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     return new NextResponse(null, {
         status: 200,
@@ -68,4 +65,3 @@ export async function OPTIONS(req: NextRequest) {
         },
     });
 }
-

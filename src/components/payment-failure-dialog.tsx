@@ -1,6 +1,8 @@
 "use client";
 
+import { AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
@@ -9,8 +11,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { AlertCircle } from "lucide-react";
 
 interface PaymentFailureDialogProps {
     subscriptionStatus?: string | null;
@@ -31,8 +31,8 @@ export function PaymentFailureDialog({ subscriptionStatus }: PaymentFailureDialo
     const handleUpdatePayment = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/create-portal-session', {
-                method: 'POST',
+            const res = await fetch("/api/create-portal-session", {
+                method: "POST",
             });
             const data = await res.json();
             if (data.url) {

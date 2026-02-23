@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useAction } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { api } from "../../convex/_generated/api";
 
 export function StripeLinkModal() {
     const [open, setOpen] = useState(false);
@@ -49,7 +49,10 @@ export function StripeLinkModal() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="link" className="text-gray-400 hover:text-white text-xs font-bold underline decoration-gray-600 hover:decoration-white transition-all">
+                <Button
+                    variant="link"
+                    className="text-gray-400 hover:text-white text-xs font-bold underline decoration-gray-600 hover:decoration-white transition-all"
+                >
                     AIで遊ぼうコミュニティだった方はこちら
                 </Button>
             </DialogTrigger>
@@ -58,13 +61,14 @@ export function StripeLinkModal() {
                     <DialogTitle>既存アカウントの連携</DialogTitle>
                     <DialogDescription className="text-gray-400">
                         以前「AIで遊ぼう」コミュニティでご利用いただいていた方は、
-                        登録時のメールアドレスを入力してください。
-                        既存のサブスクリプションを引き継ぎます。
+                        登録時のメールアドレスを入力してください。 既存のサブスクリプションを引き継ぎます。
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="email" className="text-white">メールアドレス</Label>
+                        <Label htmlFor="email" className="text-white">
+                            メールアドレス
+                        </Label>
                         <Input
                             id="email"
                             type="email"

@@ -1,13 +1,12 @@
 "use client";
 
-import { useQuery, useMutation, useAction } from "convex/react";
-import { api } from "../../../../../../convex/_generated/api";
-import { Id } from "../../../../../../convex/_generated/dataModel";
-import { useRouter, useParams } from "next/navigation";
+import { useAction, useMutation, useQuery } from "convex/react";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Card } from "@/components/ui/card";
-
 import { BrutalistLoader } from "@/components/ui/brutalist-loader";
+import { Card } from "@/components/ui/card";
+import { api } from "../../../../../../convex/_generated/api";
+import type { Id } from "../../../../../../convex/_generated/dataModel";
 
 export default function EditVideoPage() {
     const params = useParams();
@@ -35,7 +34,7 @@ export default function EditVideoPage() {
     const [customThumbnailUrl, setCustomThumbnailUrl] = useState<string | null>(null);
     const [selectedTags, setSelectedTags] = useState<Id<"tags">[]>([]);
     const [createdAt, setCreatedAt] = useState<string>(""); // YYYY-MM-DD string for input
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [_isSubmitting, setIsSubmitting] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isIndexing, setIsIndexing] = useState(false);
 
@@ -62,8 +61,8 @@ export default function EditVideoPage() {
             if (video.createdAt) {
                 const date = new Date(video.createdAt);
                 const yyyy = date.getFullYear();
-                const mm = String(date.getMonth() + 1).padStart(2, '0');
-                const dd = String(date.getDate()).padStart(2, '0');
+                const mm = String(date.getMonth() + 1).padStart(2, "0");
+                const dd = String(date.getDate()).padStart(2, "0");
                 setCreatedAt(`${yyyy}-${mm}-${dd}`);
             }
         }
@@ -89,7 +88,7 @@ export default function EditVideoPage() {
         if (!file) return;
 
         // 拡張子チェック (簡易)
-        if (!file.name.endsWith('.vtt') && !file.name.endsWith('.txt')) {
+        if (!file.name.endsWith(".vtt") && !file.name.endsWith(".txt")) {
             alert("対応しているファイル形式は .vtt または .txt です");
             return;
         }
@@ -129,11 +128,12 @@ export default function EditVideoPage() {
         }
     };
 
-    if (userData === undefined || video === undefined) return (
-        <div className="flex items-center justify-center min-h-screen bg-cream">
-            <BrutalistLoader />
-        </div>
-    );
+    if (userData === undefined || video === undefined)
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-cream">
+                <BrutalistLoader />
+            </div>
+        );
     if (!userData?.isAdmin) return null;
     if (video === null) return <div className="p-8">動画が見つかりません</div>;
 
@@ -141,7 +141,13 @@ export default function EditVideoPage() {
         <div className="p-8 max-w-4xl mx-auto">
             <h1 className="text-2xl font-bold mb-8">動画編集</h1>
 
-            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSubmit();
+                }}
+                className="space-y-6"
+            >
                 <div>
                     <label className="block text-sm font-medium mb-1">タイトル</label>
                     <input
@@ -170,15 +176,16 @@ export default function EditVideoPage() {
                         onChange={(e) => setCreatedAt(e.target.value)}
                         className="w-full p-2 border rounded bg-white dark:bg-gray-900"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                        ※この日付は動画一覧の並び順に影響します。
-                    </p>
+                    <p className="text-xs text-gray-500 mt-1">※この日付は動画一覧の並び順に影響します。</p>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
-                    <h3 className="font-bold text-yellow-600 dark:text-yellow-500 mb-2 text-sm">Mux設定（上級者向け）</h3>
+                    <h3 className="font-bold text-yellow-600 dark:text-yellow-500 mb-2 text-sm">
+                        Mux設定（上級者向け）
+                    </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                        動画が再生できない場合やAI分析が失敗する場合は、ここのIDが間違っている可能性があります。<br />
+                        動画が再生できない場合やAI分析が失敗する場合は、ここのIDが間違っている可能性があります。
+                        <br />
                         Muxダッシュボードで &quot;Asset ID&quot; と &quot;Playback ID&quot; を確認してください。
                     </p>
 
@@ -258,20 +265,23 @@ export default function EditVideoPage() {
                                 type="button"
                                 onClick={() => {
                                     if (selectedTags.includes(tag._id)) {
-                                        setSelectedTags(selectedTags.filter(id => id !== tag._id));
+                                        setSelectedTags(selectedTags.filter((id) => id !== tag._id));
                                     } else {
                                         setSelectedTags([...selectedTags, tag._id]);
                                     }
                                 }}
-                                className={`px-3 py-1 rounded-full text-sm border transition-colors ${selectedTags.includes(tag._id)
-                                    ? "bg-blue-600 text-white border-blue-600"
-                                    : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                    }`}
+                                className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                                    selectedTags.includes(tag._id)
+                                        ? "bg-blue-600 text-white border-blue-600"
+                                        : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                }`}
                             >
                                 {tag.name}
                             </button>
                         ))}
-                        {allTags?.length === 0 && <p className="text-sm text-gray-500">タグがありません。タグ管理画面で作成してください。</p>}
+                        {allTags?.length === 0 && (
+                            <p className="text-sm text-gray-500">タグがありません。タグ管理画面で作成してください。</p>
+                        )}
                     </div>
                 </div>
 
@@ -328,7 +338,10 @@ export default function EditVideoPage() {
                         </div>
                         <div className="space-y-3">
                             {chapters.map((chapter, index) => (
-                                <div key={index} className="flex gap-2 items-start bg-gray-50 dark:bg-gray-900 p-3 rounded border dark:border-gray-700">
+                                <div
+                                    key={index}
+                                    className="flex gap-2 items-start bg-gray-50 dark:bg-gray-900 p-3 rounded border dark:border-gray-700"
+                                >
                                     <div className="w-20">
                                         <label className="text-xs text-gray-500 block">開始(秒)</label>
                                         <input
@@ -395,7 +408,9 @@ export default function EditVideoPage() {
                             onChange={(e) => setIsPublished(e.target.checked)}
                             className="w-5 h-5"
                         />
-                        <label htmlFor="isPublished" className="font-medium">公開する</label>
+                        <label htmlFor="isPublished" className="font-medium">
+                            公開する
+                        </label>
                     </div>
                 </div>
 
@@ -404,7 +419,8 @@ export default function EditVideoPage() {
                         <span className="text-xl">✨</span> AI分析
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        Geminiを使用して、動画の字幕から要約とチャプターを自動生成します。<br />
+                        Geminiを使用して、動画の字幕から要約とチャプターを自動生成します。
+                        <br />
                         ※Mux側で字幕生成が完了している必要があります（アップロードから数分かかります）。
                     </p>
                     <button
@@ -417,7 +433,9 @@ export default function EditVideoPage() {
                             }
                             // 簡易バリデーション: Asset IDは通常長いため、極端に短い場合は警告
                             if (muxAssetId.length < 10) {
-                                alert("Mux Asset IDが正しくないようです（短すぎます）。Muxダッシュボードで 'Asset ID' を確認してください。");
+                                alert(
+                                    "Mux Asset IDが正しくないようです（短すぎます）。Muxダッシュボードで 'Asset ID' を確認してください。",
+                                );
                                 return;
                             }
 
@@ -447,9 +465,12 @@ export default function EditVideoPage() {
 
                                 // 結果を即座にフォームに反映
                                 if (result) {
-                                    if (result.error) {
+                                    if ("error" in result && result.error) {
                                         console.error("AI Analysis Failed:", result.error);
-                                        console.error("Error Details:", result.details);
+                                        console.error(
+                                            "Error Details:",
+                                            (result as { error: string; details?: unknown }).details,
+                                        );
                                         alert(`${result.error}\n\n詳細は開発者ツールのコンソールを確認してください。`);
                                         return;
                                     }
@@ -460,16 +481,19 @@ export default function EditVideoPage() {
                                 alert("AI分析が完了しました！");
                             } catch (error: unknown) {
                                 console.error(error);
-                                alert(`エラーが発生しました: ${error instanceof Error ? error.message : String(error)} `);
+                                alert(
+                                    `エラーが発生しました: ${error instanceof Error ? error.message : String(error)} `,
+                                );
                             } finally {
                                 setIsAnalyzing(false);
                             }
                         }}
                         disabled={isAnalyzing}
-                        className={`px-4 py-2 rounded-md transition-colors font-bold flex items-center gap-2 ${isAnalyzing
-                            ? "bg-gray-400 cursor-not-allowed text-gray-200"
-                            : "bg-purple-600 text-white hover:bg-purple-700"
-                            }`}
+                        className={`px-4 py-2 rounded-md transition-colors font-bold flex items-center gap-2 ${
+                            isAnalyzing
+                                ? "bg-gray-400 cursor-not-allowed text-gray-200"
+                                : "bg-purple-600 text-white hover:bg-purple-700"
+                        }`}
                     >
                         {isAnalyzing ? (
                             <>
@@ -487,7 +511,8 @@ export default function EditVideoPage() {
                         <span className="text-xl">🔍</span> 検索用インデックス
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        文字起こしデータからベクトル検索用のインデックスを作成します。<br />
+                        文字起こしデータからベクトル検索用のインデックスを作成します。
+                        <br />
                         AIアシスタントがこの動画の内容を検索・推薦できるようになります。
                     </p>
                     <button
@@ -497,7 +522,8 @@ export default function EditVideoPage() {
                                 alert("文字起こしデータを入力してください");
                                 return;
                             }
-                            if (!confirm("検索用インデックスを作成しますか？（既存のインデックスは再作成されます）")) return;
+                            if (!confirm("検索用インデックスを作成しますか？（既存のインデックスは再作成されます）"))
+                                return;
 
                             setIsIndexing(true);
                             try {

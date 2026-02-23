@@ -1,13 +1,13 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import { Id } from "../../../../convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2 } from "lucide-react";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 
 export default function TagsPage() {
     const tags = useQuery(api.tags.getTags);
@@ -57,7 +57,9 @@ export default function TagsPage() {
                                 required
                             />
                         </div>
-                        <Button type="submit" className="w-full">作成する</Button>
+                        <Button type="submit" className="w-full">
+                            作成する
+                        </Button>
                     </form>
                 </div>
 
@@ -71,7 +73,10 @@ export default function TagsPage() {
                     ) : (
                         <div className="space-y-2">
                             {tags.map((tag) => (
-                                <div key={tag._id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded border">
+                                <div
+                                    key={tag._id}
+                                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded border"
+                                >
                                     <div>
                                         <p className="font-medium">{tag.name}</p>
                                         <p className="text-xs text-gray-500">{tag.slug}</p>

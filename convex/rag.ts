@@ -1,11 +1,11 @@
 "use node";
 
-import { action, internalAction } from "./_generated/server";
-import { api, internal } from "./_generated/api";
-import { v } from "convex/values";
 import { GoogleGenAI } from "@google/genai";
-import { safeCompare } from "./lib/safeCompare";
+import { v } from "convex/values";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { action, internalAction } from "./_generated/server";
+import { safeCompare } from "./lib/safeCompare";
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 100;
@@ -28,9 +28,7 @@ function parseVtt(vttText: string): VttSegment[] {
 
     while (i < lines.length) {
         const line = lines[i].trim();
-        const timeMatch = line.match(
-            /(\d{1,2}:?\d{2}:\d{2}[.,]\d{3})\s*-->\s*(\d{1,2}:?\d{2}:\d{2}[.,]\d{3})/
-        );
+        const timeMatch = line.match(/(\d{1,2}:?\d{2}:\d{2}[.,]\d{3})\s*-->\s*(\d{1,2}:?\d{2}:\d{2}[.,]\d{3})/);
         if (timeMatch) {
             const startTime = parseTimestamp(timeMatch[1]);
             const endTime = parseTimestamp(timeMatch[2]);
@@ -84,10 +82,10 @@ function createChunks(segments: VttSegment[]): TextChunk[] {
                 endTime: chunkEndTime,
             });
             const overlap = currentText.slice(-CHUNK_OVERLAP);
-            currentText = overlap + " " + seg.text;
+            currentText = `${overlap} ${seg.text}`;
             chunkStartTime = seg.startTime;
         } else {
-            currentText += " " + seg.text;
+            currentText += ` ${seg.text}`;
         }
         chunkEndTime = seg.endTime;
     }
@@ -118,10 +116,7 @@ function createPlainTextChunks(text: string): TextChunk[] {
 // ============================
 // エンベディング生成
 // ============================
-async function generateEmbeddings(
-    client: GoogleGenAI,
-    texts: string[]
-): Promise<number[][]> {
+async function generateEmbeddings(client: GoogleGenAI, texts: string[]): Promise<number[][]> {
     const allEmbeddings: number[][] = [];
     const batchSize = 10;
     for (let i = 0; i < texts.length; i += batchSize) {
@@ -134,7 +129,7 @@ async function generateEmbeddings(
                     config: { outputDimensionality: EMBEDDING_DIMENSIONS },
                 });
                 return response.embeddings?.[0]?.values || [];
-            })
+            }),
         );
         allEmbeddings.push(...results);
     }
@@ -317,7 +312,7 @@ export const searchTranscriptions = action({
                     endTime: chunk.endTime,
                     score: result._score,
                 };
-            })
+            }),
         );
 
         return enrichedResults.filter((r): r is SearchResult => r !== null);

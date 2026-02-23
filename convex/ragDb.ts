@@ -1,5 +1,5 @@
-import { internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { internalMutation, query } from "./_generated/server";
 
 export const saveChunks = internalMutation({
     args: {
@@ -10,7 +10,7 @@ export const saveChunks = internalMutation({
                 startTime: v.number(),
                 endTime: v.number(),
                 embedding: v.array(v.number()),
-            })
+            }),
         ),
     },
     handler: async (ctx, args) => {

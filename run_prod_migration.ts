@@ -1,10 +1,8 @@
-
+import * as fs from "node:fs";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "./convex/_generated/api";
-import * as fs from 'fs';
-import { execSync } from 'child_process';
 
-const USERS_FILE = 'users_to_migrate.json';
+const USERS_FILE = "users_to_migrate.json";
 const BATCH_SIZE = 20;
 
 async function main() {
@@ -13,7 +11,7 @@ async function main() {
     console.log(`Targeting Production: ${prodUrl}`);
     const client = new ConvexHttpClient(prodUrl);
 
-    const users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+    const users = JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
     console.log(`Loaded ${users.length} users to migrate.`);
 
     for (let i = 0; i < users.length; i += BATCH_SIZE) {

@@ -19,7 +19,8 @@ export const createTag = mutation({
 
         // Input validation
         if (args.name.trim().length === 0) throw new Error("Tag name cannot be empty");
-        if (args.name.length > MAX_TAG_NAME_LENGTH) throw new Error(`Tag name must be ${MAX_TAG_NAME_LENGTH} characters or less`);
+        if (args.name.length > MAX_TAG_NAME_LENGTH)
+            throw new Error(`Tag name must be ${MAX_TAG_NAME_LENGTH} characters or less`);
 
         const user = await ctx.db
             .query("users")
@@ -30,12 +31,12 @@ export const createTag = mutation({
 
         // Unicode-safe slug generation:
         // Normalize, lowercase, replace whitespace with hyphens, keep CJK + alphanumeric
-        const baseSlug = args.name
-            .toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/[^\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBF-]/g, "")
-            .replace(/^-+|-+$/g, "")
-            || `tag-${Date.now()}`;
+        const baseSlug =
+            args.name
+                .toLowerCase()
+                .replace(/\s+/g, "-")
+                .replace(/[^\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBF-]/g, "")
+                .replace(/^-+|-+$/g, "") || `tag-${Date.now()}`;
 
         let slug = baseSlug;
         const existing = await ctx.db

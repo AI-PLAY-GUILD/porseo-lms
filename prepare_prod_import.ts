@@ -1,16 +1,15 @@
+import * as fs from "node:fs";
+import * as readline from "node:readline";
 
-import * as fs from 'fs';
-import * as readline from 'readline';
-
-const INPUT_FILE = 'snapshot_data/users/documents.jsonl';
-const OUTPUT_FILE = 'users_to_migrate.jsonl';
-const ADMIN_EMAIL = 'shunlokbne721@gmail.com';
+const INPUT_FILE = "snapshot_data/users/documents.jsonl";
+const OUTPUT_FILE = "users_to_migrate.jsonl";
+const ADMIN_EMAIL = "shunlokbne721@gmail.com";
 
 async function main() {
     const fileStream = fs.createReadStream(INPUT_FILE);
     const rl = readline.createInterface({
         input: fileStream,
-        crlfDelay: Infinity
+        crlfDelay: Infinity,
     });
 
     const outputStream = fs.createWriteStream(OUTPUT_FILE); // New output stream
@@ -52,10 +51,10 @@ async function main() {
                 // We don't pass _id or _creationTime, let Prod generate them.
             };
 
-            outputStream.write(JSON.stringify(userData) + '\n'); // Write each object as a line
+            outputStream.write(`${JSON.stringify(userData)}\n`); // Write each object as a line
             count++;
         } catch (e) {
-            console.error('Error parsing line:', e);
+            console.error("Error parsing line:", e);
         }
     }
 

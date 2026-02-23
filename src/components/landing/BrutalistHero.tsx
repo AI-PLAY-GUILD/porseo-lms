@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { WaveButton } from "@/components/ui/wave-button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRef } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
+import { Button } from "@/components/ui/button";
+import { WaveButton } from "@/components/ui/wave-button";
 import { heroContent } from "@/config/landing-content";
 
 interface BrutalistHeroProps {
@@ -18,29 +18,35 @@ interface BrutalistHeroProps {
 export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: BrutalistHeroProps) {
     const containerRef = useRef<HTMLDivElement>(null);
 
-    useGSAP(() => {
-        // Fade in title and buttons
-        gsap.from(".hero-content", {
-            y: 30,
-            opacity: 0,
-            duration: 1.2,
-            stagger: 0.2,
-            ease: "power2.out",
-            delay: 0.2
-        });
+    useGSAP(
+        () => {
+            // Fade in title and buttons
+            gsap.from(".hero-content", {
+                y: 30,
+                opacity: 0,
+                duration: 1.2,
+                stagger: 0.2,
+                ease: "power2.out",
+                delay: 0.2,
+            });
 
-        // Slow rotation for aurora blobs
-        gsap.to(".aurora-blob", {
-            rotation: 360,
-            duration: 25,
-            repeat: -1,
-            ease: "none",
-            transformOrigin: "center center"
-        });
-    }, { scope: containerRef });
+            // Slow rotation for aurora blobs
+            gsap.to(".aurora-blob", {
+                rotation: 360,
+                duration: 25,
+                repeat: -1,
+                ease: "none",
+                transformOrigin: "center center",
+            });
+        },
+        { scope: containerRef },
+    );
 
     return (
-        <section ref={containerRef} className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-white text-slate-900 pt-10 pb-16 md:py-24">
+        <section
+            ref={containerRef}
+            className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-white text-slate-900 pt-10 pb-16 md:py-24"
+        >
             <div className="container relative z-10 px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start lg:items-center mb-12 md:mb-20">
                     {/* Left Column: Text Content */}
@@ -61,16 +67,28 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
                                 <div className="absolute left-1/2 bottom-0 -translate-x-1/2 w-[240px] h-[240px] flex items-end justify-center pointer-events-none">
                                     <div className="boxes scale-[1.2] origin-bottom pb-4">
                                         <div className="box">
-                                            <div></div><div></div><div></div><div></div>
+                                            <div></div>
+                                            <div></div>
+                                            <div></div>
+                                            <div></div>
                                         </div>
                                         <div className="box">
-                                            <div></div><div></div><div></div><div></div>
+                                            <div></div>
+                                            <div></div>
+                                            <div></div>
+                                            <div></div>
                                         </div>
                                         <div className="box">
-                                            <div></div><div></div><div></div><div></div>
+                                            <div></div>
+                                            <div></div>
+                                            <div></div>
+                                            <div></div>
                                         </div>
                                         <div className="box">
-                                            <div></div><div></div><div></div><div></div>
+                                            <div></div>
+                                            <div></div>
+                                            <div></div>
+                                            <div></div>
                                         </div>
                                     </div>
                                 </div>
@@ -81,7 +99,11 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
                         <div className="hero-content w-full mb-12">
                             {isSignedIn ? (
                                 <div className="flex justify-start">
-                                    <Button asChild size="lg" className="w-full sm:w-auto h-12 px-8 rounded-full bg-slate-900 text-white text-base font-bold hover:bg-slate-800 hover:scale-105 transition-all shadow-lg shadow-slate-200/50">
+                                    <Button
+                                        asChild
+                                        size="lg"
+                                        className="w-full sm:w-auto h-12 px-8 rounded-full bg-slate-900 text-white text-base font-bold hover:bg-slate-800 hover:scale-105 transition-all shadow-lg shadow-slate-200/50"
+                                    >
                                         <Link href="/dashboard">
                                             Go To Dashboard <ArrowRight className="ml-2 w-5 h-5" />
                                         </Link>
@@ -97,10 +119,12 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
                                             className="w-full h-12 rounded-md text-base"
                                         />
                                     </div>
-                                    <Button asChild variant="outline" className="w-full h-12 rounded-md bg-white text-black border-2 border-black hover:bg-black hover:text-white transition-all shadow-md text-base px-0 font-bold">
-                                        <Link href="#features">
-                                            {heroContent.buttons.secondary}
-                                        </Link>
+                                    <Button
+                                        asChild
+                                        variant="outline"
+                                        className="w-full h-12 rounded-md bg-white text-black border-2 border-black hover:bg-black hover:text-white transition-all shadow-md text-base px-0 font-bold"
+                                    >
+                                        <Link href="#features">{heroContent.buttons.secondary}</Link>
                                     </Button>
                                 </div>
                             )}
@@ -110,19 +134,28 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
                         <div className="hero-content border-t border-slate-200 pt-8 w-full">
                             <div className="flex flex-row justify-start gap-6 sm:gap-12 w-full">
                                 <div className="text-left">
-                                    <div className="text-2xl sm:text-4xl font-normal text-black mb-1" style={{ fontFamily: 'var(--font-jp)' }}>
+                                    <div
+                                        className="text-2xl sm:text-4xl font-normal text-black mb-1"
+                                        style={{ fontFamily: "var(--font-jp)" }}
+                                    >
                                         週3回
                                     </div>
                                     <div className="text-xs sm:text-sm text-slate-600">ライブハンズオン</div>
                                 </div>
                                 <div className="text-left">
-                                    <div className="text-2xl sm:text-4xl font-normal text-black mb-1" style={{ fontFamily: 'var(--font-jp)' }}>
+                                    <div
+                                        className="text-2xl sm:text-4xl font-normal text-black mb-1"
+                                        style={{ fontFamily: "var(--font-jp)" }}
+                                    >
                                         10万+
                                     </div>
                                     <div className="text-xs sm:text-sm text-slate-600">総フォロワー</div>
                                 </div>
                                 <div className="text-left">
-                                    <div className="text-2xl sm:text-4xl font-normal text-black mb-1" style={{ fontFamily: 'var(--font-jp)' }}>
+                                    <div
+                                        className="text-2xl sm:text-4xl font-normal text-black mb-1"
+                                        style={{ fontFamily: "var(--font-jp)" }}
+                                    >
                                         ¥0
                                     </div>
                                     <div className="text-xs sm:text-sm text-slate-600">入会費</div>
@@ -137,16 +170,28 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
                         <div className="relative w-[300px] h-[300px] flex items-center justify-center">
                             <div className="boxes scale-[2.5]">
                                 <div className="box">
-                                    <div></div><div></div><div></div><div></div>
+                                    <div></div>
+                                    <div></div>
+                                    <div></div>
+                                    <div></div>
                                 </div>
                                 <div className="box">
-                                    <div></div><div></div><div></div><div></div>
+                                    <div></div>
+                                    <div></div>
+                                    <div></div>
+                                    <div></div>
                                 </div>
                                 <div className="box">
-                                    <div></div><div></div><div></div><div></div>
+                                    <div></div>
+                                    <div></div>
+                                    <div></div>
+                                    <div></div>
                                 </div>
                                 <div className="box">
-                                    <div></div><div></div><div></div><div></div>
+                                    <div></div>
+                                    <div></div>
+                                    <div></div>
+                                    <div></div>
                                 </div>
                             </div>
                         </div>
@@ -174,7 +219,6 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
                         </div>
                     </div>
                 </div>
-
             </div>
         </section>
     );
