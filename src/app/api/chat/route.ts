@@ -1,5 +1,5 @@
 import { streamText, stepCountIs, tool } from "ai";
-import { google } from "@ai-sdk/google";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
 import { auth } from "@clerk/nextjs/server";
 import { convex } from "@/lib/convex";
@@ -48,6 +48,10 @@ export async function POST(req: Request) {
     }
 
     const { messages } = await req.json();
+
+    const google = createGoogleGenerativeAI({
+        apiKey: process.env.GEMINI_API_KEY,
+    });
 
     const result = streamText({
         model: google("gemini-3.0-flash"),
