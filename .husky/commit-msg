@@ -1,1 +1,2 @@
+export PATH="/opt/homebrew/bin:$HOME/.nvm/versions/node/$(cat .nvmrc 2>/dev/null || echo 'v20'):bin:$PATH"
 npx --no -- commitlint --edit $1
