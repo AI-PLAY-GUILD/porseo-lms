@@ -33,7 +33,11 @@ const nextConfig: NextConfig = {
                 headers: [
                     {
                         key: "X-Frame-Options",
-                        value: "DENY",
+                        value: "SAMEORIGIN",
+                    },
+                    {
+                        key: "Content-Security-Policy",
+                        value: "frame-ancestors 'self' https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com",
                     },
                     {
                         key: "X-Content-Type-Options",
