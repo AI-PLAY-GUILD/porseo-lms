@@ -78,6 +78,14 @@ export function BrutalistFooter() {
                             </li>
                             <li>
                                 <Link
+                                    href="/guidelines"
+                                    className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                                >
+                                    コミュニティガイドライン
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
                                     href="#"
                                     className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
                                 >

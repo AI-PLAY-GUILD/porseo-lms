@@ -1,6 +1,5 @@
 "use client";
 
-import { useClerk } from "@clerk/nextjs";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -17,8 +16,6 @@ interface BrutalistHeaderProps {
 
 export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHeaderProps) {
     const [isScrolled, setIsScrolled] = useState(false);
-    const { openSignIn } = useClerk();
-
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
@@ -82,11 +79,11 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                     ) : (
                         <div className="flex gap-3">
                             <Button
+                                asChild
                                 variant="ghost"
                                 className="rounded-full font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                                onClick={() => openSignIn({ redirectUrl: "/join" })}
                             >
-                                ログイン
+                                <Link href="/login">ログイン</Link>
                             </Button>
                             <WaveButton
                                 href="/join"
@@ -146,11 +143,11 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                                 ) : (
                                     <div className="flex flex-col gap-4">
                                         <Button
+                                            asChild
                                             variant="ghost"
                                             className="w-full rounded-full font-medium text-slate-600 hover:bg-slate-50 h-12 border border-slate-200"
-                                            onClick={() => openSignIn({ redirectUrl: "/join" })}
                                         >
-                                            ログイン
+                                            <Link href="/login">ログイン</Link>
                                         </Button>
                                         <Button
                                             asChild
