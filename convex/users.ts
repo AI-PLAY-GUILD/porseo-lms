@@ -369,6 +369,52 @@ export const storeUser = mutation({
     },
 });
 
+// 新規登録時の同意情報を記録する
+export const recordConsent = mutation({
+    args: {
+        clerkId: v.string(),
+        terms: v.boolean(),
+        privacy: v.boolean(),
+        guidelines: v.boolean(),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Unauthorized");
+        }
+        if (identity.subject !== args.clerkId) {
+            throw new Error("Unauthorized: You can only update your own consent");
+        }
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+            .first();
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        await ctx.db.patch(user._id, {
+            hasAgreedToTerms: args.terms,
+            hasAgreedToPrivacy: args.privacy,
+            hasAgreedToGuidelines: args.guidelines,
+            agreedAt: Date.now(),
+        });
+
+        await writeAuditLog(
+            ctx,
+            user._id,
+            "user.consent_recorded",
+            "user",
+            user._id,
+            `terms=${args.terms}, privacy=${args.privacy}, guidelines=${args.guidelines}`
+        );
+
+        return true;
+    },
+});
+
 // Security: Requires authentication. Users can only query their own data, admins can query any user.
 export const getUserByClerkIdQuery = query({
     args: { clerkId: v.string() },

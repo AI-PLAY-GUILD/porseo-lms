@@ -13,6 +13,10 @@ export default defineSchema({
         subscriptionStatus: v.optional(v.string()),
         subscriptionName: v.optional(v.string()),
         isAdmin: v.boolean(),
+        hasAgreedToTerms: v.optional(v.boolean()),
+        hasAgreedToPrivacy: v.optional(v.boolean()),
+        hasAgreedToGuidelines: v.optional(v.boolean()),
+        agreedAt: v.optional(v.number()),
 
         createdAt: v.number(),
         updatedAt: v.number(),

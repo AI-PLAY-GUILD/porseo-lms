@@ -16,6 +16,7 @@ export default function JoinPage() {
     const { isSignedIn, user, isLoaded } = useUser();
     const userData = useQuery(api.users.getUser);
     const storeUser = useMutation(api.users.storeUser);
+    const recordConsent = useMutation(api.users.recordConsent);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
@@ -79,6 +80,21 @@ export default function JoinPage() {
                 alert("Discord IDが見つかりません。もう一度ログインしてください。");
                 return;
             }
+            // 同意情報をConvexのユーザーレコードへ記録する
+            try {
+                if (user?.id) {
+                    await recordConsent({
+                        clerkId: user.id,
+                        terms: termsChecked,
+                        privacy: privacyChecked,
+                        guidelines: guidelinesChecked,
+                    });
+                }
+            } catch (consentError) {
+                console.error("Failed to record consent:", consentError);
+                // 記録に失敗しても決済プロセス自体は止めない仕様とするか、止めるか。今回は止めずにエラーログのみ。
+            }
+
             const res = await fetch("/api/create-checkout-session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
