@@ -33,9 +33,11 @@ function setCachedRoles(discordId: string, roles: string[]) {
 }
 
 export async function POST(_req: Request) {
+    console.log("[check-subscription] リクエスト受信", { method: "POST" });
     try {
         const { userId } = await auth();
         if (!userId) {
+            console.log("[check-subscription] 認証失敗: userId が存在しません");
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -46,15 +48,18 @@ export async function POST(_req: Request) {
         });
 
         if (!user) {
+            console.log("[check-subscription] ユーザーが見つかりません", { clerkId: userId });
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
         // If already active, return success
         if (user.subscriptionStatus === "active") {
+            console.log("[check-subscription] 成功: サブスクリプションは既にアクティブ", { userId });
             return NextResponse.json({ status: "active" });
         }
 
         if (!user.discordId) {
+            console.log("[check-subscription] Discord ID が未連携", { userId });
             return NextResponse.json({ error: "Discord ID not linked" }, { status: 400 });
         }
 
@@ -69,8 +74,10 @@ export async function POST(_req: Request) {
         const cachedRoles = getCachedRoles(user.discordId);
 
         if (cachedRoles) {
+            console.log("[check-subscription] キャッシュからロール取得", { discordId: user.discordId });
             roles = cachedRoles;
         } else {
+            console.log("[check-subscription] Discord APIからロール取得", { discordId: user.discordId });
             // Issue #56: Add timeout to Discord API call
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -110,16 +117,19 @@ export async function POST(_req: Request) {
                 roleId: roleId,
                 secret: process.env.CONVEX_INTERNAL_SECRET || "",
             });
+            console.log("[check-subscription] 成功: サブスクリプションをアクティブに更新", { discordId: user.discordId });
             return NextResponse.json({ status: "active", updated: true });
         } else {
+            console.log("[check-subscription] 成功: サブスクリプションは非アクティブ", { discordId: user.discordId });
             return NextResponse.json({ status: "inactive" });
         }
     } catch (error: unknown) {
         // Issue #56: Handle timeout errors
         if (error instanceof DOMException && error.name === "AbortError") {
+            console.error("[check-subscription] エラー: Discord APIタイムアウト");
             return NextResponse.json({ error: "External service timeout" }, { status: 504 });
         }
-        console.error("Error checking subscription:", error);
+        console.error("[check-subscription] エラー:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

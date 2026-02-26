@@ -36,8 +36,10 @@ const SYSTEM_PROMPT = `あなたはPORSEOの学習アシスタントです。ユ
 時間は MM:SS 形式で表示してください（例: 3:45）。`;
 
 export async function POST(req: Request) {
+    console.log("[chat] リクエスト受信", { method: "POST" });
     const { userId } = await auth();
     if (!userId) {
+        console.log("[chat] 認証失敗: userId が存在しません");
         return new Response("Unauthorized", { status: 401 });
     }
 
@@ -46,14 +48,17 @@ export async function POST(req: Request) {
         clerkId: userId,
     });
     if (!user) {
+        console.log("[chat] ユーザーが見つかりません", { clerkId: userId });
         return new Response("User not found", { status: 404 });
     }
     const activeStatuses = ["active", "trialing"];
     if (!activeStatuses.includes(user.subscriptionStatus ?? "")) {
+        console.log("[chat] サブスクリプションが必要", { userId, status: user.subscriptionStatus });
         return new Response("Subscription required", { status: 403 });
     }
 
     const { messages } = await req.json();
+    console.log("[chat] メッセージ処理開始", { userId, messageCount: messages?.length });
 
     const google = createGoogleGenerativeAI({
         apiKey: process.env.GEMINI_API_KEY,
@@ -158,5 +163,6 @@ export async function POST(req: Request) {
         stopWhen: stepCountIs(5),
     });
 
+    console.log("[chat] 成功: ストリームレスポンス送信", { userId });
     return result.toUIMessageStreamResponse();
 }

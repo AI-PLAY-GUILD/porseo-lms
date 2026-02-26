@@ -14,6 +14,7 @@ async function writeAuditLog(
     details?: string,
 ) {
     try {
+        console.log("[users:writeAuditLog] 開始", { userId, action, targetType, targetId });
         await ctx.db.insert("auditLogs", {
             userId,
             action,
@@ -24,7 +25,7 @@ async function writeAuditLog(
         });
     } catch (e) {
         // Audit logging should never break the main operation
-        console.error("[AuditLog] Failed to write:", e);
+        console.error("[users:writeAuditLog] エラー:", e);
     }
 }
 
@@ -37,7 +38,9 @@ export const webhookSyncUser = mutation({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
+        console.log("[users:webhookSyncUser] 開始", { clerkId: args.clerkId, email: args.email });
         if (!safeCompare(args.secret, process.env.CLERK_WEBHOOK_SECRET || "")) {
+            console.log("[users:webhookSyncUser] 認証失敗: 無効なsecret");
             throw new Error("Unauthorized: Invalid secret");
         }
 
@@ -48,6 +51,7 @@ export const webhookSyncUser = mutation({
 
         // If not found by Clerk ID, check if there's a migrated user with the same email
         if (!existing) {
+            console.log("[users:webhookSyncUser] ClerkIDでユーザー未検出、メールで検索", { email: args.email });
             const existingByEmail = await ctx.db
                 .query("users")
                 .filter((q) => q.eq(q.field("email"), args.email))
@@ -56,6 +60,7 @@ export const webhookSyncUser = mutation({
             // Issue #60: Only merge if the existing user has no clerkId (migrated user)
             // Prevents account takeover via email address reuse
             if (existingByEmail && !existingByEmail.clerkId) {
+                console.log("[users:webhookSyncUser] 移行ユーザーをマージ", { emailUserId: existingByEmail._id });
                 existing = existingByEmail;
             }
         }
@@ -65,6 +70,7 @@ export const webhookSyncUser = mutation({
         // PII logs removed for security (Issue #20)
 
         if (existing) {
+            console.log("[users:webhookSyncUser] 既存ユーザーを更新", { userId: existing._id });
             await ctx.db.patch(existing._id, {
                 clerkId: args.clerkId, // Ensure Clerk ID is updated (crucial for migration linking)
                 email: args.email,
@@ -74,8 +80,10 @@ export const webhookSyncUser = mutation({
                 updatedAt: Date.now(),
             });
             await writeAuditLog(ctx, existing._id, "user.sync", "user", existing._id, "Webhook sync update");
+            console.log("[users:webhookSyncUser] 完了 (更新)", { userId: existing._id });
             return existing._id;
         } else {
+            console.log("[users:webhookSyncUser] 新規ユーザーを作成", { clerkId: args.clerkId });
             const newUserId = await ctx.db.insert("users", {
                 clerkId: args.clerkId,
                 email: args.email,
@@ -87,6 +95,7 @@ export const webhookSyncUser = mutation({
                 updatedAt: Date.now(),
             });
             await writeAuditLog(ctx, newUserId, "user.create", "user", newUserId, "Webhook sync create");
+            console.log("[users:webhookSyncUser] 完了 (新規作成)", { userId: newUserId });
             return newUserId;
         }
     },
@@ -94,9 +103,14 @@ export const webhookSyncUser = mutation({
 
 export const getUser = query({
     handler: async (ctx) => {
+        console.log("[users:getUser] 開始");
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return null;
+        if (!identity) {
+            console.log("[users:getUser] 未認証ユーザー");
+            return null;
+        }
 
+        console.log("[users:getUser] 完了", { clerkId: identity.subject });
         return await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -112,12 +126,14 @@ export const updateDiscordRoles = internalMutation({
         discordRoles: v.array(v.string()),
     },
     handler: async (ctx, args) => {
+        console.log("[users:updateDiscordRoles] 開始", { clerkId: args.clerkId, rolesCount: args.discordRoles.length });
         const user = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
             .first();
 
         if (!user) {
+            console.log("[users:updateDiscordRoles] ユーザー未検出", { clerkId: args.clerkId });
             throw new Error("User not found");
         }
 
@@ -126,14 +142,19 @@ export const updateDiscordRoles = internalMutation({
             updatedAt: Date.now(),
         });
         await writeAuditLog(ctx, user._id, "user.discord_roles_update", "user", user._id);
+        console.log("[users:updateDiscordRoles] 完了", { userId: user._id, rolesCount: args.discordRoles.length });
     },
 });
 
 export const checkAccess = query({
     args: { videoId: v.id("videos") },
     handler: async (ctx, args) => {
+        console.log("[users:checkAccess] 開始", { videoId: args.videoId });
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return { hasAccess: false };
+        if (!identity) {
+            console.log("[users:checkAccess] 未認証ユーザー");
+            return { hasAccess: false };
+        }
 
         const user = await ctx.db
             .query("users")
@@ -141,10 +162,16 @@ export const checkAccess = query({
             .first();
 
         const video = await ctx.db.get(args.videoId);
-        if (!video || !user) return { hasAccess: false };
+        if (!video || !user) {
+            console.log("[users:checkAccess] 動画またはユーザー未検出", { videoFound: !!video, userFound: !!user });
+            return { hasAccess: false };
+        }
 
         // 管理者は全てアクセス可能
-        if (user.isAdmin) return { hasAccess: true };
+        if (user.isAdmin) {
+            console.log("[users:checkAccess] 完了 (管理者アクセス)", { userId: user._id });
+            return { hasAccess: true };
+        }
 
         // 必要なロールをチェック
         // 動画にロール制限がない場合はアクセス可能とする（要件によるが、今回は制限あり前提）
@@ -152,6 +179,7 @@ export const checkAccess = query({
 
         const hasRequiredRole = video.requiredRoles.some((role) => user.discordRoles.includes(role));
 
+        console.log("[users:checkAccess] 完了", { userId: user._id, hasAccess: hasRequiredRole });
         return { hasAccess: hasRequiredRole };
     },
 });
@@ -170,14 +198,18 @@ export const getUserByClerkIdServer = query({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
+        console.log("[users:getUserByClerkIdServer] 開始", { clerkId: args.clerkId });
         if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            console.log("[users:getUserByClerkIdServer] 認証失敗: 無効なsecret");
             throw new Error("Unauthorized: Invalid secret");
         }
 
-        return await ctx.db
+        const result = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
             .first();
+        console.log("[users:getUserByClerkIdServer] 完了", { found: !!result });
+        return result;
     },
 });
 
@@ -189,14 +221,18 @@ export const getUserByStripeCustomerId = query({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
+        console.log("[users:getUserByStripeCustomerId] 開始", { stripeCustomerId: args.stripeCustomerId });
         if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            console.log("[users:getUserByStripeCustomerId] 認証失敗: 無効なsecret");
             throw new Error("Unauthorized: Invalid secret");
         }
 
-        return await ctx.db
+        const result = await ctx.db
             .query("users")
             .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.stripeCustomerId))
             .first();
+        console.log("[users:getUserByStripeCustomerId] 完了", { found: !!result });
+        return result;
     },
 });
 
@@ -211,7 +247,12 @@ export const updateSubscriptionStatus = mutation({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
+        console.log("[users:updateSubscriptionStatus] 開始", {
+            discordId: args.discordId,
+            subscriptionStatus: args.subscriptionStatus,
+        });
         if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            console.log("[users:updateSubscriptionStatus] 認証失敗: 無効なsecret");
             throw new Error("Unauthorized: Invalid secret");
         }
 
@@ -221,6 +262,7 @@ export const updateSubscriptionStatus = mutation({
             .first();
 
         if (!user) {
+            console.log("[users:updateSubscriptionStatus] ユーザー未検出", { discordId: args.discordId });
             throw new Error(`User with Discord ID ${args.discordId} not found`);
         }
 
@@ -259,6 +301,10 @@ export const updateSubscriptionStatus = mutation({
             user._id,
             `status=${args.subscriptionStatus}`,
         );
+        console.log("[users:updateSubscriptionStatus] 完了", {
+            userId: user._id,
+            subscriptionStatus: args.subscriptionStatus,
+        });
     },
 });
 
@@ -270,7 +316,12 @@ export const updateSubscriptionStatusByCustomerId = mutation({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
+        console.log("[users:updateSubscriptionStatusByCustomerId] 開始", {
+            stripeCustomerId: args.stripeCustomerId,
+            subscriptionStatus: args.subscriptionStatus,
+        });
         if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            console.log("[users:updateSubscriptionStatusByCustomerId] 認証失敗: 無効なsecret");
             throw new Error("Unauthorized: Invalid secret");
         }
 
@@ -298,6 +349,10 @@ export const updateSubscriptionStatusByCustomerId = mutation({
             user._id,
             `status=${args.subscriptionStatus}`,
         );
+        console.log("[users:updateSubscriptionStatusByCustomerId] 完了", {
+            userId: user._id,
+            subscriptionStatus: args.subscriptionStatus,
+        });
     },
 });
 
@@ -311,11 +366,14 @@ export const storeUser = mutation({
         imageUrl: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        console.log("[users:storeUser] 開始", { clerkId: args.clerkId });
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
+            console.log("[users:storeUser] 未認証ユーザー");
             throw new Error("Unauthorized");
         }
         if (identity.subject !== args.clerkId) {
+            console.log("[users:storeUser] 認証失敗: clerkId不一致");
             throw new Error("Unauthorized: You can only update your own profile");
         }
 
@@ -326,12 +384,14 @@ export const storeUser = mutation({
             .first();
 
         if (user) {
+            console.log("[users:storeUser] 既存ユーザーを更新", { userId: user._id });
             await ctx.db.patch(user._id, {
                 email: args.email,
                 name: args.name,
                 imageUrl: args.imageUrl,
                 updatedAt: Date.now(),
             });
+            console.log("[users:storeUser] 完了 (更新)", { userId: user._id });
             return user._id;
         }
 
@@ -343,6 +403,7 @@ export const storeUser = mutation({
 
         // Issue #60: Only merge if the existing user has no clerkId (migrated user)
         if (existingByEmail && !existingByEmail.clerkId) {
+            console.log("[users:storeUser] 移行ユーザーをメールでリンク", { emailUserId: existingByEmail._id });
             await ctx.db.patch(existingByEmail._id, {
                 clerkId: args.clerkId, // Link Clerk ID
                 name: args.name,
@@ -350,10 +411,12 @@ export const storeUser = mutation({
                 updatedAt: Date.now(),
             });
             await writeAuditLog(ctx, existingByEmail._id, "user.link_by_email", "user", existingByEmail._id);
+            console.log("[users:storeUser] 完了 (メールリンク)", { userId: existingByEmail._id });
             return existingByEmail._id;
         }
 
         // 3. Create New User
+        console.log("[users:storeUser] 新規ユーザーを作成", { clerkId: args.clerkId });
         const userId = await ctx.db.insert("users", {
             clerkId: args.clerkId,
             email: args.email,
@@ -365,6 +428,7 @@ export const storeUser = mutation({
             updatedAt: Date.now(),
         });
         await writeAuditLog(ctx, userId, "user.create", "user", userId, "storeUser create");
+        console.log("[users:storeUser] 完了 (新規作成)", { userId });
         return userId;
     },
 });
@@ -373,25 +437,37 @@ export const storeUser = mutation({
 export const getUserByClerkIdQuery = query({
     args: { clerkId: v.string() },
     handler: async (ctx, args) => {
+        console.log("[users:getUserByClerkIdQuery] 開始", { clerkId: args.clerkId });
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthorized");
+        if (!identity) {
+            console.log("[users:getUserByClerkIdQuery] 未認証ユーザー");
+            throw new Error("Unauthorized");
+        }
 
         // Allow querying own data or admin access
         if (identity.subject !== args.clerkId) {
+            console.log("[users:getUserByClerkIdQuery] 他ユーザーのデータにアクセス、管理者チェック");
             const currentUser = await getUserByClerkId(ctx, identity.subject);
             if (!currentUser?.isAdmin) {
+                console.log("[users:getUserByClerkIdQuery] 管理者権限なし");
                 throw new Error("Unauthorized: You can only access your own data");
             }
         }
 
-        return await getUserByClerkId(ctx, args.clerkId);
+        const result = await getUserByClerkId(ctx, args.clerkId);
+        console.log("[users:getUserByClerkIdQuery] 完了", { found: !!result });
+        return result;
     },
 });
 
 export const getAllUsers = query({
     handler: async (ctx) => {
+        console.log("[users:getAllUsers] 開始");
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return [];
+        if (!identity) {
+            console.log("[users:getAllUsers] 未認証ユーザー");
+            return [];
+        }
 
         const user = await ctx.db
             .query("users")
@@ -399,18 +475,23 @@ export const getAllUsers = query({
             .first();
 
         if (!user || !user.isAdmin) {
+            console.log("[users:getAllUsers] 管理者権限なし");
             throw new Error("Unauthorized");
         }
 
-        return await ctx.db.query("users").order("desc").collect();
+        const result = await ctx.db.query("users").order("desc").collect();
+        console.log("[users:getAllUsers] 完了", { userCount: result.length });
+        return result;
     },
 });
 
 export const syncCurrentUser = mutation({
     args: {},
     handler: async (ctx) => {
+        console.log("[users:syncCurrentUser] 開始");
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
+            console.log("[users:syncCurrentUser] 未認証ユーザー");
             throw new Error("Called syncCurrentUser without authentication");
         }
 
@@ -427,6 +508,7 @@ export const syncCurrentUser = mutation({
         if (user) {
             // User already exists, update if needed (optional, but good for consistency)
             // For now, we just return the ID as the goal is to ensure existence
+            console.log("[users:syncCurrentUser] 完了 (既存ユーザー)", { userId: user._id });
             return user._id;
         }
 
@@ -438,17 +520,20 @@ export const syncCurrentUser = mutation({
                 .first();
             // Issue #60: Only merge if the existing user has no clerkId (migrated user)
             if (existingByEmail && !existingByEmail.clerkId) {
+                console.log("[users:syncCurrentUser] 移行ユーザーをマージ", { emailUserId: existingByEmail._id });
                 await ctx.db.patch(existingByEmail._id, {
                     clerkId: clerkId,
                     name: name,
                     imageUrl: imageUrl,
                     updatedAt: Date.now(),
                 });
+                console.log("[users:syncCurrentUser] 完了 (メールマージ)", { userId: existingByEmail._id });
                 return existingByEmail._id;
             }
         }
 
         // Create new user
+        console.log("[users:syncCurrentUser] 新規ユーザーを作成", { clerkId });
         const newUserId = await ctx.db.insert("users", {
             clerkId: clerkId,
             email: email || "",
@@ -460,6 +545,7 @@ export const syncCurrentUser = mutation({
             updatedAt: Date.now(),
         });
 
+        console.log("[users:syncCurrentUser] 完了 (新規作成)", { userId: newUserId });
         return newUserId;
     },
 });
@@ -471,13 +557,16 @@ export const checkStripeEventProcessed = query({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
+        console.log("[users:checkStripeEventProcessed] 開始", { eventId: args.eventId });
         if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            console.log("[users:checkStripeEventProcessed] 認証失敗: 無効なsecret");
             throw new Error("Unauthorized: Invalid secret");
         }
         const existing = await ctx.db
             .query("processedStripeEvents")
             .withIndex("by_event_id", (q) => q.eq("eventId", args.eventId))
             .first();
+        console.log("[users:checkStripeEventProcessed] 完了", { eventId: args.eventId, alreadyProcessed: !!existing });
         return !!existing;
     },
 });
@@ -489,7 +578,9 @@ export const markStripeEventProcessed = mutation({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
+        console.log("[users:markStripeEventProcessed] 開始", { eventId: args.eventId, eventType: args.eventType });
         if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            console.log("[users:markStripeEventProcessed] 認証失敗: 無効なsecret");
             throw new Error("Unauthorized: Invalid secret");
         }
         await ctx.db.insert("processedStripeEvents", {
@@ -497,6 +588,7 @@ export const markStripeEventProcessed = mutation({
             eventType: args.eventType,
             processedAt: Date.now(),
         });
+        console.log("[users:markStripeEventProcessed] 完了", { eventId: args.eventId });
     },
 });
 

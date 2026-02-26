@@ -21,7 +21,9 @@ export default function VideoUploadPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        console.log("[VideoUploadPage] マウント/初期化 isAdmin:", userData?.isAdmin);
         if (userData !== undefined && !userData?.isAdmin) {
+            console.log("[VideoUploadPage] 管理者でないため / へリダイレクト");
             router.push("/");
         }
     }, [userData, router]);
@@ -29,6 +31,7 @@ export default function VideoUploadPage() {
     // コンポーネントマウント時にアップロードURLを取得（またはボタンで取得するように変更も可）
     // ここでは「アップロード準備」ボタンを押させるフローにする
     const prepareUpload = async () => {
+        console.log("[VideoUploadPage] アップロード準備開始");
         try {
             setError(null);
             const response = await fetch("/api/mux/upload", { method: "POST" });
@@ -37,20 +40,24 @@ export default function VideoUploadPage() {
                 throw new Error(errorData.details || "Failed to get upload URL");
             }
             const data = await response.json();
+            console.log("[VideoUploadPage] アップロードURL取得完了");
             setUploadUrl(data.url);
         } catch (err) {
+            console.error("[VideoUploadPage] エラー: アップロード準備失敗:", err);
             console.error("Error preparing upload:", err);
             setError(err instanceof Error ? err.message : "アップロードの準備に失敗しました");
         }
     };
 
     const handleUploadSuccess = (_event: unknown) => {
+        console.log("[VideoUploadPage] アップロード成功");
         setUploadSuccess(true);
         setIsUploading(false);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        console.log("[VideoUploadPage] 動画登録送信 title:", videoTitle, "muxAssetId:", muxAssetId);
         if (!muxAssetId || !muxPlaybackId) {
             alert("動画の処理待ち、またはエラーです。Muxのダッシュボードを確認してください。");
             return;
@@ -63,6 +70,7 @@ export default function VideoUploadPage() {
                 muxPlaybackId,
                 requiredRoles: [], // 初期値は制限なし
             });
+            console.log("[VideoUploadPage] 動画登録完了");
             alert("動画を登録しました！続けてアップロードできます。");
 
             // 状態をリセットして連続アップロード可能にする
@@ -74,6 +82,7 @@ export default function VideoUploadPage() {
             setUploadUrl(null);
             setError(null);
         } catch (error) {
+            console.error("[VideoUploadPage] エラー: 動画登録失敗:", error);
             console.error("Failed to create video:", error);
             alert("動画の登録に失敗しました。");
         }

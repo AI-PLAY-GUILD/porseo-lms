@@ -39,13 +39,16 @@ export default function EditVideoPage() {
     const [isIndexing, setIsIndexing] = useState(false);
 
     useEffect(() => {
+        console.log("[EditVideoPage] マウント/初期化 videoId:", videoId, "isAdmin:", userData?.isAdmin);
         if (userData !== undefined && !userData?.isAdmin) {
+            console.log("[EditVideoPage] 管理者でないため / へリダイレクト");
             router.push("/");
         }
     }, [userData, router]);
 
     useEffect(() => {
         if (video) {
+            console.log("[EditVideoPage] 動画データ読み込み完了 title:", video.title);
             setTitle(video.title);
             setDescription(video.description || "");
             setIsPublished(video.isPublished);
@@ -102,6 +105,7 @@ export default function EditVideoPage() {
     };
 
     const handleSubmit = async () => {
+        console.log("[EditVideoPage] 動画更新送信 videoId:", videoId, "title:", title);
         setIsSubmitting(true);
         try {
             await updateVideo({
@@ -118,9 +122,11 @@ export default function EditVideoPage() {
                 chapters,
             });
 
+            console.log("[EditVideoPage] 動画更新完了");
             alert("更新しました！");
             router.push("/admin/videos");
         } catch (error) {
+            console.error("[EditVideoPage] エラー: 動画更新失敗:", error);
             console.error("Failed to update video:", error);
             alert("更新に失敗しました。");
         } finally {
@@ -233,6 +239,7 @@ export default function EditVideoPage() {
                             if (!file) return;
 
                             try {
+                                console.log("[EditVideoPage] サムネイルアップロード開始");
                                 const postUrl = await generateUploadUrl();
                                 const result = await fetch(postUrl, {
                                     method: "POST",
@@ -240,9 +247,11 @@ export default function EditVideoPage() {
                                     body: file,
                                 });
                                 const { storageId } = await result.json();
+                                console.log("[EditVideoPage] サムネイルアップロード完了 storageId:", storageId);
                                 setCustomThumbnailStorageId(storageId);
                                 alert("画像をアップロードしました（保存ボタンを押すと反映されます）");
                             } catch (error) {
+                                console.error("[EditVideoPage] エラー: サムネイルアップロード失敗:", error);
                                 console.error(error);
                                 alert("アップロードに失敗しました");
                             }
@@ -443,6 +452,7 @@ export default function EditVideoPage() {
 
                             setIsAnalyzing(true);
                             try {
+                                console.log("[EditVideoPage] AI分析開始 muxAssetId:", muxAssetId);
                                 // まず動画情報を更新（保存）
                                 await updateVideo({
                                     videoId,
@@ -463,6 +473,7 @@ export default function EditVideoPage() {
                                     transcription: transcription, // 現在の入力値を渡す
                                 });
 
+                                console.log("[EditVideoPage] AI分析結果取得:", result);
                                 // 結果を即座にフォームに反映
                                 if (result) {
                                     if ("error" in result && result.error) {
@@ -478,8 +489,10 @@ export default function EditVideoPage() {
                                     setChapters(result.chapters || []);
                                 }
 
+                                console.log("[EditVideoPage] AI分析完了");
                                 alert("AI分析が完了しました！");
                             } catch (error: unknown) {
+                                console.error("[EditVideoPage] エラー: AI分析失敗:", error);
                                 console.error(error);
                                 alert(
                                     `エラーが発生しました: ${error instanceof Error ? error.message : String(error)} `,
@@ -527,6 +540,7 @@ export default function EditVideoPage() {
 
                             setIsIndexing(true);
                             try {
+                                console.log("[EditVideoPage] インデックス作成開始 videoId:", videoId);
                                 // まず文字起こしを保存
                                 await updateVideo({
                                     videoId,
@@ -541,8 +555,10 @@ export default function EditVideoPage() {
                                 });
 
                                 const result = await indexTranscription({ videoId });
+                                console.log("[EditVideoPage] インデックス作成完了 chunks:", result.chunksCreated);
                                 alert(`インデックス作成完了！(${result.chunksCreated} チャンク)`);
                             } catch (error: unknown) {
+                                console.error("[EditVideoPage] エラー: インデックス作成失敗:", error);
                                 console.error(error);
                                 alert(`エラー: ${error instanceof Error ? error.message : String(error)}`);
                             } finally {

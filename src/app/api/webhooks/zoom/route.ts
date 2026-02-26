@@ -32,6 +32,7 @@ function isValidZoomUrl(url: string): boolean {
 }
 
 export async function POST(req: Request) {
+    console.log("[webhooks/zoom] リクエスト受信", { method: "POST" });
     const body = await req.text();
     const headerPayload = await headers();
     const timestamp = headerPayload.get("x-zm-request-timestamp");
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
     }
 
     if (!timestamp || !signature) {
+        console.log("[webhooks/zoom] タイムスタンプまたは署名ヘッダーが不足");
         return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
@@ -71,12 +73,16 @@ export async function POST(req: Request) {
     try {
         payload = JSON.parse(body);
     } catch {
+        console.error("[webhooks/zoom] エラー: JSONパース失敗");
         return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
+
+    console.log("[webhooks/zoom] イベント受信", { event: payload.event });
 
     // --- 2. CRC Challenge Response ---
     // Zoom sends this when registering the webhook endpoint URL
     if (payload.event === "endpoint.url_validation") {
+        console.log("[webhooks/zoom] CRCチャレンジレスポンス処理");
         const plainToken = payload.payload?.plainToken;
         if (!plainToken) {
             return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -87,6 +93,7 @@ export async function POST(req: Request) {
 
     // --- 3. Only handle recording.completed ---
     if (payload.event !== "recording.completed") {
+        console.log("[webhooks/zoom] 対象外イベント、スキップ", { event: payload.event });
         return NextResponse.json({ received: true, ignored: true });
     }
 
@@ -105,6 +112,7 @@ export async function POST(req: Request) {
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
         });
         if (alreadyProcessed) {
+            console.log("[webhooks/zoom] 重複イベントをスキップ", { eventId });
             return NextResponse.json({ received: true, duplicate: true });
         }
     } catch (error) {
@@ -171,9 +179,10 @@ export async function POST(req: Request) {
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
         });
     } catch (error: unknown) {
-        console.error("Error creating Zoom draft video:", error);
+        console.error("[webhooks/zoom] エラー: Zoomドラフト動画作成失敗:", error);
         return NextResponse.json({ error: "Processing failed" }, { status: 500 });
     }
 
+    console.log("[webhooks/zoom] 成功: recording.completed 処理完了", { meetingId, eventId });
     return NextResponse.json({ received: true });
 }
