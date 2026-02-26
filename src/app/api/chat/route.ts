@@ -37,132 +37,160 @@ const SYSTEM_PROMPT = `あなたはPORSEOの学習アシスタントです。ユ
 
 export async function POST(req: Request) {
     console.log("[chat] リクエスト受信", { method: "POST" });
-    const { userId } = await auth();
-    if (!userId) {
-        console.log("[chat] 認証失敗: userId が存在しません");
-        return new Response("Unauthorized", { status: 401 });
-    }
+    try {
+        const { userId } = await auth();
+        if (!userId) {
+            console.log("[chat] 認証失敗: userId が存在しません");
+            return new Response("Unauthorized", { status: 401 });
+        }
+        console.log("[chat] 認証成功", { userId });
 
-    // サブスクリプション確認
-    const user = await convex.query(api.users.getUserByClerkIdQuery, {
-        clerkId: userId,
-    });
-    if (!user) {
-        console.log("[chat] ユーザーが見つかりません", { clerkId: userId });
-        return new Response("User not found", { status: 404 });
-    }
-    const activeStatuses = ["active", "trialing"];
-    if (!activeStatuses.includes(user.subscriptionStatus ?? "")) {
-        console.log("[chat] サブスクリプションが必要", { userId, status: user.subscriptionStatus });
-        return new Response("Subscription required", { status: 403 });
-    }
+        // サブスクリプション確認（HTTPクライアントはJWT認証なし → secret認証のServerクエリを使用）
+        const user = await convex.query(api.users.getUserByClerkIdServer, {
+            clerkId: userId,
+            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        });
+        if (!user) {
+            console.log("[chat] ユーザーが見つかりません", { clerkId: userId });
+            return new Response("User not found", { status: 404 });
+        }
+        console.log("[chat] ユーザー取得成功", {
+            userId,
+            subscriptionStatus: user.subscriptionStatus,
+        });
 
-    const { messages } = await req.json();
-    console.log("[chat] メッセージ処理開始", { userId, messageCount: messages?.length });
+        const activeStatuses = ["active", "trialing"];
+        if (!activeStatuses.includes(user.subscriptionStatus ?? "")) {
+            console.log("[chat] サブスクリプションが必要", {
+                userId,
+                status: user.subscriptionStatus,
+            });
+            return new Response("Subscription required", { status: 403 });
+        }
 
-    const google = createGoogleGenerativeAI({
-        apiKey: process.env.GEMINI_API_KEY,
-    });
+        const { messages } = await req.json();
+        console.log("[chat] メッセージ処理開始", {
+            userId,
+            messageCount: messages?.length,
+        });
 
-    const result = streamText({
-        model: google("gemini-3-flash-preview"),
-        system: SYSTEM_PROMPT,
-        messages,
-        tools: {
-            listVideos: tool({
-                description:
-                    "コミュニティで公開されている動画の一覧を取得します。どんな動画があるか聞かれたときや、おすすめを紹介するときに使います",
-                inputSchema: z.object({
-                    keyword: z.string().optional().describe("タイトルや概要を絞り込むキーワード（省略可）"),
-                }),
-                execute: async ({ keyword }) => {
-                    try {
-                        const videos = await convex.query(api.videos.getPublishedVideos, {});
-                        if (!videos || !Array.isArray(videos) || videos.length === 0) {
-                            return { videos: [], message: "現在公開されている動画はありません。" };
-                        }
+        if (!process.env.GEMINI_API_KEY) {
+            console.error("[chat] GEMINI_API_KEY が未設定です");
+            return new Response("AI service not configured", { status: 500 });
+        }
 
-                        const list = (videos as Array<Record<string, unknown>>)
-                            .filter((v) => {
-                                if (!keyword) return true;
-                                const kw = keyword.toLowerCase();
-                                return (
-                                    String(v.title ?? "")
-                                        .toLowerCase()
-                                        .includes(kw) ||
-                                    String(v.description ?? "")
-                                        .toLowerCase()
-                                        .includes(kw) ||
-                                    String(v.summary ?? "")
-                                        .toLowerCase()
-                                        .includes(kw)
-                                );
-                            })
-                            .map((v) => ({
-                                videoId: v._id,
-                                title: v.title,
-                                description: v.description ?? null,
-                                summary: v.summary ?? null,
-                                duration: v.duration ?? null,
-                                isLocked: v.isLocked ?? false,
-                            }));
+        const google = createGoogleGenerativeAI({
+            apiKey: process.env.GEMINI_API_KEY,
+        });
+        console.log("[chat] Google AI クライアント作成成功");
 
-                        return { videos: list, total: list.length };
-                    } catch (error: unknown) {
-                        return {
-                            videos: [],
-                            error: `動画一覧の取得に失敗しました: ${error instanceof Error ? error.message : String(error)}`,
-                        };
-                    }
-                },
-            }),
-            searchVideos: tool({
-                description:
-                    "動画の文字起こしデータをベクトル検索して、ユーザーの質問に関連する動画とタイムスタンプを見つけます",
-                inputSchema: z.object({
-                    query: z.string().describe("検索クエリ"),
-                    limit: z.number().default(8).describe("返す結果の最大数"),
-                }),
-                execute: async ({ query, limit }) => {
-                    const secret = process.env.CONVEX_INTERNAL_SECRET || "";
-                    try {
-                        const results = await convex.action(api.rag.searchTranscriptions, {
-                            query,
-                            secret,
-                            limit: limit || 8,
-                        });
-                        if (!results || !Array.isArray(results) || results.length === 0) {
+        const result = streamText({
+            model: google("gemini-3-flash-preview"),
+            system: SYSTEM_PROMPT,
+            messages,
+            tools: {
+                listVideos: tool({
+                    description:
+                        "コミュニティで公開されている動画の一覧を取得します。どんな動画があるか聞かれたときや、おすすめを紹介するときに使います",
+                    inputSchema: z.object({
+                        keyword: z.string().optional().describe("タイトルや概要を絞り込むキーワード（省略可）"),
+                    }),
+                    execute: async ({ keyword }) => {
+                        try {
+                            const videos = await convex.query(api.videos.getPublishedVideos, {});
+                            if (!videos || !Array.isArray(videos) || videos.length === 0) {
+                                return { videos: [], message: "現在公開されている動画はありません。" };
+                            }
+
+                            const list = (videos as Array<Record<string, unknown>>)
+                                .filter((v) => {
+                                    if (!keyword) return true;
+                                    const kw = keyword.toLowerCase();
+                                    return (
+                                        String(v.title ?? "")
+                                            .toLowerCase()
+                                            .includes(kw) ||
+                                        String(v.description ?? "")
+                                            .toLowerCase()
+                                            .includes(kw) ||
+                                        String(v.summary ?? "")
+                                            .toLowerCase()
+                                            .includes(kw)
+                                    );
+                                })
+                                .map((v) => ({
+                                    videoId: v._id,
+                                    title: v.title,
+                                    description: v.description ?? null,
+                                    summary: v.summary ?? null,
+                                    duration: v.duration ?? null,
+                                    isLocked: v.isLocked ?? false,
+                                }));
+
+                            return { videos: list, total: list.length };
+                        } catch (error: unknown) {
                             return {
-                                results: [] as Array<Record<string, unknown>>,
-                                message: "関連する動画が見つかりませんでした。",
+                                videos: [],
+                                error: `動画一覧の取得に失敗しました: ${error instanceof Error ? error.message : String(error)}`,
                             };
                         }
-                        return {
-                            results: (results as unknown as Array<Record<string, unknown>>).map(
-                                (r: Record<string, unknown>) => ({
-                                    videoTitle: r.videoTitle,
-                                    videoId: r.videoId,
-                                    muxPlaybackId: r.muxPlaybackId,
-                                    text: r.text,
-                                    startTime: Math.floor(r.startTime as number),
-                                    endTime: Math.floor(r.endTime as number),
-                                    relevanceScore: r.score,
-                                }),
-                            ),
-                        };
-                    } catch (error: unknown) {
-                        console.error("Video search error:", error);
-                        return {
-                            results: [] as Array<Record<string, unknown>>,
-                            error: `検索エラー: ${error instanceof Error ? error.message : String(error)}`,
-                        };
-                    }
-                },
-            }),
-        },
-        stopWhen: stepCountIs(5),
-    });
+                    },
+                }),
+                searchVideos: tool({
+                    description:
+                        "動画の文字起こしデータをベクトル検索して、ユーザーの質問に関連する動画とタイムスタンプを見つけます",
+                    inputSchema: z.object({
+                        query: z.string().describe("検索クエリ"),
+                        limit: z.number().default(8).describe("返す結果の最大数"),
+                    }),
+                    execute: async ({ query, limit }) => {
+                        const secret = process.env.CONVEX_INTERNAL_SECRET || "";
+                        try {
+                            const results = await convex.action(api.rag.searchTranscriptions, {
+                                query,
+                                secret,
+                                limit: limit || 8,
+                            });
+                            if (!results || !Array.isArray(results) || results.length === 0) {
+                                return {
+                                    results: [] as Array<Record<string, unknown>>,
+                                    message: "関連する動画が見つかりませんでした。",
+                                };
+                            }
+                            return {
+                                results: (results as unknown as Array<Record<string, unknown>>).map(
+                                    (r: Record<string, unknown>) => ({
+                                        videoTitle: r.videoTitle,
+                                        videoId: r.videoId,
+                                        muxPlaybackId: r.muxPlaybackId,
+                                        text: r.text,
+                                        startTime: Math.floor(r.startTime as number),
+                                        endTime: Math.floor(r.endTime as number),
+                                        relevanceScore: r.score,
+                                    }),
+                                ),
+                            };
+                        } catch (error: unknown) {
+                            console.error("Video search error:", error);
+                            return {
+                                results: [] as Array<Record<string, unknown>>,
+                                error: `検索エラー: ${error instanceof Error ? error.message : String(error)}`,
+                            };
+                        }
+                    },
+                }),
+            },
+            stopWhen: stepCountIs(5),
+        });
 
-    console.log("[chat] 成功: ストリームレスポンス送信", { userId });
-    return result.toUIMessageStreamResponse();
+        console.log("[chat] 成功: ストリームレスポンス送信", { userId });
+        return result.toUIMessageStreamResponse();
+    } catch (error: unknown) {
+        console.error("[chat] エラー:", error);
+        const message = error instanceof Error ? error.message : String(error);
+        return new Response(JSON.stringify({ error: "Internal server error", detail: message }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+        });
+    }
 }

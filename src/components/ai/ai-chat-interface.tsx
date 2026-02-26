@@ -25,12 +25,21 @@ function getMessageText(message: { parts?: Array<{ type: string; text?: string }
 export function AiChatInterface() {
     const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
 
-    const { messages, sendMessage, stop, status } = useChat({ transport });
+    const { messages, sendMessage, stop, status, error } = useChat({ transport });
 
     const [input, setInput] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const isLoading = status === "streaming" || status === "submitted";
+
+    console.log("[AiChatInterface] status:", status, "messages:", messages.length);
+
+    // エラーログ
+    useEffect(() => {
+        if (error) {
+            console.error("[AiChatInterface] チャットエラー:", error);
+        }
+    }, [error]);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -45,6 +54,7 @@ export function AiChatInterface() {
     const handleSend = () => {
         const text = input.trim();
         if (!text || isLoading) return;
+        console.log("[AiChatInterface] メッセージ送信:", text);
         setInput("");
         sendMessage({ text });
     };
@@ -122,6 +132,13 @@ export function AiChatInterface() {
                             </div>
                         );
                     })
+                )}
+                {error && (
+                    <div className="flex gap-3 justify-start">
+                        <div className="max-w-[80%] md:max-w-[70%] rounded-xl px-4 py-3 border-2 border-red-500 bg-red-50">
+                            <p className="font-bold text-red-600 text-sm">エラーが発生しました: {error.message}</p>
+                        </div>
+                    </div>
                 )}
                 {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
                     <div className="flex gap-3 justify-start">
