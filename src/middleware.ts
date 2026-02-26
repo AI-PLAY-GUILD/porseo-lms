@@ -107,9 +107,17 @@ export default clerkMiddleware(async (_auth, request) => {
     ) {
         const origin = request.headers.get("origin");
         if (origin) {
-            const allowedOrigins = [process.env.NEXT_PUBLIC_BASE_URL, "http://localhost:3000"].filter(Boolean);
+            const allowedOrigins = [
+                process.env.NEXT_PUBLIC_BASE_URL,
+                process.env.NEXT_PUBLIC_APP_URL,
+                request.nextUrl.origin,
+                "http://localhost:3000",
+            ].filter(Boolean);
+
+            console.log(`[middleware] CSRF check: origin=${origin}, allowed=${JSON.stringify(allowedOrigins)}`);
 
             if (!allowedOrigins.includes(origin)) {
+                console.log(`[middleware] CSRF BLOCKED: origin=${origin} not in allowedOrigins`);
                 return NextResponse.json({ error: "Forbidden" }, { status: 403 });
             }
         }
