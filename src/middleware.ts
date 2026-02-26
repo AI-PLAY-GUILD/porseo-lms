@@ -57,6 +57,11 @@ function checkUserRateLimit(userId: string): { allowed: boolean; retryAfter?: nu
 }
 
 export default clerkMiddleware(async (_auth, request) => {
+    // Block dev-login page in production
+    if (request.nextUrl.pathname.startsWith("/dev-login") && process.env.NODE_ENV !== "development") {
+        return NextResponse.redirect(new URL("/login", request.url));
+    }
+
     // Rate limiting for API routes (exclude webhooks which have their own protection)
     if (request.nextUrl.pathname.startsWith("/api/") && !request.nextUrl.pathname.startsWith("/api/webhooks/")) {
         const ip =
