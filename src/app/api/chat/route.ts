@@ -36,53 +36,64 @@ const SYSTEM_PROMPT = `あなたはPORSEOの学習アシスタントです。ユ
 時間は MM:SS 形式で表示してください（例: 3:45）。`;
 
 export async function POST(req: Request) {
-    console.log("[chat] リクエスト受信", { method: "POST" });
+    console.log("[chat] STEP 0: リクエスト受信", { method: "POST" });
     try {
+        console.log("[chat] STEP 1: 認証開始");
         const { userId } = await auth();
         if (!userId) {
-            console.log("[chat] 認証失敗: userId が存在しません");
+            console.log("[chat] STEP 1 FAIL: userId が存在しません");
             return new Response("Unauthorized", { status: 401 });
         }
-        console.log("[chat] 認証成功", { userId });
+        console.log("[chat] STEP 1 OK: 認証成功", { userId });
 
         // サブスクリプション確認（HTTPクライアントはJWT認証なし → secret認証のServerクエリを使用）
+        console.log("[chat] STEP 2: Convexユーザー取得開始", {
+            hasSecret: !!process.env.CONVEX_INTERNAL_SECRET,
+        });
         const user = await convex.query(api.users.getUserByClerkIdServer, {
             clerkId: userId,
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
         });
         if (!user) {
-            console.log("[chat] ユーザーが見つかりません", { clerkId: userId });
+            console.log("[chat] STEP 2 FAIL: ユーザーが見つかりません", { clerkId: userId });
             return new Response("User not found", { status: 404 });
         }
-        console.log("[chat] ユーザー取得成功", {
+        console.log("[chat] STEP 2 OK: ユーザー取得成功", {
             userId,
             subscriptionStatus: user.subscriptionStatus,
         });
 
+        console.log("[chat] STEP 3: サブスクリプション確認");
         const activeStatuses = ["active", "trialing", "past_due"];
         if (!activeStatuses.includes(user.subscriptionStatus ?? "")) {
-            console.log("[chat] サブスクリプションが必要", {
+            console.log("[chat] STEP 3 FAIL: サブスクリプションが必要", {
                 userId,
                 status: user.subscriptionStatus,
             });
             return new Response("Subscription required", { status: 403 });
         }
+        console.log("[chat] STEP 3 OK: サブスクリプション有効");
 
+        console.log("[chat] STEP 4: リクエストボディ解析");
         const { messages } = await req.json();
-        console.log("[chat] メッセージ処理開始", {
+        console.log("[chat] STEP 4 OK: メッセージ取得", {
             userId,
             messageCount: messages?.length,
         });
 
+        console.log("[chat] STEP 5: GEMINI_API_KEY確認", {
+            hasKey: !!process.env.GEMINI_API_KEY,
+            keyPrefix: process.env.GEMINI_API_KEY?.substring(0, 8),
+        });
         if (!process.env.GEMINI_API_KEY) {
-            console.error("[chat] GEMINI_API_KEY が未設定です");
+            console.error("[chat] STEP 5 FAIL: GEMINI_API_KEY が未設定です");
             return new Response("AI service not configured", { status: 500 });
         }
 
         const google = createGoogleGenerativeAI({
             apiKey: process.env.GEMINI_API_KEY,
         });
-        console.log("[chat] Google AI クライアント作成成功");
+        console.log("[chat] STEP 5 OK: Google AI クライアント作成成功");
 
         const result = streamText({
             model: google("gemini-3-flash-preview"),
@@ -183,16 +194,14 @@ export async function POST(req: Request) {
             stopWhen: stepCountIs(5),
         });
 
-        console.log("[chat] 成功: ストリームレスポンス送信", { userId });
+        console.log("[chat] STEP 6 OK: streamText呼び出し成功、ストリームレスポンス送信", { userId });
         return result.toUIMessageStreamResponse();
     } catch (error: unknown) {
         console.error("[chat] エラー:", error);
         const detail = error instanceof Error ? error.message : String(error);
-        const body =
-            process.env.NODE_ENV === "development"
-                ? { error: "Internal server error", detail }
-                : { error: "Internal server error" };
-        return new Response(JSON.stringify(body), {
+        const stack = error instanceof Error ? error.stack : undefined;
+        console.error("[chat] エラー詳細:", { detail, stack });
+        return new Response(JSON.stringify({ error: "Internal server error", detail }), {
             status: 500,
             headers: { "Content-Type": "application/json" },
         });
