@@ -57,8 +57,15 @@ function checkUserRateLimit(userId: string): { allowed: boolean; retryAfter?: nu
 }
 
 export default clerkMiddleware(async (_auth, request) => {
+    // リクエストログ - 全リクエストをターミナルに出力
+    const pathname = request.nextUrl.pathname;
+    const method = request.method;
+    const searchParams = request.nextUrl.search;
+    console.log(`[middleware] ${method} ${pathname}${searchParams}`);
+
     // Block dev-login page in production
-    if (request.nextUrl.pathname.startsWith("/dev-login") && process.env.NODE_ENV !== "development") {
+    if (pathname.startsWith("/dev-login") && process.env.NODE_ENV !== "development") {
+        console.log(`[middleware] BLOCKED: dev-login in production`);
         return NextResponse.redirect(new URL("/login", request.url));
     }
 
