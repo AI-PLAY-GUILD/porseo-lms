@@ -52,7 +52,8 @@ export async function POST(req: Request) {
             secretLength: process.env.CONVEX_INTERNAL_SECRET?.length,
             convexUrl: process.env.CONVEX_URL || process.env.NEXT_PUBLIC_CONVEX_URL,
         });
-        let user: Record<string, unknown> | null;
+        // biome-ignore lint: Convex型は動的生成のため明示的な型定義が困難
+        let user: any;
         try {
             user = await convex.query(api.users.getUserByClerkIdServer, {
                 clerkId: userId,
