@@ -4,28 +4,6 @@ import { useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-interface DevUser {
-    label: string;
-    description: string;
-    email: string;
-    password: string;
-}
-
-const DEV_USERS: DevUser[] = [
-    {
-        label: "テストユーザー（一般）",
-        description: "通常の会員ユーザーとしてログイン",
-        email: process.env.NEXT_PUBLIC_DEV_USER_EMAIL || "",
-        password: process.env.NEXT_PUBLIC_DEV_USER_PASSWORD || "",
-    },
-    {
-        label: "テスト管理者",
-        description: "管理者権限でログイン",
-        email: process.env.NEXT_PUBLIC_DEV_ADMIN_EMAIL || "",
-        password: process.env.NEXT_PUBLIC_DEV_ADMIN_PASSWORD || "",
-    },
-];
-
 export default function DevLoginPage() {
     const { signIn, setActive, isLoaded } = useSignIn();
     const router = useRouter();
@@ -42,12 +20,6 @@ export default function DevLoginPage() {
 
     const handleLogin = async (email: string, password: string, label: string) => {
         if (!isLoaded || !signIn || !setActive) return;
-        if (!email || !password) {
-            setError(
-                "メールアドレスとパスワードを設定してください。.env.local の DEV_USER / DEV_ADMIN 環境変数を確認してください。",
-            );
-            return;
-        }
 
         setLoading(label);
         setError(null);
@@ -62,7 +34,7 @@ export default function DevLoginPage() {
                 await setActive({ session: result.createdSessionId });
                 router.push("/dashboard");
             } else {
-                setError("ログインが完了しませんでした。Clerk Dashboardでアカウントを確認してください。");
+                setError("ログインが完了しませんでした。");
             }
         } catch (err: unknown) {
             const clerkError = err as { errors?: { message: string }[] };
@@ -72,7 +44,47 @@ export default function DevLoginPage() {
         }
     };
 
-    const hasConfiguredUsers = DEV_USERS.some((u) => u.email && u.password);
+    const handleCreateAndLogin = async (role: "user" | "admin") => {
+        if (!isLoaded || !signIn || !setActive) return;
+
+        const label = role === "admin" ? "管理者を作成中" : "ユーザーを作成中";
+        setLoading(label);
+        setError(null);
+
+        try {
+            // 1. テストユーザーをClerkに自動作成
+            const res = await fetch("/api/dev/create-test-user", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ role }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "ユーザー作成に失敗しました");
+            }
+
+            const { email, password } = await res.json();
+
+            // 2. 作成したユーザーで自動ログイン
+            const result = await signIn.create({
+                identifier: email,
+                password: password,
+            });
+
+            if (result.status === "complete") {
+                await setActive({ session: result.createdSessionId });
+                router.push("/dashboard");
+            } else {
+                setError("ログインが完了しませんでした。");
+            }
+        } catch (err: unknown) {
+            const error = err as { errors?: { message: string }[]; message?: string };
+            setError(error.errors?.[0]?.message || error.message || "エラーが発生しました");
+        } finally {
+            setLoading(null);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-amber-50 flex items-center justify-center p-4">
@@ -91,33 +103,50 @@ export default function DevLoginPage() {
                     </div>
                 )}
 
-                {/* プリセットユーザーボタン */}
-                {hasConfiguredUsers && (
-                    <div className="space-y-3 mb-6">
-                        <h2 className="text-sm font-medium text-gray-700">ワンクリックログイン</h2>
-                        {DEV_USERS.filter((u) => u.email && u.password).map((user) => (
-                            <button
-                                key={user.email}
-                                onClick={() => handleLogin(user.email, user.password, user.label)}
-                                disabled={!!loading}
-                                className="w-full p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <div className="font-medium text-gray-900">{user.label}</div>
-                                <div className="text-xs text-gray-500 mt-0.5">{user.description}</div>
-                                <div className="text-xs text-gray-400 mt-1 font-mono">{user.email}</div>
-                                {loading === user.label && (
-                                    <div className="text-xs text-blue-600 mt-1 animate-pulse">ログイン中...</div>
-                                )}
-                            </button>
-                        ))}
-                    </div>
-                )}
+                {/* ワンクリック: テストユーザー自動作成＆ログイン */}
+                <div className="space-y-3 mb-6">
+                    <h2 className="text-sm font-medium text-gray-700">ワンクリックでテスト開始</h2>
+                    <p className="text-xs text-gray-500">
+                        Clerkにテストアカウントを自動作成し、そのままログインします。
+                    </p>
 
-                {/* カスタムログインフォーム */}
+                    <button
+                        onClick={() => handleCreateAndLogin("user")}
+                        disabled={!!loading}
+                        className="w-full p-4 rounded-xl border-2 border-green-200 hover:border-green-400 hover:bg-green-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <div className="font-medium text-gray-900">テストユーザーを作成してログイン</div>
+                        <div className="text-xs text-gray-500 mt-0.5">一般ユーザーとしてテスト</div>
+                        {loading === "ユーザーを作成中" && (
+                            <div className="text-xs text-green-600 mt-1 animate-pulse">作成＆ログイン中...</div>
+                        )}
+                    </button>
+
+                    <button
+                        onClick={() => handleCreateAndLogin("admin")}
+                        disabled={!!loading}
+                        className="w-full p-4 rounded-xl border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <div className="font-medium text-gray-900">テスト管理者を作成してログイン</div>
+                        <div className="text-xs text-gray-500 mt-0.5">管理者権限でテスト</div>
+                        {loading === "管理者を作成中" && (
+                            <div className="text-xs text-purple-600 mt-1 animate-pulse">作成＆ログイン中...</div>
+                        )}
+                    </button>
+                </div>
+
+                {/* 区切り線 */}
+                <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-200" />
+                    </div>
+                    <div className="relative flex justify-center text-xs">
+                        <span className="bg-white px-3 text-gray-400">または既存アカウントで</span>
+                    </div>
+                </div>
+
+                {/* 手動ログインフォーム */}
                 <div className="space-y-3">
-                    <h2 className="text-sm font-medium text-gray-700">
-                        {hasConfiguredUsers ? "または手動入力" : "ログイン情報を入力"}
-                    </h2>
                     <input
                         type="email"
                         placeholder="メールアドレス"
@@ -140,23 +169,6 @@ export default function DevLoginPage() {
                         {loading === "カスタム" ? "ログイン中..." : "ログイン"}
                     </button>
                 </div>
-
-                {/* セットアップガイド */}
-                {!hasConfiguredUsers && (
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <h3 className="text-sm font-medium text-blue-900 mb-2">セットアップ手順</h3>
-                        <ol className="text-xs text-blue-800 space-y-1.5 list-decimal list-inside">
-                            <li>Clerk Dashboardでテストユーザーを作成</li>
-                            <li>
-                                <code className="bg-blue-100 px-1 rounded">.env.local</code> に以下を追加：
-                            </li>
-                        </ol>
-                        <pre className="mt-2 text-xs bg-blue-100 p-2 rounded overflow-x-auto text-blue-900">{`NEXT_PUBLIC_DEV_USER_EMAIL=test@example.com
-NEXT_PUBLIC_DEV_USER_PASSWORD=your-password
-NEXT_PUBLIC_DEV_ADMIN_EMAIL=admin@example.com
-NEXT_PUBLIC_DEV_ADMIN_PASSWORD=your-password`}</pre>
-                    </div>
-                )}
 
                 <div className="mt-6 pt-4 border-t text-center">
                     <a href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
