@@ -49,11 +49,27 @@ export async function POST(req: Request) {
         // サブスクリプション確認（HTTPクライアントはJWT認証なし → secret認証のServerクエリを使用）
         console.log("[chat] STEP 2: Convexユーザー取得開始", {
             hasSecret: !!process.env.CONVEX_INTERNAL_SECRET,
+            secretLength: process.env.CONVEX_INTERNAL_SECRET?.length,
+            convexUrl: process.env.CONVEX_URL || process.env.NEXT_PUBLIC_CONVEX_URL,
         });
-        const user = await convex.query(api.users.getUserByClerkIdServer, {
-            clerkId: userId,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
-        });
+        let user: Record<string, unknown> | null;
+        try {
+            user = await convex.query(api.users.getUserByClerkIdServer, {
+                clerkId: userId,
+                secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            });
+        } catch (convexError: unknown) {
+            const msg = convexError instanceof Error ? convexError.message : String(convexError);
+            console.error("[chat] STEP 2 ERROR: Convexクエリ失敗", { error: msg });
+            return new Response(
+                JSON.stringify({
+                    error: "Convex query failed",
+                    detail: msg,
+                    hint: "CONVEX_INTERNAL_SECRET がVercelとConvexで一致しているか確認してください",
+                }),
+                { status: 500, headers: { "Content-Type": "application/json" } },
+            );
+        }
         if (!user) {
             console.log("[chat] STEP 2 FAIL: ユーザーが見つかりません", { clerkId: userId });
             return new Response("User not found", { status: 404 });
