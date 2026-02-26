@@ -63,6 +63,11 @@ const nextConfig: NextConfig = {
             },
         ];
     },
+    logging: {
+        fetches: {
+            fullUrl: true,
+        },
+    },
     experimental: {
         optimizePackageImports: ["lucide-react", "@radix-ui/react-icons"],
     },

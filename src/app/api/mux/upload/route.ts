@@ -10,10 +10,12 @@ const mux = new Mux({
 });
 
 export async function POST(_req: NextRequest) {
+    console.log("[mux/upload] リクエスト受信", { method: "POST" });
     try {
         // Security: Verify authentication and admin access
         const { userId } = await auth();
         if (!userId) {
+            console.log("[mux/upload] 認証失敗: userId が存在しません");
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -22,6 +24,7 @@ export async function POST(_req: NextRequest) {
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
         });
         if (!user?.isAdmin) {
+            console.log("[mux/upload] 管理者権限なし", { userId });
             return NextResponse.json({ error: "Admin access required" }, { status: 403 });
         }
 
@@ -43,13 +46,14 @@ export async function POST(_req: NextRequest) {
 
         const upload = await mux.video.uploads.create(uploadSettings);
 
+        console.log("[mux/upload] 成功: アップロードURL作成完了", { uploadId: upload.id });
         return NextResponse.json({
             id: upload.id,
             url: upload.url,
             uploadUrl: upload.url,
         });
     } catch (error) {
-        console.error("Error creating upload URL:", error);
+        console.error("[mux/upload] エラー:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

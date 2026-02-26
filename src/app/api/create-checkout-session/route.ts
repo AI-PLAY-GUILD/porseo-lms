@@ -6,6 +6,7 @@ import { stripe } from "@/lib/stripe";
 import { api } from "../../../../convex/_generated/api";
 
 export async function POST(_req: Request) {
+    console.log("[create-checkout-session] リクエスト受信", { method: "POST" });
     try {
         if (!process.env.NEXT_PUBLIC_BASE_URL) {
             console.error("NEXT_PUBLIC_BASE_URL is not set");
@@ -14,6 +15,7 @@ export async function POST(_req: Request) {
 
         const { userId } = await auth();
         if (!userId) {
+            console.log("[create-checkout-session] 認証失敗: userId が存在しません");
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -31,11 +33,12 @@ export async function POST(_req: Request) {
                 discordId = user.discordId;
             }
         } catch (error) {
-            console.error("Error fetching user from Convex:", error);
+            console.error("[create-checkout-session] エラー: Convexからユーザー取得失敗:", error);
             return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
         }
 
         if (!discordId) {
+            console.log("[create-checkout-session] Discord未連携", { userId });
             return NextResponse.json(
                 { error: "Discord account not linked. Please link your account first." },
                 { status: 400 },
@@ -62,9 +65,10 @@ export async function POST(_req: Request) {
 
         const session = await stripe.checkout.sessions.create(sessionParams);
 
+        console.log("[create-checkout-session] 成功: セッション作成完了", { sessionId: session.id });
         return NextResponse.json({ url: session.url });
     } catch (error: unknown) {
-        console.error("Error creating checkout session:", error);
+        console.error("[create-checkout-session] エラー:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

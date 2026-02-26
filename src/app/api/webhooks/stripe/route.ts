@@ -20,6 +20,7 @@ if (!discordToken || !guildId || !roleId) {
 const rest = new REST({ version: "10", timeout: 10_000 }).setToken(discordToken || "");
 
 export async function POST(req: Request) {
+    console.log("[webhooks/stripe] リクエスト受信", { method: "POST" });
     const body = await req.text();
     const signature = (await headers()).get("Stripe-Signature") as string;
 
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
         event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET);
     } catch (error: unknown) {
         console.error(
-            `Webhook signature verification failed: ${error instanceof Error ? error.message : String(error)}`,
+            `[webhooks/stripe] エラー: Webhook署名検証失敗: ${error instanceof Error ? error.message : String(error)}`,
         );
         return NextResponse.json({ error: "Webhook signature verification failed" }, { status: 400 });
     }
@@ -44,11 +45,14 @@ export async function POST(req: Request) {
             secret: process.env.CONVEX_INTERNAL_SECRET || "",
         });
         if (alreadyProcessed) {
+            console.log("[webhooks/stripe] 重複イベントをスキップ", { eventId: event.id });
             return NextResponse.json({ received: true, duplicate: true });
         }
     } catch (error) {
         console.error("Idempotency check failed, proceeding with event processing:", error);
     }
+
+    console.log("[webhooks/stripe] イベント処理開始", { eventType: event.type, eventId: event.id });
 
     try {
         switch (event.type) {
@@ -71,7 +75,7 @@ export async function POST(req: Request) {
                 console.log(`Unhandled event type ${event.type}`);
         }
     } catch (error: unknown) {
-        console.error(`Error handling event ${event.type}:`, error);
+        console.error(`[webhooks/stripe] エラー: イベント処理失敗 ${event.type}:`, error);
         return NextResponse.json({ error: "Error handling event" }, { status: 500 });
     }
 
@@ -86,6 +90,7 @@ export async function POST(req: Request) {
         console.error("Failed to mark event as processed:", error);
     }
 
+    console.log("[webhooks/stripe] 成功: イベント処理完了", { eventType: event.type, eventId: event.id });
     return NextResponse.json({ received: true });
 }
 
@@ -95,11 +100,12 @@ function isValidDiscordId(id: string): boolean {
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+    console.log("[webhooks/stripe] handleCheckoutSessionCompleted 開始", { sessionId: session.id });
     const clerkUserId = session.metadata?.userId;
     const customerId = session.customer as string;
 
     if (!clerkUserId || !customerId) {
-        console.error("Missing userId or customerId in session metadata/payload");
+        console.error("[webhooks/stripe] エラー: セッションメタデータにuserIdまたはcustomerIdが不足");
         return;
     }
 
@@ -112,12 +118,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         });
         discordId = user?.discordId;
     } catch (error) {
-        console.error("Error fetching user from Convex:", error);
+        console.error("[webhooks/stripe] エラー: Convexからユーザー取得失敗:", error);
         return;
     }
 
     if (!discordId || !isValidDiscordId(discordId)) {
-        console.error("User has no valid discordId in DB");
+        console.error("[webhooks/stripe] エラー: 有効なdiscordIdがDBに存在しません", { clerkUserId });
         return;
     }
 
@@ -138,19 +144,29 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         secret: process.env.CONVEX_INTERNAL_SECRET || "",
     });
 
+    console.log("[webhooks/stripe] handleCheckoutSessionCompleted: サブスクリプション更新完了", {
+        discordId,
+        customerId,
+    });
+
     // Add Discord Role
     if (discordToken && guildId && roleId) {
         try {
             await rest.put(Routes.guildMemberRole(guildId, discordId, roleId));
+            console.log("[webhooks/stripe] Discordロール付与成功", { discordId });
         } catch (error) {
-            console.error("Failed to add Discord role:", error);
+            console.error("[webhooks/stripe] エラー: Discordロール付与失敗:", error);
         }
     }
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+    console.log("[webhooks/stripe] handleInvoicePaymentFailed 開始", { invoiceId: invoice.id });
     const customerId = invoice.customer as string;
-    if (!customerId) return;
+    if (!customerId) {
+        console.log("[webhooks/stripe] customerIdが不足、スキップ");
+        return;
+    }
 
     // Action: Update Convex DB
     await convex.mutation(api.users.updateSubscriptionStatusByCustomerId, {
@@ -192,8 +208,12 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+    console.log("[webhooks/stripe] handleSubscriptionDeleted 開始", { subscriptionId: subscription.id });
     const customerId = subscription.customer as string;
-    if (!customerId) return;
+    if (!customerId) {
+        console.log("[webhooks/stripe] customerIdが不足、スキップ");
+        return;
+    }
 
     // Action: Update Convex DB
     await convex.mutation(api.users.updateSubscriptionStatusByCustomerId, {
@@ -214,6 +234,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
             await rest.delete(Routes.guildMemberRole(guildId, user.discordId, roleId));
         }
     } catch (e) {
-        console.error("Failed to remove role or find user:", e);
+        console.error("[webhooks/stripe] エラー: ロール削除またはユーザー検索失敗:", e);
     }
+    console.log("[webhooks/stripe] handleSubscriptionDeleted 完了", { customerId });
 }

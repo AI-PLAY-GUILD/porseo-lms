@@ -144,22 +144,39 @@ export const indexVideoTranscription = action({
         videoId: v.id("videos"),
     },
     handler: async (ctx, args): Promise<{ chunksCreated: number }> => {
+        console.log("[rag:indexVideoTranscription] 開始", { videoId: args.videoId });
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthorized: Authentication required");
+        if (!identity) {
+            console.log("[rag:indexVideoTranscription] 未認証ユーザー");
+            throw new Error("Unauthorized: Authentication required");
+        }
 
         const user = await ctx.runQuery(api.users.getUserByClerkIdQuery, {
             clerkId: identity.subject,
         });
-        if (!user?.isAdmin) throw new Error("Unauthorized: Admin access required");
+        if (!user?.isAdmin) {
+            console.log("[rag:indexVideoTranscription] 管理者権限なし");
+            throw new Error("Unauthorized: Admin access required");
+        }
 
         const video = await ctx.runQuery(api.videos.getById, { videoId: args.videoId });
-        if (!video) throw new Error("Video not found");
-        if (!video.transcription) throw new Error("文字起こしデータがありません");
+        if (!video) {
+            console.log("[rag:indexVideoTranscription] 動画未検出", { videoId: args.videoId });
+            throw new Error("Video not found");
+        }
+        if (!video.transcription) {
+            console.log("[rag:indexVideoTranscription] 文字起こしデータなし", { videoId: args.videoId });
+            throw new Error("文字起こしデータがありません");
+        }
 
         const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+        if (!apiKey) {
+            console.error("[rag:indexVideoTranscription] GEMINI_API_KEY未設定");
+            throw new Error("GEMINI_API_KEY is not set");
+        }
         const client = new GoogleGenAI({ apiKey });
 
+        console.log("[rag:indexVideoTranscription] 既存チャンク削除開始");
         await ctx.runMutation(internal.ragDb.deleteChunksByVideoId, {
             videoId: args.videoId,
         });
@@ -170,9 +187,14 @@ export const indexVideoTranscription = action({
             ? createChunks(parseVtt(transcription))
             : createPlainTextChunks(transcription);
 
-        if (chunks.length === 0) throw new Error("チャンクの生成に失敗しました");
+        if (chunks.length === 0) {
+            console.log("[rag:indexVideoTranscription] チャンク生成失敗");
+            throw new Error("チャンクの生成に失敗しました");
+        }
+        console.log("[rag:indexVideoTranscription] チャンク生成完了", { chunksCount: chunks.length, isVtt });
 
         const texts: string[] = chunks.map((c: TextChunk) => c.text);
+        console.log("[rag:indexVideoTranscription] エンベディング生成開始", { textsCount: texts.length });
         const embeddings = await generateEmbeddings(client, texts);
 
         const dbChunks = chunks.map((chunk: TextChunk, i: number) => ({
@@ -183,6 +205,7 @@ export const indexVideoTranscription = action({
             embedding: embeddings[i],
         }));
 
+        console.log("[rag:indexVideoTranscription] チャンクDB保存開始", { dbChunksCount: dbChunks.length });
         const saveBatchSize = 50;
         for (let i = 0; i < dbChunks.length; i += saveBatchSize) {
             await ctx.runMutation(internal.ragDb.saveChunks, {
@@ -190,6 +213,7 @@ export const indexVideoTranscription = action({
             });
         }
 
+        console.log("[rag:indexVideoTranscription] 完了", { videoId: args.videoId, chunksCreated: chunks.length });
         return { chunksCreated: chunks.length };
     },
 });
@@ -202,6 +226,7 @@ export const autoIndexVideoTranscription = internalAction({
         videoId: v.id("videos"),
     },
     handler: async (ctx, args): Promise<void> => {
+        console.log("[rag:autoIndexVideoTranscription] 開始", { videoId: args.videoId });
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
             console.error("[autoIndex] GEMINI_API_KEY is not set");
@@ -277,21 +302,30 @@ export const searchTranscriptions = action({
         limit: v.optional(v.number()),
     },
     handler: async (ctx, args): Promise<SearchResult[]> => {
+        console.log("[rag:searchTranscriptions] 開始", { query: args.query, limit: args.limit });
         if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            console.log("[rag:searchTranscriptions] 認証失敗: 無効なsecret");
             throw new Error("Unauthorized: Invalid secret");
         }
 
         const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+        if (!apiKey) {
+            console.error("[rag:searchTranscriptions] GEMINI_API_KEY未設定");
+            throw new Error("GEMINI_API_KEY is not set");
+        }
         const client = new GoogleGenAI({ apiKey });
 
+        console.log("[rag:searchTranscriptions] クエリエンベディング生成開始");
         const response = await client.models.embedContent({
             model: EMBEDDING_MODEL,
             contents: args.query,
             config: { outputDimensionality: EMBEDDING_DIMENSIONS },
         });
         const queryEmbedding = response.embeddings?.[0]?.values;
-        if (!queryEmbedding) throw new Error("Failed to generate query embedding");
+        if (!queryEmbedding) {
+            console.error("[rag:searchTranscriptions] クエリエンベディング生成失敗");
+            throw new Error("Failed to generate query embedding");
+        }
 
         const results = await ctx.vectorSearch("transcription_chunks", "by_embedding", {
             vector: queryEmbedding,
@@ -315,6 +349,8 @@ export const searchTranscriptions = action({
             }),
         );
 
-        return enrichedResults.filter((r): r is SearchResult => r !== null);
+        const finalResults = enrichedResults.filter((r): r is SearchResult => r !== null);
+        console.log("[rag:searchTranscriptions] 完了", { query: args.query, resultsCount: finalResults.length });
+        return finalResults;
     },
 });

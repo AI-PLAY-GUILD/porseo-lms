@@ -14,9 +14,7 @@ export function BrutalistLoader() {
                     ></div>
                 </div>
 
-                <div
-                    className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 via-transparent to-sky-400/5 animate-pulse rounded-full blur-sm"
-                ></div>
+                <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 via-transparent to-sky-400/5 animate-pulse rounded-full blur-sm"></div>
             </div>
         </div>
     );

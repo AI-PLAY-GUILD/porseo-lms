@@ -5,10 +5,12 @@ import { convex } from "@/lib/convex";
 import { api } from "../../../../../convex/_generated/api";
 
 export async function POST(req: Request) {
+    console.log("[webhooks/clerk] リクエスト受信", { method: "POST" });
     // You can find this in the Clerk Dashboard -> Webhooks -> choose the endpoint
     const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
     if (!WEBHOOK_SECRET) {
+        console.error("[webhooks/clerk] エラー: CLERK_WEBHOOK_SECRET が未設定");
         throw new Error("Please add CLERK_WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local");
     }
 
@@ -20,6 +22,7 @@ export async function POST(req: Request) {
 
     // If there are no headers, error out
     if (!svix_id || !svix_timestamp || !svix_signature) {
+        console.log("[webhooks/clerk] svixヘッダーが不足しています");
         return new Response("Error occured -- no svix headers", {
             status: 400,
         });
@@ -42,7 +45,7 @@ export async function POST(req: Request) {
             "svix-signature": svix_signature,
         }) as WebhookEvent;
     } catch (err) {
-        console.error("Error verifying webhook:", err);
+        console.error("[webhooks/clerk] エラー: webhook検証失敗:", err);
         return new Response("Error occured", {
             status: 400,
         });
@@ -54,10 +57,13 @@ export async function POST(req: Request) {
     const eventType = evt.type;
     // Webhook body/ID log removed for security (Issue #13, #29)
 
+    console.log("[webhooks/clerk] イベント受信", { eventType, eventId: id });
+
     if (eventType === "user.created" || eventType === "user.updated") {
         const { id, email_addresses, first_name, last_name, image_url } = evt.data;
 
         if (!id || !email_addresses || email_addresses.length === 0) {
+            console.log("[webhooks/clerk] 必須データ不足", { eventType });
             return new Response("Error occured -- missing data", {
                 status: 400,
             });
@@ -75,12 +81,13 @@ export async function POST(req: Request) {
                 secret: process.env.CLERK_WEBHOOK_SECRET!,
             });
         } catch (error) {
-            console.error("Error syncing user to Convex:", error);
+            console.error("[webhooks/clerk] エラー: Convexへのユーザー同期失敗:", error);
             return new Response("Error syncing user to Convex", {
                 status: 500,
             });
         }
     }
 
+    console.log("[webhooks/clerk] 成功: イベント処理完了", { eventType });
     return new Response("", { status: 200 });
 }

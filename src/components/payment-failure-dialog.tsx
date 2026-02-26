@@ -21,7 +21,9 @@ export function PaymentFailureDialog({ subscriptionStatus }: PaymentFailureDialo
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
+        console.log("[PaymentFailureDialog] subscriptionStatus変更:", subscriptionStatus);
         if (subscriptionStatus === "past_due" || subscriptionStatus === "unpaid") {
+            console.log("[PaymentFailureDialog] 支払い問題検出 - ダイアログ表示");
             setIsOpen(true);
         } else {
             setIsOpen(false);
@@ -29,18 +31,22 @@ export function PaymentFailureDialog({ subscriptionStatus }: PaymentFailureDialo
     }, [subscriptionStatus]);
 
     const handleUpdatePayment = async () => {
+        console.log("[PaymentFailureDialog] 支払い情報更新開始");
         setLoading(true);
         try {
             const res = await fetch("/api/create-portal-session", {
                 method: "POST",
             });
             const data = await res.json();
+            console.log("[PaymentFailureDialog] ポータルセッション取得結果:", { hasUrl: !!data.url });
             if (data.url) {
+                console.log("[PaymentFailureDialog] ポータルURLへリダイレクト");
                 window.location.href = data.url;
             } else {
                 alert("カスタマーポータルのURL取得に失敗しました。");
             }
         } catch (error) {
+            console.error("[PaymentFailureDialog] エラー: ポータルリダイレクト失敗:", error);
             console.error("Failed to redirect to portal:", error);
             alert("エラーが発生しました。");
         } finally {

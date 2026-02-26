@@ -46,37 +46,57 @@ export default function JoinPage() {
 
     // Sync User & Auto-Join
     useEffect(() => {
+        console.log("[JoinPage] useEffect(sync)", { isLoaded, isSignedIn, isSynced });
         const sync = async () => {
             if (!isLoaded || !isSignedIn || !user || isSynced) return;
+            console.log("[JoinPage] ユーザー同期開始");
             try {
                 const discordAccount = user.externalAccounts.find(
                     (acc) => (acc.provider as string) === "oauth_discord" || (acc.provider as string) === "discord",
                 );
                 const _discordId = discordAccount?.providerUserId;
+                console.log("[JoinPage] storeUser呼び出し clerkId:", user.id);
                 await storeUser({
                     clerkId: user.id,
                     email: user.primaryEmailAddress?.emailAddress || "",
                     name: user.fullName || user.username || "Unknown",
                     imageUrl: user.imageUrl,
                 });
-                try { await fetch("/api/join-server", { method: "POST" }); } catch (e) { console.error("Failed to auto-join server:", e); }
-                try { await fetch("/api/check-subscription", { method: "POST" }); } catch (e) { console.error("Failed to check subscription:", e); }
+                console.log("[JoinPage] storeUser完了");
+                try {
+                    console.log("[JoinPage] Discord自動参加開始");
+                    await fetch("/api/join-server", { method: "POST" });
+                    console.log("[JoinPage] Discord自動参加完了");
+                } catch (e) {
+                    console.error("[JoinPage] エラー: Discord自動参加失敗:", e);
+                }
+                try {
+                    console.log("[JoinPage] サブスクリプション確認開始");
+                    await fetch("/api/check-subscription", { method: "POST" });
+                    console.log("[JoinPage] サブスクリプション確認完了");
+                } catch (e) {
+                    console.error("[JoinPage] エラー: サブスクリプション確認失敗:", e);
+                }
                 setIsSynced(true);
+                console.log("[JoinPage] ユーザー同期完了");
             } catch (error) {
-                console.error("Failed to sync user:", error);
+                console.error("[JoinPage] エラー: ユーザー同期失敗:", error);
             }
         };
         sync();
     }, [isLoaded, isSignedIn, user, isSynced, storeUser]);
 
     const handleCheckout = async () => {
+        console.log("[JoinPage] チェックアウト開始");
         setCheckoutLoading(true);
         try {
             const discordAccount = user?.externalAccounts.find(
                 (acc) => (acc.provider as string) === "oauth_discord" || (acc.provider as string) === "discord",
             );
             const discordId = discordAccount?.providerUserId;
+            console.log("[JoinPage] discordId取得:", !!discordId);
             if (!discordId) {
+                console.error("[JoinPage] エラー: Discord ID not found");
                 alert("Discord IDが見つかりません。もう一度ログインしてください。");
                 return;
             }
@@ -101,10 +121,14 @@ export default function JoinPage() {
                 body: JSON.stringify({ discordId, userId: user?.id }),
             });
             const data = await res.json();
+            console.log("[JoinPage] チェックアウトセッション応答 ok:", res.ok);
             if (!res.ok) throw new Error(data.error || "Checkout failed");
-            if (data.url) window.location.href = data.url;
+            if (data.url) {
+                console.log("[JoinPage] チェックアウトURLへリダイレクト");
+                window.location.href = data.url;
+            }
         } catch (error) {
-            console.error("Checkout error:", error);
+            console.error("[JoinPage] エラー: チェックアウト失敗:", error);
             alert("決済セッションの作成に失敗しました。");
         } finally {
             setCheckoutLoading(false);
@@ -124,12 +148,8 @@ export default function JoinPage() {
             <main className="z-10 flex flex-col items-center gap-8 p-6 sm:p-16 w-full max-w-4xl">
                 <div className="flex flex-col items-center gap-2 text-center">
                     <h1 ref={titleRef} className="flex flex-col items-center gap-0 opacity-0">
-                        <span className="join-main-title-top">
-                            {isSignedIn ? "メンバーエリア" : "AI PLAY GUILD"}
-                        </span>
-                        {!isSignedIn && (
-                            <span className="join-main-title-bottom">メンバーシップ</span>
-                        )}
+                        <span className="join-main-title-top">{isSignedIn ? "メンバーエリア" : "AI PLAY GUILD"}</span>
+                        {!isSignedIn && <span className="join-main-title-bottom">メンバーシップ</span>}
                     </h1>
                 </div>
 
@@ -151,15 +171,24 @@ export default function JoinPage() {
                                     </Button>
                                 ) : (
                                     <>
-                                        <Button onClick={handleCheckout} disabled={checkoutLoading} size="lg" className="join-btn join-btn-checkout">
-                                            {checkoutLoading ? "Loading..." : (
+                                        <Button
+                                            onClick={handleCheckout}
+                                            disabled={checkoutLoading}
+                                            size="lg"
+                                            className="join-btn join-btn-checkout"
+                                        >
+                                            {checkoutLoading ? (
+                                                "Loading..."
+                                            ) : (
                                                 <span className="flex items-center justify-center gap-2">
                                                     <CreditCard className="w-5 h-5" />
                                                     今すぐ参加する
                                                 </span>
                                             )}
                                         </Button>
-                                        <div className="flex justify-center"><StripeLinkModal /></div>
+                                        <div className="flex justify-center">
+                                            <StripeLinkModal />
+                                        </div>
                                     </>
                                 )}
                                 {userData?.isAdmin && (
@@ -171,7 +200,10 @@ export default function JoinPage() {
                                     </Button>
                                 )}
                                 <SignOutButton>
-                                    <Button variant="ghost" className="w-full text-sm font-medium text-gray-400 hover:text-gray-700 hover:bg-gray-50">
+                                    <Button
+                                        variant="ghost"
+                                        className="w-full text-sm font-medium text-gray-400 hover:text-gray-700 hover:bg-gray-50"
+                                    >
                                         別のアカウントでログイン
                                     </Button>
                                 </SignOutButton>
@@ -180,7 +212,6 @@ export default function JoinPage() {
                     ) : (
                         <>
                             <div className="join-card">
-
                                 <div className="text-center space-y-2">
                                     <div className="flex items-baseline justify-center gap-1">
                                         <span className="join-price">¥4,000</span>
@@ -202,7 +233,10 @@ export default function JoinPage() {
                                         "ハッカソンへの参加・フィードバック",
                                         "メンバー限定のソースコード共有",
                                     ].map((feature, i) => (
-                                        <div key={i} className="flex items-center gap-3 text-sm font-medium text-gray-700">
+                                        <div
+                                            key={i}
+                                            className="flex items-center gap-3 text-sm font-medium text-gray-700"
+                                        >
                                             <div className="join-check-icon">
                                                 <Check className="w-3.5 h-3.5 text-white" />
                                             </div>
@@ -220,7 +254,8 @@ export default function JoinPage() {
                                         <span className="font-bold">重要なお知らせ</span>
                                     </div>
                                     <p className="join-discord-alert-body">
-                                        このコミュニティは<strong>Discordアカウントのみ</strong>利用可能です。メール・Google等のアカウントではサービスをご利用いただけません。
+                                        このコミュニティは<strong>Discordアカウントのみ</strong>
+                                        利用可能です。メール・Google等のアカウントではサービスをご利用いただけません。
                                     </p>
                                 </div>
 
@@ -228,11 +263,16 @@ export default function JoinPage() {
                                 <div className="join-consent-wrap">
                                     <div
                                         className="join-consent-row"
-                                        onClick={() => setTermsChecked(v => !v)}
+                                        onClick={() => setTermsChecked((v) => !v)}
                                         role="checkbox"
                                         aria-checked={termsChecked}
                                         tabIndex={0}
-                                        onKeyDown={e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setTermsChecked(v => !v); } }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === " " || e.key === "Enter") {
+                                                e.preventDefault();
+                                                setTermsChecked((v) => !v);
+                                            }
+                                        }}
                                     >
                                         <div className={`join-checkbox ${termsChecked ? "join-checkbox-checked" : ""}`}>
                                             {termsChecked && <Check className="w-3 h-3 text-white" />}
@@ -243,7 +283,7 @@ export default function JoinPage() {
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="join-consent-link"
-                                                onClick={e => e.stopPropagation()}
+                                                onClick={(e) => e.stopPropagation()}
                                             >
                                                 利用規約
                                             </a>
@@ -253,13 +293,20 @@ export default function JoinPage() {
 
                                     <div
                                         className="join-consent-row"
-                                        onClick={() => setPrivacyChecked(v => !v)}
+                                        onClick={() => setPrivacyChecked((v) => !v)}
                                         role="checkbox"
                                         aria-checked={privacyChecked}
                                         tabIndex={0}
-                                        onKeyDown={e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setPrivacyChecked(v => !v); } }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === " " || e.key === "Enter") {
+                                                e.preventDefault();
+                                                setPrivacyChecked((v) => !v);
+                                            }
+                                        }}
                                     >
-                                        <div className={`join-checkbox ${privacyChecked ? "join-checkbox-checked" : ""}`}>
+                                        <div
+                                            className={`join-checkbox ${privacyChecked ? "join-checkbox-checked" : ""}`}
+                                        >
                                             {privacyChecked && <Check className="w-3 h-3 text-white" />}
                                         </div>
                                         <span className="join-consent-text">
@@ -268,7 +315,7 @@ export default function JoinPage() {
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="join-consent-link"
-                                                onClick={e => e.stopPropagation()}
+                                                onClick={(e) => e.stopPropagation()}
                                             >
                                                 プライバシーポリシー
                                             </a>
@@ -278,13 +325,20 @@ export default function JoinPage() {
 
                                     <div
                                         className="join-consent-row"
-                                        onClick={() => setGuidelinesChecked(v => !v)}
+                                        onClick={() => setGuidelinesChecked((v) => !v)}
                                         role="checkbox"
                                         aria-checked={guidelinesChecked}
                                         tabIndex={0}
-                                        onKeyDown={e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setGuidelinesChecked(v => !v); } }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === " " || e.key === "Enter") {
+                                                e.preventDefault();
+                                                setGuidelinesChecked((v) => !v);
+                                            }
+                                        }}
                                     >
-                                        <div className={`join-checkbox ${guidelinesChecked ? "join-checkbox-checked" : ""}`}>
+                                        <div
+                                            className={`join-checkbox ${guidelinesChecked ? "join-checkbox-checked" : ""}`}
+                                        >
                                             {guidelinesChecked && <Check className="w-3 h-3 text-white" />}
                                         </div>
                                         <span className="join-consent-text">
@@ -293,7 +347,7 @@ export default function JoinPage() {
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="join-consent-link"
-                                                onClick={e => e.stopPropagation()}
+                                                onClick={(e) => e.stopPropagation()}
                                             >
                                                 コミュニティガイドライン
                                             </a>
@@ -321,7 +375,11 @@ export default function JoinPage() {
                                 </p>
                             </div>
 
-                            <Button asChild variant="link" className="text-gray-400 font-medium hover:text-gray-700 transition-colors">
+                            <Button
+                                asChild
+                                variant="link"
+                                className="text-gray-400 font-medium hover:text-gray-700 transition-colors"
+                            >
                                 <Link href="/">
                                     <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
                                     ホームへ戻る
