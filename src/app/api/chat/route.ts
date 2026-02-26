@@ -59,7 +59,7 @@ export async function POST(req: Request) {
             subscriptionStatus: user.subscriptionStatus,
         });
 
-        const activeStatuses = ["active", "trialing"];
+        const activeStatuses = ["active", "trialing", "past_due"];
         if (!activeStatuses.includes(user.subscriptionStatus ?? "")) {
             console.log("[chat] サブスクリプションが必要", {
                 userId,

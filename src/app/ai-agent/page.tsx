@@ -33,7 +33,7 @@ export default function AiAgentPage() {
     useEffect(() => {
         if (isMounted && stats) {
             const status = stats.subscriptionStatus;
-            if (status !== "active" && status !== "past_due") {
+            if (status !== "active" && status !== "trialing" && status !== "past_due") {
                 router.push("/join");
             }
         }
