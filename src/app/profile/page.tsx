@@ -25,19 +25,28 @@ export default function ProfilePage() {
     const userData = useQuery(api.users.getUser);
     const [loading, setLoading] = useState(false);
 
+    console.log(
+        "[ProfilePage] レンダリング userData:",
+        userData === undefined ? "loading" : userData === null ? "null" : "loaded",
+    );
+
     const handleManageSubscription = async () => {
+        console.log("[ProfilePage] サブスクリプション管理開始");
         setLoading(true);
         try {
             const res = await fetch("/api/create-portal-session", {
                 method: "POST",
             });
             const data = await res.json();
+            console.log("[ProfilePage] ポータルセッション取得結果:", { hasUrl: !!data.url });
             if (data.url) {
+                console.log("[ProfilePage] ポータルURLへリダイレクト");
                 window.location.href = data.url;
             } else {
                 alert("カスタマーポータルのURL取得に失敗しました。");
             }
         } catch (error) {
+            console.error("[ProfilePage] エラー: ポータルリダイレクト失敗:", error);
             console.error("Failed to redirect to portal:", error);
             alert("エラーが発生しました。");
         } finally {

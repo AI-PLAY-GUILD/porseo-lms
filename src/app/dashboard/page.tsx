@@ -45,16 +45,28 @@ export default function DashboardPage() {
     };
 
     useEffect(() => {
+        console.log("[DashboardPage] マウント/初期化");
         setIsMounted(true);
     }, []);
 
     useEffect(() => {
+        console.log(
+            "[DashboardPage] useEffect(sync) stats:",
+            stats === null ? "null" : stats === undefined ? "undefined" : "loaded",
+            "isUserLoaded:",
+            isUserLoaded,
+            "isSyncing:",
+            isSyncing,
+        );
         const sync = async () => {
             if (stats === null && isUserLoaded && user && !isSyncing) {
+                console.log("[DashboardPage] ユーザー同期開始");
                 setIsSyncing(true);
                 try {
                     await syncUser();
+                    console.log("[DashboardPage] ユーザー同期完了");
                 } catch (error) {
+                    console.error("[DashboardPage] エラー: ユーザー同期失敗:", error);
                     console.error("Failed to sync user:", error);
                 } finally {
                     setIsSyncing(false);
@@ -68,7 +80,9 @@ export default function DashboardPage() {
     useEffect(() => {
         if (isMounted && stats) {
             const status = stats.subscriptionStatus;
+            console.log("[DashboardPage] ゲートキーパー確認 subscriptionStatus:", status);
             if (status !== "active" && status !== "past_due") {
+                console.log("[DashboardPage] アクティブでないため /join へリダイレクト");
                 router.push("/join");
             }
         }

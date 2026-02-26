@@ -31,16 +31,20 @@ export default function Home() {
 
     // Redirect logged-in users to dashboard
     useEffect(() => {
+        console.log("[Home] useEffect(redirect) isLoaded:", isLoaded, "isSignedIn:", isSignedIn);
         if (isLoaded && isSignedIn) {
+            console.log("[Home] ログイン済みユーザー - ダッシュボードへリダイレクト");
             router.push("/dashboard");
         }
     }, [isLoaded, isSignedIn, router]);
 
     // Sync User & Auto-Join
     useEffect(() => {
+        console.log("[Home] useEffect(sync) isLoaded:", isLoaded, "isSignedIn:", isSignedIn, "isSynced:", isSynced);
         const sync = async () => {
             if (!isLoaded || !isSignedIn || !user || isSynced) return;
 
+            console.log("[Home] ユーザー同期開始");
             try {
                 const discordAccount = user.externalAccounts.find(
                     (acc) => (acc.provider as string) === "oauth_discord" || (acc.provider as string) === "discord",
@@ -48,29 +52,39 @@ export default function Home() {
                 const _discordId = discordAccount?.providerUserId;
 
                 // Store User (discordId removed for security - Issue #16)
+                console.log("[Home] storeUser呼び出し clerkId:", user.id);
                 await storeUser({
                     clerkId: user.id,
                     email: user.primaryEmailAddress?.emailAddress || "",
                     name: user.fullName || user.username || "Unknown",
                     imageUrl: user.imageUrl,
                 });
+                console.log("[Home] storeUser完了");
 
                 // Auto-join Discord Server
                 try {
+                    console.log("[Home] Discord自動参加開始");
                     await fetch("/api/join-server", { method: "POST" });
+                    console.log("[Home] Discord自動参加完了");
                 } catch (e) {
+                    console.error("[Home] エラー: Discord自動参加失敗:", e);
                     console.error("Failed to auto-join server:", e);
                 }
 
                 // Check Subscription (Role Sync)
                 try {
+                    console.log("[Home] サブスクリプション確認開始");
                     await fetch("/api/check-subscription", { method: "POST" });
+                    console.log("[Home] サブスクリプション確認完了");
                 } catch (e) {
+                    console.error("[Home] エラー: サブスクリプション確認失敗:", e);
                     console.error("Failed to check subscription:", e);
                 }
 
                 setIsSynced(true);
+                console.log("[Home] ユーザー同期完了");
             } catch (error) {
+                console.error("[Home] エラー: ユーザー同期失敗:", error);
                 console.error("Failed to sync user:", error);
             }
         };
@@ -79,14 +93,17 @@ export default function Home() {
     }, [isLoaded, isSignedIn, user, isSynced, storeUser]);
 
     const handleCheckout = async () => {
+        console.log("[Home] チェックアウト開始");
         setCheckoutLoading(true);
         try {
             const discordAccount = user?.externalAccounts.find(
                 (acc) => (acc.provider as string) === "oauth_discord" || (acc.provider as string) === "discord",
             );
             const discordId = discordAccount?.providerUserId;
+            console.log("[Home] discordId取得:", !!discordId);
 
             if (!discordId) {
+                console.error("[Home] エラー: Discord ID not found");
                 console.error("Discord ID not found");
                 alert("Discord IDが見つかりません。もう一度ログインしてください。");
                 return;
@@ -101,12 +118,17 @@ export default function Home() {
                 }),
             });
             const data = await res.json();
+            console.log("[Home] チェックアウトセッション応答 ok:", res.ok);
             if (!res.ok) {
                 throw new Error(data.error || "Checkout failed");
             }
             const { url } = data;
-            if (url) window.location.href = url;
+            if (url) {
+                console.log("[Home] チェックアウトURLへリダイレクト");
+                window.location.href = url;
+            }
         } catch (error) {
+            console.error("[Home] エラー: チェックアウト失敗:", error);
             console.error("Checkout error:", error);
             alert("決済セッションの作成に失敗しました。");
         } finally {

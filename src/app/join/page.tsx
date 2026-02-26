@@ -39,9 +39,11 @@ export default function JoinPage() {
 
     // Sync User & Auto-Join
     useEffect(() => {
+        console.log("[JoinPage] useEffect(sync) isLoaded:", isLoaded, "isSignedIn:", isSignedIn, "isSynced:", isSynced);
         const sync = async () => {
             if (!isLoaded || !isSignedIn || !user || isSynced) return;
 
+            console.log("[JoinPage] ユーザー同期開始");
             try {
                 const discordAccount = user.externalAccounts.find(
                     (acc) => (acc.provider as string) === "oauth_discord" || (acc.provider as string) === "discord",
@@ -49,29 +51,39 @@ export default function JoinPage() {
                 const _discordId = discordAccount?.providerUserId;
 
                 // Store User (discordId removed for security - Issue #16)
+                console.log("[JoinPage] storeUser呼び出し clerkId:", user.id);
                 await storeUser({
                     clerkId: user.id,
                     email: user.primaryEmailAddress?.emailAddress || "",
                     name: user.fullName || user.username || "Unknown",
                     imageUrl: user.imageUrl,
                 });
+                console.log("[JoinPage] storeUser完了");
 
                 // Auto-join Discord Server
                 try {
+                    console.log("[JoinPage] Discord自動参加開始");
                     await fetch("/api/join-server", { method: "POST" });
+                    console.log("[JoinPage] Discord自動参加完了");
                 } catch (e) {
+                    console.error("[JoinPage] エラー: Discord自動参加失敗:", e);
                     console.error("Failed to auto-join server:", e);
                 }
 
                 // Check Subscription (Role Sync)
                 try {
+                    console.log("[JoinPage] サブスクリプション確認開始");
                     await fetch("/api/check-subscription", { method: "POST" });
+                    console.log("[JoinPage] サブスクリプション確認完了");
                 } catch (e) {
+                    console.error("[JoinPage] エラー: サブスクリプション確認失敗:", e);
                     console.error("Failed to check subscription:", e);
                 }
 
                 setIsSynced(true);
+                console.log("[JoinPage] ユーザー同期完了");
             } catch (error) {
+                console.error("[JoinPage] エラー: ユーザー同期失敗:", error);
                 console.error("Failed to sync user:", error);
             }
         };
@@ -80,14 +92,17 @@ export default function JoinPage() {
     }, [isLoaded, isSignedIn, user, isSynced, storeUser]);
 
     const handleCheckout = async () => {
+        console.log("[JoinPage] チェックアウト開始");
         setCheckoutLoading(true);
         try {
             const discordAccount = user?.externalAccounts.find(
                 (acc) => (acc.provider as string) === "oauth_discord" || (acc.provider as string) === "discord",
             );
             const discordId = discordAccount?.providerUserId;
+            console.log("[JoinPage] discordId取得:", !!discordId);
 
             if (!discordId) {
+                console.error("[JoinPage] エラー: Discord ID not found");
                 console.error("Discord ID not found");
                 alert("Discord IDが見つかりません。もう一度ログインしてください。");
                 return;
@@ -102,12 +117,17 @@ export default function JoinPage() {
                 }),
             });
             const data = await res.json();
+            console.log("[JoinPage] チェックアウトセッション応答 ok:", res.ok);
             if (!res.ok) {
                 throw new Error(data.error || "Checkout failed");
             }
             const { url } = data;
-            if (url) window.location.href = url;
+            if (url) {
+                console.log("[JoinPage] チェックアウトURLへリダイレクト");
+                window.location.href = url;
+            }
         } catch (error) {
+            console.error("[JoinPage] エラー: チェックアウト失敗:", error);
             console.error("Checkout error:", error);
             alert("決済セッションの作成に失敗しました。");
         } finally {

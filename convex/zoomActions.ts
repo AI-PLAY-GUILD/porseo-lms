@@ -29,11 +29,12 @@ export const ingestToMux = internalAction({
         vttDownloadUrl: v.string(), // empty string if no VTT
     },
     handler: async (ctx, args) => {
+        console.log("[zoomActions:ingestToMux] 開始", { videoId: args.videoId, hasVtt: !!args.vttDownloadUrl });
         const tokenId = process.env.MUX_TOKEN_ID;
         const tokenSecret = process.env.MUX_TOKEN_SECRET;
 
         if (!tokenId || !tokenSecret) {
-            console.error("MUX_TOKEN_ID or MUX_TOKEN_SECRET not set");
+            console.error("[zoomActions:ingestToMux] MUX_TOKEN_ID or MUX_TOKEN_SECRET not set");
             // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
             await ctx.runMutation((internal as any).zoom.updateVideoError, {
                 videoId: args.videoId,
@@ -45,7 +46,7 @@ export const ingestToMux = internalAction({
         // Defense-in-depth: re-validate URLs even though webhook handler already checked
         const mp4BaseUrl = args.mp4DownloadUrl.split("?")[0];
         if (!isValidZoomUrl(mp4BaseUrl)) {
-            console.error("Invalid MP4 URL domain in ingestToMux:", mp4BaseUrl);
+            console.error("[zoomActions:ingestToMux] 無効なMP4 URLドメイン:", mp4BaseUrl);
             // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
             await ctx.runMutation((internal as any).zoom.updateVideoError, {
                 videoId: args.videoId,
@@ -55,6 +56,7 @@ export const ingestToMux = internalAction({
         }
 
         try {
+            console.log("[zoomActions:ingestToMux] Muxアセット作成開始");
             // 1. Create Mux asset from Zoom recording URL
             const mux = new Mux({ tokenId, tokenSecret });
 
@@ -67,6 +69,7 @@ export const ingestToMux = internalAction({
 
             const asset = await mux.video.assets.create(assetConfig);
             const playbackId = asset.playback_ids?.[0]?.id || "";
+            console.log("[zoomActions:ingestToMux] Muxアセット作成完了", { assetId: asset.id, playbackId });
 
             // 2. Save Mux info to Convex
             // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
@@ -78,9 +81,10 @@ export const ingestToMux = internalAction({
 
             // 3. Download VTT transcription if available
             if (args.vttDownloadUrl) {
+                console.log("[zoomActions:ingestToMux] VTT文字起こしダウンロード開始");
                 const vttBaseUrl = args.vttDownloadUrl.split("?")[0];
                 if (!isValidZoomUrl(vttBaseUrl)) {
-                    console.error("Invalid VTT URL domain in ingestToMux:", vttBaseUrl);
+                    console.error("[zoomActions:ingestToMux] 無効なVTT URLドメイン:", vttBaseUrl);
                     // Non-fatal: skip VTT but don't fail the whole ingestion
                 } else
                     try {
@@ -88,6 +92,9 @@ export const ingestToMux = internalAction({
                         if (vttResponse.ok) {
                             const vttText = await vttResponse.text();
                             if (vttText && vttText.trim().length > 0) {
+                                console.log("[zoomActions:ingestToMux] VTT文字起こし保存", {
+                                    vttLength: vttText.length,
+                                });
                                 // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
                                 await ctx.runMutation((internal as any).zoom.updateVideoTranscription, {
                                     videoId: args.videoId,
@@ -107,12 +114,13 @@ export const ingestToMux = internalAction({
                             }
                         }
                     } catch (vttError) {
-                        console.error("Failed to fetch VTT transcription:", vttError);
+                        console.error("[zoomActions:ingestToMux] VTT文字起こし取得エラー:", vttError);
                         // Non-fatal: admin can add transcription manually later
                     }
             }
+            console.log("[zoomActions:ingestToMux] 完了", { videoId: args.videoId });
         } catch (error) {
-            console.error("Mux ingest failed:", error);
+            console.error("[zoomActions:ingestToMux] エラー:", error);
             // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
             await ctx.runMutation((internal as any).zoom.updateVideoError, {
                 videoId: args.videoId,
@@ -132,17 +140,23 @@ export const processAiMetadata = internalAction({
         transcription: v.string(),
     },
     handler: async (ctx, args) => {
+        console.log("[zoomActions:processAiMetadata] 開始", {
+            videoId: args.videoId,
+            transcriptionLength: args.transcription?.length,
+        });
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
-            console.error("GEMINI_API_KEY not set, skipping AI processing for Zoom recording");
+            console.error("[zoomActions:processAiMetadata] GEMINI_API_KEY未設定");
             return;
         }
 
         if (!args.transcription || args.transcription.trim().length === 0) {
+            console.log("[zoomActions:processAiMetadata] 文字起こしテキストなし");
             return;
         }
 
         try {
+            console.log("[zoomActions:processAiMetadata] Gemini API呼び出し開始");
             const client = new GoogleGenAI({ apiKey });
 
             // Same prompt as convex/ai.ts for consistency
@@ -190,7 +204,7 @@ ${args.transcription}
             }
 
             if (!responseText) {
-                console.error("Empty response from Gemini for Zoom recording");
+                console.error("[zoomActions:processAiMetadata] Geminiからの応答が空");
                 return;
             }
 
@@ -204,19 +218,21 @@ ${args.transcription}
                 if (jsonMatch) {
                     aiData = JSON.parse(jsonMatch[0]);
                 } else {
-                    console.error("Failed to parse AI response for Zoom recording");
+                    console.error("[zoomActions:processAiMetadata] AI応答のJSONパース失敗");
                     return;
                 }
             }
 
             // Reuse existing internal mutation from videos.ts
+            console.log("[zoomActions:processAiMetadata] DB更新開始", { chaptersCount: aiData.chapters?.length });
             await ctx.runMutation(internal.videos.updateVideoAiMetadata, {
                 videoId: args.videoId,
                 summary: aiData.summary || "",
                 chapters: aiData.chapters || [],
             });
+            console.log("[zoomActions:processAiMetadata] 完了", { videoId: args.videoId });
         } catch (error) {
-            console.error("AI processing for Zoom recording failed:", error);
+            console.error("[zoomActions:processAiMetadata] エラー:", error);
             // Non-fatal: admin can trigger AI analysis manually
         }
     },

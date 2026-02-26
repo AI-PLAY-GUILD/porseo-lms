@@ -13,9 +13,15 @@ export const generateVideoMetadata = action({
         transcription: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        console.log("[ai:generateVideoMetadata] 開始", {
+            videoId: args.videoId,
+            hasMuxAssetId: !!args.muxAssetId,
+            hasTranscription: !!args.transcription,
+        });
         // --- Security Check Start ---
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
+            console.log("[ai:generateVideoMetadata] 未認証ユーザー");
             throw new Error("Unauthorized: Authentication required");
         }
 
@@ -24,13 +30,17 @@ export const generateVideoMetadata = action({
         });
 
         if (!user || !user.isAdmin) {
+            console.log("[ai:generateVideoMetadata] 管理者権限なし");
             throw new Error("Unauthorized: Admin access required");
         }
         // --- Security Check End ---
 
         try {
             const apiKey = process.env.GEMINI_API_KEY;
-            if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+            if (!apiKey) {
+                console.error("[ai:generateVideoMetadata] GEMINI_API_KEY未設定");
+                throw new Error("GEMINI_API_KEY is not set");
+            }
 
             // 1. 文字起こしテキストの取得
             let subtitleText = args.transcription || "";
@@ -44,8 +54,11 @@ export const generateVideoMetadata = action({
 
             // テキストが空の場合のチェックを強化
             if (!subtitleText || subtitleText.trim().length === 0) {
+                console.log("[ai:generateVideoMetadata] 文字起こしテキストなし");
                 throw new Error("文字起こしテキストがありません。");
             }
+
+            console.log("[ai:generateVideoMetadata] Gemini API呼び出し開始", { textLength: subtitleText.length });
 
             // 2. Geminiで分析
             const client = new GoogleGenAI({ apiKey: apiKey });
@@ -132,15 +145,20 @@ ${subtitleText}
             }
 
             // 4. DB更新
+            console.log("[ai:generateVideoMetadata] DB更新開始", { chaptersCount: aiData.chapters?.length });
             await ctx.runMutation(internal.videos.updateVideoAiMetadata, {
                 videoId: args.videoId,
                 summary: aiData.summary,
                 chapters: aiData.chapters,
             });
 
+            console.log("[ai:generateVideoMetadata] 完了", {
+                videoId: args.videoId,
+                chaptersCount: aiData.chapters?.length,
+            });
             return aiData;
         } catch (error: unknown) {
-            console.error("Gemini API Error:", error);
+            console.error("[ai:generateVideoMetadata] エラー:", error);
             // エラー時もJSON構造を保って返す
             return {
                 summary: "",

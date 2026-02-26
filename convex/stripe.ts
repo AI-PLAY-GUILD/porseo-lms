@@ -8,8 +8,10 @@ import { action } from "./_generated/server";
 export const createCustomer = action({
     args: {},
     handler: async (ctx): Promise<{ customerId: string }> => {
+        console.log("[stripe:createCustomer] 開始");
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
+            console.log("[stripe:createCustomer] 未認証ユーザー");
             throw new Error("Unauthenticated");
         }
 
@@ -18,6 +20,7 @@ export const createCustomer = action({
         });
 
         if (!user) {
+            console.log("[stripe:createCustomer] ユーザー未検出", { clerkId: identity.subject });
             throw new Error("User not found");
         }
 
@@ -69,7 +72,7 @@ export const createCustomer = action({
                 }
             }
         } catch (e) {
-            console.error("[Stripe+Discord] Error fetching roles:", e);
+            console.error("[stripe:createCustomer] Discordロール取得エラー:", e);
         }
 
         // Security fix (Issue #8): Save roles server-side directly, don't return to client
@@ -83,8 +86,10 @@ export const createCustomer = action({
 
         let customerId: string;
         if (user.stripeCustomerId) {
+            console.log("[stripe:createCustomer] 既存のStripe顧客ID使用", { stripeCustomerId: user.stripeCustomerId });
             customerId = user.stripeCustomerId;
         } else {
+            console.log("[stripe:createCustomer] Stripe顧客検索/作成開始");
             const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
                 apiVersion: "2025-12-15.clover",
             });
@@ -97,8 +102,12 @@ export const createCustomer = action({
 
             if (existingCustomers.data.length > 0) {
                 // Found existing customer
+                console.log("[stripe:createCustomer] 既存Stripe顧客をメールで発見", {
+                    customerId: existingCustomers.data[0].id,
+                });
                 customerId = existingCustomers.data[0].id;
             } else {
+                console.log("[stripe:createCustomer] 新規Stripe顧客作成");
                 // Create new customer
                 const customer = await stripe.customers.create({
                     email: user.email,
@@ -117,6 +126,7 @@ export const createCustomer = action({
             });
         }
 
+        console.log("[stripe:createCustomer] 完了", { customerId });
         return { customerId };
     },
 });
@@ -125,8 +135,10 @@ export const createCustomer = action({
 export const linkStripeCustomerByEmail = action({
     args: { email: v.string() },
     handler: async (ctx, args): Promise<{ success: boolean; message: string }> => {
+        console.log("[stripe:linkStripeCustomerByEmail] 開始", { email: args.email });
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
+            console.log("[stripe:linkStripeCustomerByEmail] 未認証ユーザー");
             throw new Error("Unauthenticated");
         }
 
@@ -134,6 +146,7 @@ export const linkStripeCustomerByEmail = action({
             clerkId: identity.subject,
         });
         if (!user) {
+            console.log("[stripe:linkStripeCustomerByEmail] ユーザー未検出", { clerkId: identity.subject });
             throw new Error("User not found");
         }
 
@@ -141,11 +154,15 @@ export const linkStripeCustomerByEmail = action({
         const inputEmail = args.email.trim().toLowerCase();
         const userEmail = (user.email || "").trim().toLowerCase();
         if (inputEmail !== userEmail) {
+            console.log("[stripe:linkStripeCustomerByEmail] メールアドレス不一致");
             throw new Error("入力されたメールアドレスがアカウントのメールアドレスと一致しません");
         }
 
         // Already linked
         if (user.stripeCustomerId) {
+            console.log("[stripe:linkStripeCustomerByEmail] 完了 (既にリンク済み)", {
+                stripeCustomerId: user.stripeCustomerId,
+            });
             return { success: true, message: "既にStripeアカウントと連携済みです" };
         }
 
@@ -160,6 +177,7 @@ export const linkStripeCustomerByEmail = action({
         });
 
         if (existingCustomers.data.length === 0) {
+            console.log("[stripe:linkStripeCustomerByEmail] 完了 (Stripe顧客未検出)");
             return {
                 success: false,
                 message: "このメールアドレスに紐づくStripe顧客が見つかりませんでした",
@@ -167,6 +185,7 @@ export const linkStripeCustomerByEmail = action({
         }
 
         const customerId = existingCustomers.data[0].id;
+        console.log("[stripe:linkStripeCustomerByEmail] Stripe顧客発見", { customerId });
 
         // Check for active subscription
         const subscriptions = await stripe.subscriptions.list({
@@ -181,12 +200,14 @@ export const linkStripeCustomerByEmail = action({
         });
 
         if (subscriptions.data.length > 0) {
+            console.log("[stripe:linkStripeCustomerByEmail] 完了 (アクティブなサブスクリプションあり)", { customerId });
             return {
                 success: true,
                 message: "Stripeアカウントと連携し、アクティブなサブスクリプションを確認しました！",
             };
         }
 
+        console.log("[stripe:linkStripeCustomerByEmail] 完了 (サブスクリプションなし)", { customerId });
         return {
             success: true,
             message: "Stripeアカウントと連携しました（アクティブなサブスクリプションはありません）",
@@ -198,22 +219,27 @@ export const linkStripeCustomerByEmail = action({
 export const getDiscordRolesV2 = action({
     args: {},
     handler: async (ctx): Promise<{ synced: boolean }> => {
+        console.log("[stripe:getDiscordRolesV2] 開始");
         try {
             const identity = await ctx.auth.getUserIdentity();
             if (!identity) {
+                console.log("[stripe:getDiscordRolesV2] 未認証ユーザー");
                 throw new Error("Unauthenticated");
             }
 
             const clerkSecretKey = process.env.CLERK_SECRET_KEY;
             if (!clerkSecretKey) {
+                console.error("[stripe:getDiscordRolesV2] CLERK_SECRET_KEY未設定");
                 throw new Error("Missing CLERK_SECRET_KEY env variable");
             }
 
             const guildId = process.env.NEXT_PUBLIC_DISCORD_GUILD_ID;
             if (!guildId) {
+                console.error("[stripe:getDiscordRolesV2] NEXT_PUBLIC_DISCORD_GUILD_ID未設定");
                 throw new Error("Missing NEXT_PUBLIC_DISCORD_GUILD_ID env variable");
             }
 
+            console.log("[stripe:getDiscordRolesV2] Clerk APIからDiscordトークン取得開始");
             // 1. Clerk API: Get Discord Access Token
             // Issue #56: Add timeout to external API calls
             const clerkController = new AbortController();
@@ -234,17 +260,19 @@ export const getDiscordRolesV2 = action({
             }
 
             if (!clerkResponse.ok) {
-                console.error("Clerk API Error:", await clerkResponse.text());
+                console.error("[stripe:getDiscordRolesV2] Clerk APIエラー:", await clerkResponse.text());
                 return { synced: false };
             }
 
             const clerkData = await clerkResponse.json();
             if (!clerkData.length || !clerkData[0].token) {
+                console.log("[stripe:getDiscordRolesV2] Discordトークン未取得");
                 return { synced: false };
             }
 
             const accessToken = clerkData[0].token;
 
+            console.log("[stripe:getDiscordRolesV2] Discord APIからロール取得開始");
             // 2. Discord API: Get Current User Guild Member
             const discordController = new AbortController();
             const discordTimeout = setTimeout(() => discordController.abort(), 10000);
@@ -262,24 +290,27 @@ export const getDiscordRolesV2 = action({
 
             if (!discordResponse.ok) {
                 if (discordResponse.status === 404) {
+                    console.log("[stripe:getDiscordRolesV2] ギルドメンバー未検出 (404)");
                     return { synced: false };
                 }
-                console.error("Discord API Error:", await discordResponse.text());
+                console.error("[stripe:getDiscordRolesV2] Discord APIエラー:", await discordResponse.text());
                 return { synced: false };
             }
 
             const discordData = await discordResponse.json();
             const roles = discordData.roles as string[];
 
+            console.log("[stripe:getDiscordRolesV2] ロール保存開始", { rolesCount: roles.length });
             // Save roles server-side — never expose raw role IDs to client
             await ctx.runMutation(internal.users.updateDiscordRoles, {
                 clerkId: identity.subject,
                 discordRoles: roles,
             });
 
+            console.log("[stripe:getDiscordRolesV2] 完了", { synced: true, rolesCount: roles.length });
             return { synced: true };
         } catch (error) {
-            console.error("[Discord API] Critical Error:", error);
+            console.error("[stripe:getDiscordRolesV2] エラー:", error);
             throw error;
         }
     },

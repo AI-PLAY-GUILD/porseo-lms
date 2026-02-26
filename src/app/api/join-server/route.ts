@@ -2,9 +2,11 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function POST(_req: Request) {
+    console.log("[join-server] リクエスト受信", { method: "POST" });
     try {
         const { userId } = await auth();
         if (!userId) {
+            console.log("[join-server] 認証失敗: userId が存在しません");
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -17,6 +19,7 @@ export async function POST(_req: Request) {
         );
 
         if (!discordAccount || !discordAccount.externalId) {
+            console.log("[join-server] Discordアカウント未連携", { userId });
             return NextResponse.json({ error: "Discord account not linked" }, { status: 400 });
         }
 
@@ -26,6 +29,7 @@ export async function POST(_req: Request) {
         const response = await client.users.getUserOauthAccessToken(userId, "oauth_discord");
 
         if (!response.data || response.data.length === 0) {
+            console.log("[join-server] Discordアクセストークンが見つかりません", { userId });
             return NextResponse.json({ error: "No Discord access token found" }, { status: 400 });
         }
 
@@ -63,6 +67,7 @@ export async function POST(_req: Request) {
         }
 
         if (discordRes.ok || discordRes.status === 201 || discordRes.status === 204) {
+            console.log("[join-server] 成功: Discordサーバー参加完了", { discordUserId });
             return NextResponse.json({ success: true });
         } else {
             const errorText = await discordRes.text();
@@ -73,9 +78,10 @@ export async function POST(_req: Request) {
     } catch (error: unknown) {
         // Issue #56: Handle timeout errors
         if (error instanceof DOMException && error.name === "AbortError") {
+            console.error("[join-server] エラー: Discord APIタイムアウト");
             return NextResponse.json({ error: "External service timeout" }, { status: 504 });
         }
-        console.error("Error joining server:", error);
+        console.error("[join-server] エラー:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
