@@ -5,14 +5,18 @@ import { getUserByClerkId } from "./users";
 
 // Helper to check if user is admin
 async function checkAdmin(ctx: QueryCtx) {
+    console.log("[admin:checkAdmin] 開始");
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
+        console.log("[admin:checkAdmin] 未認証ユーザー");
         throw new Error("Unauthorized");
     }
     const user = await getUserByClerkId(ctx, identity.subject);
     if (!user || !user.isAdmin) {
+        console.log("[admin:checkAdmin] 管理者権限なし", { clerkId: identity.subject });
         throw new Error("Unauthorized: Admin access required");
     }
+    console.log("[admin:checkAdmin] 完了", { userId: user._id });
     return user;
 }
 
@@ -22,6 +26,7 @@ export const getAdminStats = query({
         endDate: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
+        console.log("[admin:getAdminStats] 開始", { startDate: args.startDate, endDate: args.endDate });
         await checkAdmin(ctx);
 
         const users = await ctx.db.query("users").collect();
@@ -68,6 +73,7 @@ export const getAdminStats = query({
         // ideally we'd have completedAt, but lastWatchedAt is close enough for "recently completed"
         const completedVideos = filteredProgress.filter((p) => p.completed).length;
 
+        console.log("[admin:getAdminStats] 完了", { totalUsers, activeUsers, totalWatchTimeHours, completedVideos });
         return {
             totalUsers, // Total users is always all users
             activeUsers,
@@ -83,6 +89,7 @@ export const getUserGrowth = query({
         endDate: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
+        console.log("[admin:getUserGrowth] 開始", { startDate: args.startDate, endDate: args.endDate });
         await checkAdmin(ctx);
 
         const users = await ctx.db.query("users").collect();
@@ -123,6 +130,7 @@ export const getUserGrowth = query({
             };
         });
 
+        console.log("[admin:getUserGrowth] 完了", { dataPoints: growthData.length });
         return growthData;
     },
 });
@@ -133,6 +141,7 @@ export const getContentPerformance = query({
         endDate: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
+        console.log("[admin:getContentPerformance] 開始", { startDate: args.startDate, endDate: args.endDate });
         // Validating admin access and fetching performance stats
         await checkAdmin(ctx);
 
@@ -172,7 +181,9 @@ export const getContentPerformance = query({
         });
 
         // Sort by views descending
-        return stats.sort((a, b) => b.views - a.views);
+        const sorted = stats.sort((a, b) => b.views - a.views);
+        console.log("[admin:getContentPerformance] 完了", { videoCount: sorted.length });
+        return sorted;
     },
 });
 
@@ -182,6 +193,7 @@ export const getUserBehaviorAnalytics = query({
         endDate: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
+        console.log("[admin:getUserBehaviorAnalytics] 開始", { startDate: args.startDate, endDate: args.endDate });
         await checkAdmin(ctx);
 
         const logs = await ctx.db.query("dailyLearningLogs").collect();
@@ -234,6 +246,10 @@ export const getUserBehaviorAnalytics = query({
             .sort((a, b) => b.minutesWatched - a.minutesWatched)
             .slice(0, 10); // Top 10
 
+        console.log("[admin:getUserBehaviorAnalytics] 完了", {
+            dailyActivityDays: dailyActivity.length,
+            topLearnersCount: topLearners.length,
+        });
         return {
             dailyActivity,
             topLearners,
@@ -246,6 +262,7 @@ export const getAuditLogs = query({
         limit: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
+        console.log("[admin:getAuditLogs] 開始", { limit: args.limit });
         await checkAdmin(ctx);
 
         const logs = await ctx.db
@@ -256,9 +273,11 @@ export const getAuditLogs = query({
         const users = await ctx.db.query("users").collect();
         const userMap = new Map(users.map((u) => [u._id, u]));
 
-        return logs.map((log) => ({
+        const result = logs.map((log) => ({
             ...log,
             userName: log.userId ? (userMap.get(log.userId)?.name ?? "Unknown") : "System",
         }));
+        console.log("[admin:getAuditLogs] 完了", { logsCount: result.length });
+        return result;
     },
 });
