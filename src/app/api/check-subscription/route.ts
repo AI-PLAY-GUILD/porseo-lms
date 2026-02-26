@@ -117,7 +117,9 @@ export async function POST(_req: Request) {
                 roleId: roleId,
                 secret: process.env.CONVEX_INTERNAL_SECRET || "",
             });
-            console.log("[check-subscription] 成功: サブスクリプションをアクティブに更新", { discordId: user.discordId });
+            console.log("[check-subscription] 成功: サブスクリプションをアクティブに更新", {
+                discordId: user.discordId,
+            });
             return NextResponse.json({ status: "active", updated: true });
         } else {
             console.log("[check-subscription] 成功: サブスクリプションは非アクティブ", { discordId: user.discordId });

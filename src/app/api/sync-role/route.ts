@@ -33,7 +33,10 @@ export async function POST(_req: Request) {
         }
 
         if (user.subscriptionStatus !== "active") {
-            console.log("[sync-role] サブスクリプションがアクティブではありません", { userId, status: user.subscriptionStatus });
+            console.log("[sync-role] サブスクリプションがアクティブではありません", {
+                userId,
+                status: user.subscriptionStatus,
+            });
             return NextResponse.json({ error: "Subscription not active" }, { status: 403 });
         }
 
