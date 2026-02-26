@@ -187,8 +187,12 @@ export async function POST(req: Request) {
         return result.toUIMessageStreamResponse();
     } catch (error: unknown) {
         console.error("[chat] エラー:", error);
-        const message = error instanceof Error ? error.message : String(error);
-        return new Response(JSON.stringify({ error: "Internal server error", detail: message }), {
+        const detail = error instanceof Error ? error.message : String(error);
+        const body =
+            process.env.NODE_ENV === "development"
+                ? { error: "Internal server error", detail }
+                : { error: "Internal server error" };
+        return new Response(JSON.stringify(body), {
             status: 500,
             headers: { "Content-Type": "application/json" },
         });
