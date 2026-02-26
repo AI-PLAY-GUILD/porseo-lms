@@ -9,6 +9,7 @@ export default function DevLoginPage() {
     const router = useRouter();
     const [loading, setLoading] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [debugLogs, setDebugLogs] = useState<string[]>([]);
     const [customEmail, setCustomEmail] = useState("");
     const [customPassword, setCustomPassword] = useState("");
 
@@ -18,11 +19,20 @@ export default function DevLoginPage() {
         return null;
     }
 
+    const log = (msg: string) => {
+        console.log(`[dev-login] ${msg}`);
+        setDebugLogs((prev) => [...prev, `${new Date().toLocaleTimeString()} ${msg}`]);
+    };
+
     const handleLogin = async (email: string, password: string, label: string) => {
-        if (!isLoaded || !signIn || !setActive) return;
+        if (!isLoaded || !signIn || !setActive) {
+            log("Clerk未ロード - isLoaded:" + isLoaded);
+            return;
+        }
 
         setLoading(label);
         setError(null);
+        log(`ログイン開始: ${email}`);
 
         try {
             const result = await signIn.create({
@@ -30,57 +40,81 @@ export default function DevLoginPage() {
                 password: password,
             });
 
+            log(`signIn結果: status=${result.status}`);
+
             if (result.status === "complete") {
                 await setActive({ session: result.createdSessionId });
+                log("セッション設定完了、ダッシュボードへ遷移");
                 router.push("/dashboard");
             } else {
-                setError("ログインが完了しませんでした。");
+                log(`予期しないstatus: ${result.status}`);
+                setError(`ログイン未完了 (status: ${result.status})`);
             }
         } catch (err: unknown) {
-            const clerkError = err as { errors?: { message: string }[] };
-            setError(clerkError.errors?.[0]?.message || "ログインに失敗しました");
+            const clerkError = err as { errors?: { message: string; code?: string }[] };
+            const msg = clerkError.errors?.map((e) => `${e.code}: ${e.message}`).join(", ") || "不明なエラー";
+            log(`ログインエラー: ${msg}`);
+            setError(msg);
         } finally {
             setLoading(null);
         }
     };
 
     const handleCreateAndLogin = async (role: "user" | "admin") => {
-        if (!isLoaded || !signIn || !setActive) return;
+        if (!isLoaded || !signIn || !setActive) {
+            log("Clerk未ロード");
+            return;
+        }
 
         const label = role === "admin" ? "管理者を作成中" : "ユーザーを作成中";
         setLoading(label);
         setError(null);
+        log(`テストユーザー作成開始 (role: ${role})`);
 
         try {
             // 1. テストユーザーをClerkに自動作成
+            log("API呼び出し: /api/dev/create-test-user");
             const res = await fetch("/api/dev/create-test-user", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ role }),
             });
 
+            log(`APIレスポンス: status=${res.status}`);
+
+            const data = await res.json();
+            log(`APIレスポンスbody: ${JSON.stringify(data)}`);
+
             if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || "ユーザー作成に失敗しました");
+                throw new Error(data.error || `API エラー (${res.status})`);
             }
 
-            const { email, password } = await res.json();
+            const { email, password } = data;
+            log(`ユーザー作成成功: ${email}`);
 
             // 2. 作成したユーザーで自動ログイン
+            log("Clerkサインイン開始...");
             const result = await signIn.create({
                 identifier: email,
                 password: password,
             });
 
+            log(`signIn結果: status=${result.status}`);
+
             if (result.status === "complete") {
                 await setActive({ session: result.createdSessionId });
+                log("ログイン成功！ダッシュボードへ遷移");
                 router.push("/dashboard");
             } else {
-                setError("ログインが完了しませんでした。");
+                log(`予期しないstatus: ${result.status}`);
+                setError(`ログイン未完了 (status: ${result.status})`);
             }
         } catch (err: unknown) {
-            const error = err as { errors?: { message: string }[]; message?: string };
-            setError(error.errors?.[0]?.message || error.message || "エラーが発生しました");
+            const error = err as { errors?: { message: string; code?: string }[]; message?: string };
+            const msg =
+                error.errors?.map((e) => `${e.code}: ${e.message}`).join(", ") || error.message || "不明なエラー";
+            log(`エラー: ${msg}`);
+            setError(msg);
         } finally {
             setLoading(null);
         }
@@ -169,6 +203,28 @@ export default function DevLoginPage() {
                         {loading === "カスタム" ? "ログイン中..." : "ログイン"}
                     </button>
                 </div>
+
+                {/* デバッグログ */}
+                {debugLogs.length > 0 && (
+                    <div className="mt-6 p-3 bg-gray-900 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-xs font-medium text-gray-400">Debug Log</h3>
+                            <button
+                                onClick={() => setDebugLogs([])}
+                                className="text-xs text-gray-500 hover:text-gray-300"
+                            >
+                                clear
+                            </button>
+                        </div>
+                        <div className="space-y-0.5 max-h-48 overflow-y-auto">
+                            {debugLogs.map((log, i) => (
+                                <div key={`${i}-${log}`} className="text-xs font-mono text-green-400">
+                                    {log}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="mt-6 pt-4 border-t text-center">
                     <a href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
