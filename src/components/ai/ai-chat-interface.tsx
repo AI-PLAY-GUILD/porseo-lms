@@ -5,6 +5,7 @@ import { DefaultChatTransport } from "ai";
 import { Bot, Send, Sparkles, Square, User } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 
 const SUGGESTIONS = [
@@ -45,7 +46,7 @@ export function AiChatInterface() {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, []);
+    }, [messages]);
 
     useEffect(() => {
         inputRef.current?.focus();
@@ -120,8 +121,8 @@ export function AiChatInterface() {
                                             : "bg-white brutal-shadow-sm"
                                     }`}
                                 >
-                                    <div className="prose prose-sm max-w-none font-bold text-black prose-headings:font-black prose-strong:text-black prose-p:my-1 prose-ul:my-1 prose-li:my-0">
-                                        <ReactMarkdown>{text}</ReactMarkdown>
+                                    <div className="prose prose-sm max-w-none text-black prose-headings:font-black prose-headings:text-black prose-headings:mt-3 prose-headings:mb-1.5 prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-p:leading-relaxed prose-strong:font-black prose-strong:text-black prose-a:text-pop-purple prose-a:font-bold prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-pop-purple/70 prose-ul:my-2 prose-ul:pl-4 prose-ol:my-2 prose-ol:pl-4 prose-li:my-1 prose-li:leading-relaxed prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-code:font-mono prose-code:border prose-code:border-gray-300 prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:border-2 prose-pre:border-black prose-pre:my-3 prose-blockquote:border-l-4 prose-blockquote:border-pop-purple prose-blockquote:bg-pop-purple/5 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:my-2 prose-blockquote:rounded-r-lg prose-hr:my-3 prose-hr:border-gray-300">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
                                     </div>
                                 </div>
                                 {message.role === "user" && (
