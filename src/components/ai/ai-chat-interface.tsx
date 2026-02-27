@@ -162,8 +162,9 @@ export function AiChatInterface() {
                                             remarkPlugins={[remarkGfm]}
                                             components={{
                                                 img: ({ src, alt }) => {
-                                                    if (src?.startsWith("VIDEO_CARD:")) {
-                                                        const parts = src.replace("VIDEO_CARD:", "").split(":");
+                                                    const srcStr = typeof src === "string" ? src : "";
+                                                    if (srcStr.startsWith("VIDEO_CARD:")) {
+                                                        const parts = srcStr.replace("VIDEO_CARD:", "").split(":");
                                                         const videoId = parts[0];
                                                         const muxPlaybackId = parts[1] || undefined;
                                                         return (
@@ -174,7 +175,7 @@ export function AiChatInterface() {
                                                             />
                                                         );
                                                     }
-                                                    return <img src={src} alt={alt} />;
+                                                    return <img src={srcStr} alt={alt || ""} />;
                                                 },
                                             }}
                                         >
