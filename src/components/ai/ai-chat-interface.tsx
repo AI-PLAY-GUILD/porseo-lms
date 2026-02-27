@@ -2,7 +2,8 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { Bot, Send, Sparkles, Square, User } from "lucide-react";
+import { Bot, ExternalLink, Play, Send, Sparkles, Square, User } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -14,6 +15,41 @@ const SUGGESTIONS = [
     "AIの活用方法を知りたい",
     "初心者向けのおすすめ動画は？",
 ];
+
+function VideoCard({ videoId, muxPlaybackId, title }: { videoId: string; muxPlaybackId?: string; title: string }) {
+    const thumbnailUrl = muxPlaybackId
+        ? `https://image.mux.com/${muxPlaybackId}/thumbnail.jpg?width=480&height=270&fit_mode=smartcrop`
+        : null;
+
+    return (
+        <Link href={`/videos/${videoId}`} className="block my-3 no-underline group">
+            <div className="rounded-xl border-2 border-black bg-cream overflow-hidden brutal-shadow-sm hover:translate-y-[-2px] transition-all duration-200">
+                {thumbnailUrl ? (
+                    <div className="relative aspect-video bg-gray-200">
+                        <img
+                            src={thumbnailUrl}
+                            alt={title}
+                            className="w-full h-full object-cover !my-0 !border-0 !rounded-none"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="aspect-video bg-gradient-to-br from-pop-purple/20 to-pop-yellow/20 flex items-center justify-center">
+                        <Play className="w-10 h-10 text-gray-400" />
+                    </div>
+                )}
+                <div className="px-3 py-2 border-t-2 border-black flex items-center justify-between gap-2">
+                    <p className="font-black text-sm text-black truncate !my-0">{title}</p>
+                    <ExternalLink className="w-4 h-4 text-gray-400 shrink-0" />
+                </div>
+            </div>
+        </Link>
+    );
+}
 
 function getMessageText(message: { parts?: Array<{ type: string; text?: string }> }): string {
     if (!message.parts) return "";
@@ -122,7 +158,28 @@ export function AiChatInterface() {
                                     }`}
                                 >
                                     <div className="prose prose-sm max-w-none text-black prose-headings:font-black prose-headings:text-black prose-headings:mt-3 prose-headings:mb-1.5 prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-p:leading-relaxed prose-strong:font-black prose-strong:text-black prose-a:text-pop-purple prose-a:font-bold prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-pop-purple/70 prose-ul:my-2 prose-ul:pl-4 prose-ol:my-2 prose-ol:pl-4 prose-li:my-1 prose-li:leading-relaxed prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-code:font-mono prose-code:border prose-code:border-gray-300 prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:border-2 prose-pre:border-black prose-pre:my-3 prose-blockquote:border-l-4 prose-blockquote:border-pop-purple prose-blockquote:bg-pop-purple/5 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:my-2 prose-blockquote:rounded-r-lg prose-hr:my-3 prose-hr:border-gray-300">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            components={{
+                                                img: ({ src, alt }) => {
+                                                    if (src?.startsWith("VIDEO_CARD:")) {
+                                                        const parts = src.replace("VIDEO_CARD:", "").split(":");
+                                                        const videoId = parts[0];
+                                                        const muxPlaybackId = parts[1] || undefined;
+                                                        return (
+                                                            <VideoCard
+                                                                videoId={videoId}
+                                                                muxPlaybackId={muxPlaybackId}
+                                                                title={alt || "動画"}
+                                                            />
+                                                        );
+                                                    }
+                                                    return <img src={src} alt={alt} />;
+                                                },
+                                            }}
+                                        >
+                                            {text}
+                                        </ReactMarkdown>
                                     </div>
                                 </div>
                                 {message.role === "user" && (
