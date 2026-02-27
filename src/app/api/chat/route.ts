@@ -1,6 +1,6 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { auth } from "@clerk/nextjs/server";
-import { stepCountIs, streamText, tool } from "ai";
+import { convertToModelMessages, stepCountIs, streamText, tool } from "ai";
 import { z } from "zod";
 import { convex } from "@/lib/convex";
 import { api } from "../../../../convex/_generated/api";
@@ -92,8 +92,9 @@ export async function POST(req: Request) {
         console.log("[chat] STEP 3 OK: サブスクリプション有効");
 
         console.log("[chat] STEP 4: リクエストボディ解析");
-        const { messages } = await req.json();
-        console.log("[chat] STEP 4 OK: メッセージ取得", {
+        const { messages: uiMessages } = await req.json();
+        const messages = convertToModelMessages(uiMessages);
+        console.log("[chat] STEP 4 OK: メッセージ取得・変換完了", {
             userId,
             messageCount: messages?.length,
         });
