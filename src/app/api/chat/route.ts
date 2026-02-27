@@ -93,7 +93,7 @@ export async function POST(req: Request) {
 
         console.log("[chat] STEP 4: リクエストボディ解析");
         const { messages: uiMessages } = await req.json();
-        const messages = convertToModelMessages(uiMessages);
+        const messages = await convertToModelMessages(uiMessages);
         console.log("[chat] STEP 4 OK: メッセージ取得・変換完了", {
             userId,
             messageCount: messages?.length,
