@@ -100,6 +100,18 @@ export default function VideoPage() {
     const [showTranscription, setShowTranscription] = useState(false);
     const [showChat, setShowChat] = useState(false);
 
+    // Parse transcription (VTT) into segments
+    const transcriptionSegments = useMemo(() => {
+        if (!video?.transcription) return [];
+        return parseVttToSegments(video.transcription);
+    }, [video?.transcription]);
+
+    // Parse chat messages
+    const chatMessages = useMemo(() => {
+        if (!video?.zoomChatMessages) return [];
+        return parseChatMessages(video.zoomChatMessages);
+    }, [video?.zoomChatMessages]);
+
     if (video === undefined || access === undefined) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
@@ -133,18 +145,6 @@ export default function VideoPage() {
             </div>
         );
     }
-
-    // Parse transcription (VTT) into segments
-    const transcriptionSegments = useMemo(() => {
-        if (!video?.transcription) return [];
-        return parseVttToSegments(video.transcription);
-    }, [video?.transcription]);
-
-    // Parse chat messages
-    const chatMessages = useMemo(() => {
-        if (!video?.zoomChatMessages) return [];
-        return parseChatMessages(video.zoomChatMessages);
-    }, [video?.zoomChatMessages]);
 
     const handleSeek = (time: number) => {
         const videoEl = document.querySelector("mux-player") as
