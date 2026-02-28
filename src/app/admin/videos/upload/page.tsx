@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "../../../../../convex/_generated/api";
 
-type UploadMode = "file" | "manual" | "zoom";
+type UploadMode = "file" | "manual" | "zoom" | "bulk";
 
 interface ZoomRecordingFile {
     download_url: string;
@@ -62,6 +62,18 @@ export default function VideoUploadPage() {
     const [zoomLoading, setZoomLoading] = useState(false);
     const [zoomImporting, setZoomImporting] = useState(false);
     const [zoomSuccess, setZoomSuccess] = useState(false);
+
+    // Bulk import state
+    const [bulkLoading, setBulkLoading] = useState(false);
+    const [bulkResults, setBulkResults] = useState<{
+        fromDate: string;
+        toDate: string;
+        totalFound: number;
+        imported: number;
+        skipped: number;
+        errors: number;
+        results: { meetingId: string; topic: string; status: string; reason?: string }[];
+    } | null>(null);
 
     useEffect(() => {
         if (userData !== undefined && !userData?.isAdmin) {
@@ -188,6 +200,28 @@ export default function VideoUploadPage() {
         setError(null);
     };
 
+    // ===== Bulk Import =====
+    const handleBulkImport = async () => {
+        setBulkLoading(true);
+        setError(null);
+        setBulkResults(null);
+        try {
+            const res = await fetch("/api/zoom/bulk-import", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || "一括取り込みに失敗しました");
+            }
+            setBulkResults(data);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "エラーが発生しました");
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
     if (userData === undefined) return <div className="p-8">読み込み中...</div>;
     if (!userData?.isAdmin) return null;
 
@@ -216,6 +250,9 @@ export default function VideoUploadPage() {
                         </button>
                         <button onClick={() => handleModeChange("zoom")} className={tabClass("zoom")}>
                             Zoom録画取得
+                        </button>
+                        <button onClick={() => handleModeChange("bulk")} className={tabClass("bulk")}>
+                            一括取込
                         </button>
                     </div>
                 </div>
@@ -461,6 +498,101 @@ export default function VideoUploadPage() {
                                     </div>
                                 )}
                             </>
+                        )}
+                    </div>
+                )}
+
+                {/* ===== Bulk Import Tab ===== */}
+                {mode === "bulk" && (
+                    <div className="flex flex-col gap-4">
+                        <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-md">
+                            <p className="font-medium mb-1">Zoom録画の一括取り込み</p>
+                            <p className="text-sm">
+                                アプリに最後に登録されたZoom録画以降の、すべてのクラウドレコーディングを自動で取り込みます。
+                                文字起こし・チャットメッセージも自動で取得されます。
+                            </p>
+                        </div>
+
+                        {!bulkResults ? (
+                            <button
+                                onClick={handleBulkImport}
+                                disabled={bulkLoading}
+                                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {bulkLoading ? "取り込み中... (しばらくお待ちください)" : "一括取り込みを開始する"}
+                            </button>
+                        ) : (
+                            <div className="space-y-4">
+                                {/* Summary */}
+                                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-md space-y-2">
+                                    <p className="text-sm">
+                                        <span className="font-medium">対象期間:</span> {bulkResults.fromDate} 〜{" "}
+                                        {bulkResults.toDate}
+                                    </p>
+                                    <p className="text-sm">
+                                        <span className="font-medium">検出数:</span> {bulkResults.totalFound}件
+                                    </p>
+                                    <div className="flex gap-4 text-sm">
+                                        <span className="text-green-600 font-bold">取込: {bulkResults.imported}件</span>
+                                        <span className="text-gray-500">スキップ: {bulkResults.skipped}件</span>
+                                        {bulkResults.errors > 0 && (
+                                            <span className="text-red-600 font-bold">
+                                                エラー: {bulkResults.errors}件
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Details */}
+                                {bulkResults.results.length > 0 && (
+                                    <div className="border rounded-md overflow-hidden">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-gray-100 dark:bg-gray-700">
+                                                <tr>
+                                                    <th className="py-2 px-3 text-left">トピック</th>
+                                                    <th className="py-2 px-3 text-left">状態</th>
+                                                    <th className="py-2 px-3 text-left">備考</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {bulkResults.results.map((r, i) => (
+                                                    <tr
+                                                        key={`${r.meetingId}-${i}`}
+                                                        className="border-t dark:border-gray-600"
+                                                    >
+                                                        <td className="py-2 px-3">{r.topic}</td>
+                                                        <td className="py-2 px-3">
+                                                            <span
+                                                                className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                                                    r.status === "imported"
+                                                                        ? "bg-green-100 text-green-800"
+                                                                        : r.status === "error"
+                                                                          ? "bg-red-100 text-red-800"
+                                                                          : "bg-gray-100 text-gray-600"
+                                                                }`}
+                                                            >
+                                                                {r.status === "imported"
+                                                                    ? "取込済"
+                                                                    : r.status === "error"
+                                                                      ? "エラー"
+                                                                      : "スキップ"}
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-2 px-3 text-gray-500">{r.reason || "-"}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={() => setBulkResults(null)}
+                                    className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors font-medium"
+                                >
+                                    もう一度実行する
+                                </button>
+                            </div>
                         )}
                     </div>
                 )}

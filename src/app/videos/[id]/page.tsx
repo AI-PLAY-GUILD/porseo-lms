@@ -3,10 +3,10 @@
 import { SignOutButton } from "@clerk/nextjs";
 import MuxPlayer from "@mux/mux-player-react";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Calendar, FileText, LogOut } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, LogOut, MessageSquare, Mic } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { BrutalistLoader } from "@/components/ui/brutalist-loader";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,73 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+
+// Parse VTT format into timestamped segments
+function parseVttToSegments(vttText: string): { startTime: number; endTime: number; text: string }[] {
+    const segments: { startTime: number; endTime: number; text: string }[] = [];
+    const blocks = vttText.split(/\n\s*\n/);
+
+    for (const block of blocks) {
+        const lines = block.trim().split("\n");
+        for (let i = 0; i < lines.length; i++) {
+            const timeMatch = lines[i].match(
+                /(\d{2}):(\d{2}):(\d{2})[.,](\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2})[.,](\d{3})/,
+            );
+            if (timeMatch) {
+                const startTime =
+                    Number(timeMatch[1]) * 3600 +
+                    Number(timeMatch[2]) * 60 +
+                    Number(timeMatch[3]) +
+                    Number(timeMatch[4]) / 1000;
+                const endTime =
+                    Number(timeMatch[5]) * 3600 +
+                    Number(timeMatch[6]) * 60 +
+                    Number(timeMatch[7]) +
+                    Number(timeMatch[8]) / 1000;
+                const textLines = lines.slice(i + 1).filter((l) => l.trim().length > 0);
+                if (textLines.length > 0) {
+                    segments.push({ startTime, endTime, text: textLines.join(" ") });
+                }
+            }
+        }
+    }
+    return segments;
+}
+
+// Parse Zoom chat messages
+function parseChatMessages(chatText: string): { time: string; sender: string; message: string }[] {
+    const messages: { time: string; sender: string; message: string }[] = [];
+    const lines = chatText.split("\n");
+
+    for (const line of lines) {
+        // Zoom chat format: "HH:MM:SS From Sender Name to Everyone:" or similar
+        const match = line.match(/^(\d{2}:\d{2}:\d{2})\s+From\s+(.+?)\s+to\s+.+?:\s*$/i);
+        if (match) {
+            // The message content may be on the next line
+            continue;
+        }
+        // Alternative: "HH:MM:SS\tSender Name\tMessage"
+        const tabMatch = line.match(/^(\d{2}:\d{2}:\d{2})\t(.+?)\t(.+)$/);
+        if (tabMatch) {
+            messages.push({ time: tabMatch[1], sender: tabMatch[2], message: tabMatch[3] });
+            continue;
+        }
+        // Format: "HH:MM:SS From Sender : Message" (single-line)
+        const singleLineMatch = line.match(/^(\d{2}:\d{2}:\d{2})\s+From\s+(.+?)\s*:\s*(.+)$/i);
+        if (singleLineMatch) {
+            messages.push({ time: singleLineMatch[1], sender: singleLineMatch[2], message: singleLineMatch[3] });
+        }
+    }
+    return messages;
+}
+
+function formatSecondsToTime(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${m}:${String(s).padStart(2, "0")}`;
+}
 
 export default function VideoPage() {
     const params = useParams();
@@ -28,6 +95,10 @@ export default function VideoPage() {
     // Track watched time for logging
     const lastLoggedTimeRef = useRef<number>(0);
     const accumulatedTimeRef = useRef<number>(0);
+
+    // Transcription & Chat toggle
+    const [showTranscription, setShowTranscription] = useState(false);
+    const [showChat, setShowChat] = useState(false);
 
     if (video === undefined || access === undefined) {
         return (
@@ -62,6 +133,18 @@ export default function VideoPage() {
             </div>
         );
     }
+
+    // Parse transcription (VTT) into segments
+    const transcriptionSegments = useMemo(() => {
+        if (!video?.transcription) return [];
+        return parseVttToSegments(video.transcription);
+    }, [video?.transcription]);
+
+    // Parse chat messages
+    const chatMessages = useMemo(() => {
+        if (!video?.zoomChatMessages) return [];
+        return parseChatMessages(video.zoomChatMessages);
+    }, [video?.zoomChatMessages]);
 
     const handleSeek = (time: number) => {
         const videoEl = document.querySelector("mux-player") as
@@ -250,6 +333,144 @@ export default function VideoPage() {
                                     </div>
                                 </div>
                             )}
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Transcription & Chat Section */}
+                {(transcriptionSegments.length > 0 || chatMessages.length > 0) && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Transcription */}
+                        {transcriptionSegments.length > 0 && (
+                            <Card>
+                                <CardHeader className="pb-3">
+                                    <button onClick={() => setShowTranscription(!showTranscription)} className="w-full">
+                                        <CardTitle className="flex items-center justify-between text-lg">
+                                            <span className="flex items-center gap-2">
+                                                <Mic className="w-5 h-5 text-primary" />
+                                                文字起こし
+                                                <Badge variant="secondary" className="text-xs">
+                                                    {transcriptionSegments.length}件
+                                                </Badge>
+                                            </span>
+                                            <span className="text-sm text-muted-foreground">
+                                                {showTranscription ? "閉じる" : "表示する"}
+                                            </span>
+                                        </CardTitle>
+                                    </button>
+                                </CardHeader>
+                                {showTranscription && (
+                                    <CardContent>
+                                        <ScrollArea className="h-[400px]">
+                                            <div className="space-y-2">
+                                                {transcriptionSegments.map((seg, i) => (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => handleSeek(seg.startTime)}
+                                                        className="w-full text-left group hover:bg-accent rounded-lg p-2 transition-colors duration-200"
+                                                    >
+                                                        <div className="flex items-start gap-3">
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="font-mono shrink-0 text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                                                            >
+                                                                {formatSecondsToTime(seg.startTime)}
+                                                            </Badge>
+                                                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                                                {seg.text}
+                                                            </p>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </ScrollArea>
+                                    </CardContent>
+                                )}
+                            </Card>
+                        )}
+
+                        {/* Zoom Chat Messages */}
+                        {chatMessages.length > 0 && (
+                            <Card>
+                                <CardHeader className="pb-3">
+                                    <button onClick={() => setShowChat(!showChat)} className="w-full">
+                                        <CardTitle className="flex items-center justify-between text-lg">
+                                            <span className="flex items-center gap-2">
+                                                <MessageSquare className="w-5 h-5 text-primary" />
+                                                チャット
+                                                <Badge variant="secondary" className="text-xs">
+                                                    {chatMessages.length}件
+                                                </Badge>
+                                            </span>
+                                            <span className="text-sm text-muted-foreground">
+                                                {showChat ? "閉じる" : "表示する"}
+                                            </span>
+                                        </CardTitle>
+                                    </button>
+                                </CardHeader>
+                                {showChat && (
+                                    <CardContent>
+                                        <ScrollArea className="h-[400px]">
+                                            <div className="space-y-3">
+                                                {chatMessages.map((msg, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="rounded-lg p-3 bg-muted/50 border border-border/50"
+                                                    >
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <Badge variant="outline" className="font-mono text-xs">
+                                                                {msg.time}
+                                                            </Badge>
+                                                            <span className="text-sm font-medium">{msg.sender}</span>
+                                                        </div>
+                                                        <p className="text-sm text-muted-foreground pl-1">
+                                                            {msg.message}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </ScrollArea>
+                                    </CardContent>
+                                )}
+                            </Card>
+                        )}
+                    </div>
+                )}
+
+                {/* Raw Transcription (fallback if VTT parsing yields nothing but text exists) */}
+                {video.transcription && transcriptionSegments.length === 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <Mic className="w-5 h-5 text-primary" />
+                                文字起こし
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ScrollArea className="h-[300px]">
+                                <p className="whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">
+                                    {video.transcription}
+                                </p>
+                            </ScrollArea>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Raw Chat (fallback if chat parsing yields nothing but text exists) */}
+                {video.zoomChatMessages && chatMessages.length === 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <MessageSquare className="w-5 h-5 text-primary" />
+                                Zoomチャット
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ScrollArea className="h-[300px]">
+                                <p className="whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">
+                                    {video.zoomChatMessages}
+                                </p>
+                            </ScrollArea>
                         </CardContent>
                     </Card>
                 )}

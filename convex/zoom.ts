@@ -4,6 +4,32 @@ import { internalMutation, mutation, query } from "./_generated/server";
 import { safeCompare } from "./lib/safeCompare";
 
 // ============================
+// Query: Get latest Zoom recording date
+// ============================
+export const getLatestZoomVideoDate = query({
+    args: {
+        secret: v.string(),
+    },
+    handler: async (ctx, args) => {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+
+        const latestZoomVideo = await ctx.db
+            .query("videos")
+            .filter((q) => q.eq(q.field("source"), "zoom"))
+            .order("desc")
+            .first();
+
+        if (!latestZoomVideo) {
+            return null;
+        }
+
+        return latestZoomVideo.createdAt;
+    },
+});
+
+// ============================
 // Idempotency: Check if event already processed
 // ============================
 export const checkZoomEventProcessed = query({
@@ -120,6 +146,27 @@ export const createZoomDraftVideo = mutation({
         });
 
         return videoId;
+    },
+});
+
+// ============================
+// Query: Check if Zoom meeting is already registered
+// ============================
+export const isZoomMeetingImported = query({
+    args: {
+        meetingId: v.string(),
+        secret: v.string(),
+    },
+    handler: async (ctx, args) => {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+
+        const existing = await ctx.db
+            .query("videos")
+            .filter((q) => q.eq(q.field("zoomMeetingId"), args.meetingId))
+            .first();
+        return !!existing;
     },
 });
 
