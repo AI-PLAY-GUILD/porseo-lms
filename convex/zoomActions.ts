@@ -27,9 +27,14 @@ export const ingestToMux = internalAction({
         videoId: v.id("videos"),
         mp4DownloadUrl: v.string(),
         vttDownloadUrl: v.string(), // empty string if no VTT
+        chatDownloadUrl: v.optional(v.string()), // empty string if no chat
     },
     handler: async (ctx, args) => {
-        console.log("[zoomActions:ingestToMux] 開始", { videoId: args.videoId, hasVtt: !!args.vttDownloadUrl });
+        console.log("[zoomActions:ingestToMux] 開始", {
+            videoId: args.videoId,
+            hasVtt: !!args.vttDownloadUrl,
+            hasChat: !!args.chatDownloadUrl,
+        });
         const tokenId = process.env.MUX_TOKEN_ID;
         const tokenSecret = process.env.MUX_TOKEN_SECRET;
 
@@ -118,6 +123,36 @@ export const ingestToMux = internalAction({
                         // Non-fatal: admin can add transcription manually later
                     }
             }
+
+            // 5. Download chat messages if available
+            if (args.chatDownloadUrl) {
+                console.log("[zoomActions:ingestToMux] チャットメッセージダウンロード開始");
+                const chatBaseUrl = args.chatDownloadUrl.split("?")[0];
+                if (!isValidZoomUrl(chatBaseUrl)) {
+                    console.error("[zoomActions:ingestToMux] 無効なChat URLドメイン:", chatBaseUrl);
+                } else {
+                    try {
+                        const chatResponse = await fetch(args.chatDownloadUrl);
+                        if (chatResponse.ok) {
+                            const chatText = await chatResponse.text();
+                            if (chatText && chatText.trim().length > 0) {
+                                console.log("[zoomActions:ingestToMux] チャットメッセージ保存", {
+                                    chatLength: chatText.length,
+                                });
+                                // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
+                                await ctx.runMutation((internal as any).zoom.updateVideoChatMessages, {
+                                    videoId: args.videoId,
+                                    chatMessages: chatText,
+                                });
+                            }
+                        }
+                    } catch (chatError) {
+                        console.error("[zoomActions:ingestToMux] チャット取得エラー:", chatError);
+                        // Non-fatal: chat is optional
+                    }
+                }
+            }
+
             console.log("[zoomActions:ingestToMux] 完了", { videoId: args.videoId });
         } catch (error) {
             console.error("[zoomActions:ingestToMux] エラー:", error);

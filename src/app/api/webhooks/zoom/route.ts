@@ -141,6 +141,9 @@ export async function POST(req: Request) {
         (f: ZoomRecordingFile) => f.file_type === "TRANSCRIPT" || f.recording_type === "audio_transcript",
     );
 
+    // Chat file
+    const chatFile = recordingFiles.find((f: ZoomRecordingFile) => f.file_type === "CHAT");
+
     if (!mp4File) {
         console.error("No completed MP4 recording file found in Zoom payload");
         return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -155,9 +158,14 @@ export async function POST(req: Request) {
         console.error("Invalid VTT download URL domain:", vttFile.download_url);
         return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
+    if (chatFile && !isValidZoomUrl(chatFile.download_url)) {
+        console.error("Invalid Chat download URL domain:", chatFile.download_url);
+        return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    }
 
     const mp4Url = `${mp4File.download_url}?access_token=${downloadToken}`;
     const vttUrl = vttFile ? `${vttFile.download_url}?access_token=${downloadToken}` : "";
+    const chatUrl = chatFile ? `${chatFile.download_url}?access_token=${downloadToken}` : "";
 
     // Calculate duration from recording timestamps
     let duration = 0;
@@ -173,6 +181,7 @@ export async function POST(req: Request) {
             meetingTopic,
             mp4DownloadUrl: mp4Url,
             vttDownloadUrl: vttUrl,
+            chatDownloadUrl: chatUrl,
             recordingFileId: mp4File.id || `${meetingId}_${eventTs}`,
             duration,
             eventId,
