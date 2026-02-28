@@ -2,7 +2,8 @@
 
 import { SignOutButton } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
-import { CreditCard, LogOut, Mail, Shield, User } from "lucide-react";
+import { CreditCard, LogOut, Mail, Settings, Shield, User } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -128,6 +129,20 @@ export default function ProfilePage() {
                                     {isPremium ? "プレミアム会員" : "無料会員"}
                                 </Badge>
                             </div>
+                            {userData.isAdmin && (
+                                <div className="mt-3">
+                                    <Button
+                                        asChild
+                                        size="sm"
+                                        className="gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                                    >
+                                        <Link href="/admin">
+                                            <Settings className="w-4 h-4" />
+                                            管理ページへ遷移
+                                        </Link>
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
