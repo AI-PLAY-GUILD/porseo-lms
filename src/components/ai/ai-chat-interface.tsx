@@ -16,21 +16,31 @@ const SUGGESTIONS = [
     "初心者向けのおすすめ動画は？",
 ];
 
-function VideoCard({ videoId, muxPlaybackId, title }: { videoId: string; muxPlaybackId?: string; title: string }) {
+interface VideoInfo {
+    videoId: string;
+    title: string;
+    muxPlaybackId?: string | null;
+}
+
+function VideoCard({
+    videoId,
+    muxPlaybackId,
+    title,
+}: {
+    videoId: string;
+    muxPlaybackId?: string | null;
+    title: string;
+}) {
     const thumbnailUrl = muxPlaybackId
         ? `https://image.mux.com/${muxPlaybackId}/thumbnail.jpg?width=480&height=270&fit_mode=smartcrop`
         : null;
 
     return (
-        <Link href={`/videos/${videoId}`} className="block my-3 no-underline group">
+        <Link href={`/videos/${videoId}`} className="block no-underline group">
             <div className="rounded-xl border-2 border-black bg-cream overflow-hidden brutal-shadow-sm hover:translate-y-[-2px] transition-all duration-200">
                 {thumbnailUrl ? (
                     <div className="relative aspect-video bg-gray-200">
-                        <img
-                            src={thumbnailUrl}
-                            alt={title}
-                            className="w-full h-full object-cover !my-0 !border-0 !rounded-none"
-                        />
+                        <img src={thumbnailUrl} alt={title} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                             <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
@@ -43,7 +53,7 @@ function VideoCard({ videoId, muxPlaybackId, title }: { videoId: string; muxPlay
                     </div>
                 )}
                 <div className="px-3 py-2 border-t-2 border-black flex items-center justify-between gap-2">
-                    <p className="font-black text-sm text-black truncate !my-0">{title}</p>
+                    <p className="font-black text-sm text-black truncate">{title}</p>
                     <ExternalLink className="w-4 h-4 text-gray-400 shrink-0" />
                 </div>
             </div>
@@ -51,9 +61,48 @@ function VideoCard({ videoId, muxPlaybackId, title }: { videoId: string; muxPlay
     );
 }
 
-function getMessageText(message: { parts?: Array<{ type: string; text?: string }> }): string {
-    if (!message.parts) return "";
-    return message.parts
+// biome-ignore lint/suspicious/noExplicitAny: AI SDK v6 の parts 型は複雑なため any を使用
+function extractVideosFromParts(parts: Array<any>): VideoInfo[] {
+    const videos: VideoInfo[] = [];
+    const seen = new Set<string>();
+
+    for (const part of parts) {
+        if (part.type !== "tool-invocation" || part.state !== "result") continue;
+        const result = part.result;
+        if (!result) continue;
+
+        if (part.toolName === "listVideos" && Array.isArray(result.videos)) {
+            for (const v of result.videos) {
+                if (v.videoId && !seen.has(v.videoId)) {
+                    seen.add(v.videoId);
+                    videos.push({
+                        videoId: v.videoId,
+                        title: v.title || "動画",
+                        muxPlaybackId: v.muxPlaybackId,
+                    });
+                }
+            }
+        }
+
+        if (part.toolName === "searchVideos" && Array.isArray(result.results)) {
+            for (const r of result.results) {
+                if (r.videoId && !seen.has(r.videoId)) {
+                    seen.add(r.videoId);
+                    videos.push({
+                        videoId: r.videoId,
+                        title: r.videoTitle || "動画",
+                        muxPlaybackId: r.muxPlaybackId,
+                    });
+                }
+            }
+        }
+    }
+
+    return videos;
+}
+
+function getMessageText(parts: Array<{ type: string; text?: string }>): string {
+    return parts
         .filter((part): part is { type: "text"; text: string } => part.type === "text" && !!part.text)
         .map((part) => part.text)
         .join("");
@@ -69,9 +118,6 @@ export function AiChatInterface() {
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const isLoading = status === "streaming" || status === "submitted";
 
-    console.log("[AiChatInterface] status:", status, "messages:", messages.length);
-
-    // エラーログ
     useEffect(() => {
         if (error) {
             console.error("[AiChatInterface] チャットエラー:", error);
@@ -91,7 +137,6 @@ export function AiChatInterface() {
     const handleSend = () => {
         const text = input.trim();
         if (!text || isLoading) return;
-        console.log("[AiChatInterface] メッセージ送信:", text);
         setInput("");
         sendMessage({ text });
     };
@@ -102,7 +147,7 @@ export function AiChatInterface() {
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+        if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSend();
         }
@@ -138,8 +183,11 @@ export function AiChatInterface() {
                     </div>
                 ) : (
                     messages.map((message) => {
-                        const text = getMessageText(message);
-                        if (!text) return null;
+                        const parts = message.parts || [];
+                        const text = getMessageText(parts);
+                        const videos = message.role === "assistant" ? extractVideosFromParts(parts) : [];
+                        if (!text && videos.length === 0) return null;
+
                         return (
                             <div
                                 key={message.id}
@@ -157,31 +205,23 @@ export function AiChatInterface() {
                                             : "bg-white brutal-shadow-sm"
                                     }`}
                                 >
-                                    <div className="prose prose-sm max-w-none text-black prose-headings:font-black prose-headings:text-black prose-headings:mt-3 prose-headings:mb-1.5 prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-p:leading-relaxed prose-strong:font-black prose-strong:text-black prose-a:text-pop-purple prose-a:font-bold prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-pop-purple/70 prose-ul:my-2 prose-ul:pl-4 prose-ol:my-2 prose-ol:pl-4 prose-li:my-1 prose-li:leading-relaxed prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-code:font-mono prose-code:border prose-code:border-gray-300 prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:border-2 prose-pre:border-black prose-pre:my-3 prose-blockquote:border-l-4 prose-blockquote:border-pop-purple prose-blockquote:bg-pop-purple/5 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:my-2 prose-blockquote:rounded-r-lg prose-hr:my-3 prose-hr:border-gray-300">
-                                        <ReactMarkdown
-                                            remarkPlugins={[remarkGfm]}
-                                            components={{
-                                                img: ({ src, alt }) => {
-                                                    const srcStr = typeof src === "string" ? src : "";
-                                                    if (srcStr.startsWith("VIDEO_CARD:")) {
-                                                        const parts = srcStr.replace("VIDEO_CARD:", "").split(":");
-                                                        const videoId = parts[0];
-                                                        const muxPlaybackId = parts[1] || undefined;
-                                                        return (
-                                                            <VideoCard
-                                                                videoId={videoId}
-                                                                muxPlaybackId={muxPlaybackId}
-                                                                title={alt || "動画"}
-                                                            />
-                                                        );
-                                                    }
-                                                    return <img src={srcStr} alt={alt || ""} />;
-                                                },
-                                            }}
-                                        >
-                                            {text}
-                                        </ReactMarkdown>
-                                    </div>
+                                    {text && (
+                                        <div className="prose prose-sm max-w-none text-black prose-headings:font-black prose-headings:text-black prose-headings:mt-3 prose-headings:mb-1.5 prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-p:leading-relaxed prose-strong:font-black prose-strong:text-black prose-a:text-pop-purple prose-a:font-bold prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-pop-purple/70 prose-ul:my-2 prose-ul:pl-4 prose-ol:my-2 prose-ol:pl-4 prose-li:my-1 prose-li:leading-relaxed prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-code:font-mono prose-code:border prose-code:border-gray-300 prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:border-2 prose-pre:border-black prose-pre:my-3 prose-blockquote:border-l-4 prose-blockquote:border-pop-purple prose-blockquote:bg-pop-purple/5 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:my-2 prose-blockquote:rounded-r-lg prose-hr:my-3 prose-hr:border-gray-300 prose-img:hidden">
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+                                        </div>
+                                    )}
+                                    {videos.length > 0 && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                                            {videos.map((v) => (
+                                                <VideoCard
+                                                    key={v.videoId}
+                                                    videoId={v.videoId}
+                                                    muxPlaybackId={v.muxPlaybackId}
+                                                    title={v.title}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 {message.role === "user" && (
                                     <div className="w-8 h-8 rounded-lg bg-pop-green border-2 border-black brutal-shadow-sm flex items-center justify-center shrink-0 mt-1">

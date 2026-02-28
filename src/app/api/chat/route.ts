@@ -27,18 +27,13 @@ const SYSTEM_PROMPT = `あなたはPORSEOの学習アシスタントです。
 - 段落間に空行を入れる
 
 ## 動画の紹介フォーマット
-動画を紹介する際は必ず以下の形式で（videoIdとmuxPlaybackIdは検索結果から取得した値をそのまま使うこと）：
+動画のサムネイルカードはUIが自動表示するので、テキストでは以下の情報だけ書いてください：
 
-![動画タイトル](VIDEO_CARD:videoId:muxPlaybackId)
-**概要**: 1〜2文の説明
+- **動画タイトル**を太字で書く
+- 1〜2文の簡潔な概要
+- 該当箇所がある場合: **⏱ 0:00 〜 0:00**
 
-該当箇所がある場合: **⏱ 0:00 〜 0:00**
-
----
-
-重要: \`VIDEO_CARD:videoId:muxPlaybackId\` の部分は、実際のvideoIdとmuxPlaybackIdの値に置き換えてください。
-例: \`![Claude Code入門](VIDEO_CARD:jh71pca01vnrkph6mznx5se4m17xbgc9:abc123def456)\`
-muxPlaybackIdがnullの場合は省略可: \`![タイトル](VIDEO_CARD:videoId)\``;
+画像タグ(\`![]()\`)は絶対に使わないでください。`;
 
 export async function POST(req: Request) {
     console.log("[chat] STEP 0: リクエスト受信", { method: "POST" });
