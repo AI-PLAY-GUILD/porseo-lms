@@ -106,6 +106,74 @@ export const createZoomDraftVideo = mutation({
 });
 
 // ============================
+// Manual import: Create video from Zoom recording URL (admin UI)
+// ============================
+export const createZoomManualImportVideo = mutation({
+    args: {
+        meetingId: v.string(),
+        meetingTopic: v.string(),
+        mp4DownloadUrl: v.string(),
+        vttDownloadUrl: v.string(),
+        chatMessages: v.optional(v.string()),
+        duration: v.number(),
+        secret: v.string(),
+    },
+    handler: async (ctx, args) => {
+        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
+            throw new Error("Unauthorized: Invalid secret");
+        }
+
+        const safeTopic = args.meetingTopic.slice(0, 200);
+        const title = `【Zoom】${safeTopic}`.slice(0, 200);
+
+        // 「非公開」タグを取得 or 作成
+        let unpublishedTag = await ctx.db
+            .query("tags")
+            .withIndex("by_slug", (q) => q.eq("slug", "非公開"))
+            .first();
+
+        if (!unpublishedTag) {
+            const tagId = await ctx.db.insert("tags", {
+                name: "非公開",
+                slug: "非公開",
+                createdAt: Date.now(),
+            });
+            unpublishedTag = await ctx.db.get(tagId);
+        }
+
+        const videoId = await ctx.db.insert("videos", {
+            title,
+            description: `Zoom ミーティング (ID: ${args.meetingId}) の手動取り込み録画`,
+            isPublished: false,
+            duration: Math.round(args.duration),
+            zoomMeetingId: args.meetingId,
+            zoomChatMessages: args.chatMessages || undefined,
+            source: "zoom",
+            tags: unpublishedTag ? [unpublishedTag._id] : [],
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+        });
+
+        await ctx.db.insert("auditLogs", {
+            action: "video.create.zoom_manual",
+            targetType: "video",
+            targetId: videoId,
+            details: `Zoom manual import: ${safeTopic} (Meeting ID: ${args.meetingId})`.slice(0, 500),
+            createdAt: Date.now(),
+        });
+
+        // biome-ignore lint/suspicious/noExplicitAny: zoomActions module not yet in generated API types
+        await ctx.scheduler.runAfter(0, (internal as any).zoomActions.ingestToMux, {
+            videoId,
+            mp4DownloadUrl: args.mp4DownloadUrl,
+            vttDownloadUrl: args.vttDownloadUrl,
+        });
+
+        return videoId;
+    },
+});
+
+// ============================
 // Internal Mutations (called by zoomActions.ts)
 // ============================
 export const updateVideoMuxInfo = internalMutation({

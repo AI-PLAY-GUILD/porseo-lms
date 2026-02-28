@@ -53,6 +53,7 @@ export default defineSchema({
         // Zoom integration fields
         zoomMeetingId: v.optional(v.string()),
         zoomRecordingId: v.optional(v.string()),
+        zoomChatMessages: v.optional(v.string()),
         source: v.optional(v.string()), // "zoom" | "manual" | "upload"
         createdAt: v.number(),
         updatedAt: v.number(),
