@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { convex } from "@/lib/convex";
 import { getConvexInternalSecret } from "@/lib/env";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { api } from "../../../../convex/_generated/api";
 
 export async function POST(_req: Request) {
@@ -64,7 +64,7 @@ export async function POST(_req: Request) {
             ...(stripeCustomerId ? { customer: stripeCustomerId } : {}),
         };
 
-        const session = await stripe.checkout.sessions.create(sessionParams);
+        const session = await getStripe().checkout.sessions.create(sessionParams);
 
         console.log("[create-checkout-session] 成功: セッション作成完了", { sessionId: session.id });
         return NextResponse.json({ url: session.url });

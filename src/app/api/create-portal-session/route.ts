@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { convex } from "@/lib/convex";
 import { getConvexInternalSecret } from "@/lib/env";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { api } from "../../../../convex/_generated/api";
 
 export async function POST(_req: Request) {
@@ -31,7 +31,7 @@ export async function POST(_req: Request) {
         }
 
         // Create Portal Session
-        const session = await stripe.billingPortal.sessions.create({
+        const session = await getStripe().billingPortal.sessions.create({
             customer: user.stripeCustomerId,
             return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/profile`,
         });

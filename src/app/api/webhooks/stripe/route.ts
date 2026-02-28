@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { convex } from "@/lib/convex";
 import { getConvexInternalSecret } from "@/lib/env";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { api } from "../../../../../convex/_generated/api";
 
 // Initialize Discord REST client
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
         if (!process.env.STRIPE_WEBHOOK_SECRET) {
             throw new Error("STRIPE_WEBHOOK_SECRET is missing");
         }
-        event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET);
+        event = getStripe().webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET);
     } catch (error: unknown) {
         console.error(
             `[webhooks/stripe] エラー: Webhook署名検証失敗: ${error instanceof Error ? error.message : String(error)}`,
@@ -129,7 +129,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     }
 
     // Retrieve the session with line_items expanded to get the product name
-    const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+    const fullSession = await getStripe().checkout.sessions.retrieve(session.id, {
         expand: ["line_items"],
     });
 
