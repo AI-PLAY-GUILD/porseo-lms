@@ -67,9 +67,17 @@ function extractVideosFromParts(parts: Array<any>): VideoInfo[] {
     const seen = new Set<string>();
 
     for (const part of parts) {
-        // AI SDK v6: ツールパーツは type="tool-{toolName}", state="output-available", 結果は output
-        if (!part.type?.startsWith("tool-") || part.state !== "output-available") continue;
-        const toolName = part.type.slice(5);
+        if (part.state !== "output-available") continue;
+
+        // AI SDK v6: 静的ツール → type="tool-{name}", 動的ツール → type="dynamic-tool" + toolName
+        let toolName: string | undefined;
+        if (part.type === "dynamic-tool" && part.toolName) {
+            toolName = part.toolName;
+        } else if (part.type?.startsWith("tool-")) {
+            toolName = part.type.slice(5);
+        }
+        if (!toolName) continue;
+
         const result = part.output;
         if (!result) continue;
 
