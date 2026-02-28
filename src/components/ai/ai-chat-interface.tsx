@@ -110,6 +110,31 @@ function getMessageText(parts: Array<{ type: string; text?: string }>): string {
         .join("");
 }
 
+type ContentBlock = { type: "text"; content: string } | { type: "video"; video: VideoInfo };
+
+function buildInterleavedContent(text: string, videos: VideoInfo[]): ContentBlock[] {
+    if (!text) return [];
+    if (videos.length === 0) return [{ type: "text", content: text }];
+
+    // 番号付きセクション（1. 2. 3. ...）で分割
+    const sections = text.split(/(?=\n\d+\.\s)/);
+    const blocks: ContentBlock[] = [];
+    const usedIds = new Set<string>();
+
+    for (const section of sections) {
+        blocks.push({ type: "text", content: section });
+
+        // このセクション内にタイトルが含まれる動画を探す
+        const match = videos.find((v) => !usedIds.has(v.videoId) && section.includes(v.title));
+        if (match) {
+            usedIds.add(match.videoId);
+            blocks.push({ type: "video", video: match });
+        }
+    }
+
+    return blocks;
+}
+
 export function AiChatInterface() {
     const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
 
@@ -207,22 +232,25 @@ export function AiChatInterface() {
                                             : "bg-white brutal-shadow-sm"
                                     }`}
                                 >
-                                    {text && (
-                                        <div className="prose prose-sm max-w-none text-black prose-headings:font-black prose-headings:text-black prose-headings:mt-3 prose-headings:mb-1.5 prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-p:leading-relaxed prose-strong:font-black prose-strong:text-black prose-a:text-pop-purple prose-a:font-bold prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-pop-purple/70 prose-ul:my-2 prose-ul:pl-4 prose-ol:my-2 prose-ol:pl-4 prose-li:my-1 prose-li:leading-relaxed prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-code:font-mono prose-code:border prose-code:border-gray-300 prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:border-2 prose-pre:border-black prose-pre:my-3 prose-blockquote:border-l-4 prose-blockquote:border-pop-purple prose-blockquote:bg-pop-purple/5 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:my-2 prose-blockquote:rounded-r-lg prose-hr:my-3 prose-hr:border-gray-300 prose-img:hidden">
-                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
-                                        </div>
-                                    )}
-                                    {videos.length > 0 && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                                            {videos.map((v) => (
+                                    {buildInterleavedContent(text, videos).map((block, i) =>
+                                        block.type === "text" ? (
+                                            <div
+                                                key={`t-${i}`}
+                                                className="prose prose-sm max-w-none text-black prose-headings:font-black prose-headings:text-black prose-headings:mt-3 prose-headings:mb-1.5 prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-p:leading-relaxed prose-strong:font-black prose-strong:text-black prose-a:text-pop-purple prose-a:font-bold prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-pop-purple/70 prose-ul:my-2 prose-ul:pl-4 prose-ol:my-2 prose-ol:pl-4 prose-li:my-1 prose-li:leading-relaxed prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-code:font-mono prose-code:border prose-code:border-gray-300 prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:border-2 prose-pre:border-black prose-pre:my-3 prose-blockquote:border-l-4 prose-blockquote:border-pop-purple prose-blockquote:bg-pop-purple/5 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:my-2 prose-blockquote:rounded-r-lg prose-hr:my-3 prose-hr:border-gray-300 prose-img:hidden"
+                                            >
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                    {block.content}
+                                                </ReactMarkdown>
+                                            </div>
+                                        ) : (
+                                            <div key={`v-${block.video.videoId}`} className="my-3">
                                                 <VideoCard
-                                                    key={v.videoId}
-                                                    videoId={v.videoId}
-                                                    muxPlaybackId={v.muxPlaybackId}
-                                                    title={v.title}
+                                                    videoId={block.video.videoId}
+                                                    muxPlaybackId={block.video.muxPlaybackId}
+                                                    title={block.video.title}
                                                 />
-                                            ))}
-                                        </div>
+                                            </div>
+                                        ),
                                     )}
                                 </div>
                                 {message.role === "user" && (
