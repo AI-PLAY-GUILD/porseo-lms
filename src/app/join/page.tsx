@@ -477,10 +477,9 @@ export default function JoinPage() {
                     width: 100%;
                     display: flex; flex-direction: column; align-items: center; gap: 1.2rem;
                     padding: 2.25rem 2rem;
-                    background: rgba(255,255,255,0.88);
+                    background: rgba(255,255,255,0.95);
                     border: 1px solid rgba(14,165,233,0.16);
                     border-radius: 28px;
-                    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
                     box-shadow:
                         0 0 0 1px rgba(14,165,233,0.07),
                         0 24px 60px rgba(14,165,233,0.10),

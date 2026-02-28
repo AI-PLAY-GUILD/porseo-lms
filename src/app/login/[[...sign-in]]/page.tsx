@@ -190,16 +190,14 @@ export default function LoginPage() {
                     flex-direction: column;
                     align-items: center;
                     gap: 1.1rem;
-                    background: rgba(255,255,255,0.85);
+                    background: rgba(255,255,255,0.95);
                     border: 1px solid rgba(14,165,233,0.18);
                     border-radius: 28px;
-                    backdrop-filter: blur(20px);
-                    -webkit-backdrop-filter: blur(20px);
                     box-shadow:
                         0 0 0 1px rgba(14,165,233,0.08),
                         0 24px 60px rgba(14,165,233,0.12),
                         0 4px 16px rgba(0,0,0,0.05);
-                    animation: auth-card-in 0.65s cubic-bezier(0.16,1,0.3,1) both;
+                    animation: auth-card-in 0.65s cubic-bezier(0.16,1,0.3,1) forwards;
                 }
                 @keyframes auth-card-in {
                     from { opacity: 0; transform: translateY(28px) scale(0.97); }
@@ -272,6 +270,11 @@ export default function LoginPage() {
                     border: none !important;
                     letter-spacing: 0.02em !important;
                     transition: opacity 0.2s, transform 0.2s !important;
+                    position: relative !important;
+                    z-index: 10 !important;
+                    -webkit-tap-highlight-color: transparent;
+                    touch-action: manipulation;
+                    -webkit-transform: translateZ(0);
                 }
                 .auth-submit-btn:hover { opacity: 0.88 !important; transform: translateY(-1px) !important; }
                 .auth-clerk-footer { display: none !important; }
