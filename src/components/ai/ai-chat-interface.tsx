@@ -67,11 +67,13 @@ function extractVideosFromParts(parts: Array<any>): VideoInfo[] {
     const seen = new Set<string>();
 
     for (const part of parts) {
-        if (part.type !== "tool-invocation" || part.state !== "result") continue;
-        const result = part.result;
+        // AI SDK v6: ツールパーツは type="tool-{toolName}", state="output-available", 結果は output
+        if (!part.type?.startsWith("tool-") || part.state !== "output-available") continue;
+        const toolName = part.type.slice(5);
+        const result = part.output;
         if (!result) continue;
 
-        if (part.toolName === "listVideos" && Array.isArray(result.videos)) {
+        if (toolName === "listVideos" && Array.isArray(result.videos)) {
             for (const v of result.videos) {
                 if (v.videoId && !seen.has(v.videoId)) {
                     seen.add(v.videoId);
@@ -84,7 +86,7 @@ function extractVideosFromParts(parts: Array<any>): VideoInfo[] {
             }
         }
 
-        if (part.toolName === "searchVideos" && Array.isArray(result.results)) {
+        if (toolName === "searchVideos" && Array.isArray(result.results)) {
             for (const r of result.results) {
                 if (r.videoId && !seen.has(r.videoId)) {
                     seen.add(r.videoId);
@@ -106,6 +108,60 @@ function getMessageText(parts: Array<{ type: string; text?: string }>): string {
         .filter((part): part is { type: "text"; text: string } => part.type === "text" && !!part.text)
         .map((part) => part.text)
         .join("");
+}
+
+type ContentBlock = { type: "text"; content: string } | { type: "video"; video: VideoInfo };
+
+function fuzzyTitleMatch(section: string, title: string): boolean {
+    const s = section.toLowerCase();
+    const t = title.toLowerCase();
+    // 完全一致
+    if (s.includes(t)) return true;
+    // タイトルの先頭から徐々に短くして部分一致を試みる（最低8文字）
+    const minLen = Math.min(8, t.length);
+    for (let len = t.length; len >= minLen; len--) {
+        if (s.includes(t.slice(0, len))) return true;
+    }
+    return false;
+}
+
+function buildInterleavedContent(text: string, videos: VideoInfo[]): ContentBlock[] {
+    if (!text) return [];
+    if (videos.length === 0) return [{ type: "text", content: text }];
+
+    // 番号付きセクション（1. 2. 3. ...）で分割
+    const sections = text.split(/(?=(?:^|\n)\d+\.\s)/m);
+    const blocks: ContentBlock[] = [];
+    const usedIds = new Set<string>();
+    let nextIdx = 0;
+
+    for (const section of sections) {
+        blocks.push({ type: "text", content: section });
+
+        // 番号付きセクションでなければスキップ（イントロ等）
+        if (!/(?:^|\n)\d+\.\s/.test(section)) continue;
+
+        // あいまいタイトルマッチを試みる
+        let match = videos.find((v) => !usedIds.has(v.videoId) && fuzzyTitleMatch(section, v.title));
+
+        // マッチしなければ順番で次の動画を割り当て
+        if (!match) {
+            while (nextIdx < videos.length && usedIds.has(videos[nextIdx].videoId)) {
+                nextIdx++;
+            }
+            if (nextIdx < videos.length) {
+                match = videos[nextIdx];
+                nextIdx++;
+            }
+        }
+
+        if (match) {
+            usedIds.add(match.videoId);
+            blocks.push({ type: "video", video: match });
+        }
+    }
+
+    return blocks;
 }
 
 export function AiChatInterface() {
@@ -205,22 +261,25 @@ export function AiChatInterface() {
                                             : "bg-white brutal-shadow-sm"
                                     }`}
                                 >
-                                    {text && (
-                                        <div className="prose prose-sm max-w-none text-black prose-headings:font-black prose-headings:text-black prose-headings:mt-3 prose-headings:mb-1.5 prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-p:leading-relaxed prose-strong:font-black prose-strong:text-black prose-a:text-pop-purple prose-a:font-bold prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-pop-purple/70 prose-ul:my-2 prose-ul:pl-4 prose-ol:my-2 prose-ol:pl-4 prose-li:my-1 prose-li:leading-relaxed prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-code:font-mono prose-code:border prose-code:border-gray-300 prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:border-2 prose-pre:border-black prose-pre:my-3 prose-blockquote:border-l-4 prose-blockquote:border-pop-purple prose-blockquote:bg-pop-purple/5 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:my-2 prose-blockquote:rounded-r-lg prose-hr:my-3 prose-hr:border-gray-300 prose-img:hidden">
-                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
-                                        </div>
-                                    )}
-                                    {videos.length > 0 && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                                            {videos.map((v) => (
+                                    {buildInterleavedContent(text, videos).map((block, i) =>
+                                        block.type === "text" ? (
+                                            <div
+                                                key={`t-${i}`}
+                                                className="prose prose-sm max-w-none text-black prose-headings:font-black prose-headings:text-black prose-headings:mt-3 prose-headings:mb-1.5 prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-p:leading-relaxed prose-strong:font-black prose-strong:text-black prose-a:text-pop-purple prose-a:font-bold prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-pop-purple/70 prose-ul:my-2 prose-ul:pl-4 prose-ol:my-2 prose-ol:pl-4 prose-li:my-1 prose-li:leading-relaxed prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-code:font-mono prose-code:border prose-code:border-gray-300 prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:border-2 prose-pre:border-black prose-pre:my-3 prose-blockquote:border-l-4 prose-blockquote:border-pop-purple prose-blockquote:bg-pop-purple/5 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:my-2 prose-blockquote:rounded-r-lg prose-hr:my-3 prose-hr:border-gray-300 prose-img:hidden"
+                                            >
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                    {block.content}
+                                                </ReactMarkdown>
+                                            </div>
+                                        ) : (
+                                            <div key={`v-${block.video.videoId}`} className="my-3">
                                                 <VideoCard
-                                                    key={v.videoId}
-                                                    videoId={v.videoId}
-                                                    muxPlaybackId={v.muxPlaybackId}
-                                                    title={v.title}
+                                                    videoId={block.video.videoId}
+                                                    muxPlaybackId={block.video.muxPlaybackId}
+                                                    title={block.video.title}
                                                 />
-                                            ))}
-                                        </div>
+                                            </div>
+                                        ),
                                     )}
                                 </div>
                                 {message.role === "user" && (
