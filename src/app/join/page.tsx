@@ -413,6 +413,7 @@ export default function JoinPage() {
                         radial-gradient(ellipse 55% 45% at 90% 95%, rgba(6,182,212,0.12) 0%, transparent 60%),
                         radial-gradient(ellipse 80% 70% at 50% 50%, #f0f9ff 0%, #e0f2fe 100%);
                     z-index: 0;
+                    pointer-events: none;
                 }
                 .join-grid {
                     position: absolute; inset: 0;
@@ -422,8 +423,9 @@ export default function JoinPage() {
                     background-size: 56px 56px;
                     z-index: 1;
                     mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, black, transparent);
+                    pointer-events: none;
                 }
-                .join-orb { position: absolute; border-radius: 50%; filter: blur(90px); z-index: 0; }
+                .join-orb { position: absolute; border-radius: 50%; filter: blur(90px); z-index: 0; pointer-events: none; }
                 .join-orb-1 {
                     width: 420px; height: 420px;
                     background: radial-gradient(circle, rgba(56,189,248,0.20) 0%, transparent 70%);

@@ -137,6 +137,7 @@ export default function LoginPage() {
                         radial-gradient(ellipse 55% 45% at 90% 100%, rgba(6,182,212,0.12) 0%, transparent 60%),
                         radial-gradient(ellipse 80% 70% at 50% 50%, #f0f9ff 0%, #e0f2fe 100%);
                     z-index: 0;
+                    pointer-events: none;
                 }
                 .auth-grid {
                     position: absolute;
@@ -147,6 +148,7 @@ export default function LoginPage() {
                     background-size: 56px 56px;
                     z-index: 1;
                     mask-image: radial-gradient(ellipse 65% 65% at 50% 50%, black, transparent);
+                    pointer-events: none;
                 }
                 .auth-orb {
                     position: absolute;
@@ -154,6 +156,7 @@ export default function LoginPage() {
                     filter: blur(80px);
                     z-index: 0;
                     animation: auth-orb-float 12s ease-in-out infinite;
+                    pointer-events: none;
                 }
                 .auth-orb-1 {
                     width: 380px; height: 380px;
