@@ -220,6 +220,18 @@ export function AiChatInterface() {
                         const parts = message.parts || [];
                         const text = getMessageText(parts);
                         const videos = message.role === "assistant" ? extractVideosFromParts(parts) : [];
+                        // DEBUG: パーツ構造を確認（本番で一時的に表示）
+                        const debugParts =
+                            message.role === "assistant"
+                                ? parts
+                                      .filter((p: { type: string }) => p.type !== "text")
+                                      .map((p: { type: string; state?: string; toolName?: string }) => ({
+                                          type: p.type,
+                                          state: p.state,
+                                          toolName: (p as Record<string, unknown>).toolName,
+                                          hasOutput: !!(p as Record<string, unknown>).output,
+                                      }))
+                                : [];
                         if (!text && videos.length === 0) return null;
 
                         return (
@@ -239,6 +251,25 @@ export function AiChatInterface() {
                                             : "bg-white brutal-shadow-sm"
                                     }`}
                                 >
+                                    {/* DEBUG INFO */}
+                                    {debugParts.length > 0 && (
+                                        <div className="text-[10px] bg-yellow-100 p-2 rounded mb-2 break-all">
+                                            <div>
+                                                parts({parts.length}):{" "}
+                                                {debugParts
+                                                    .map(
+                                                        (d: {
+                                                            type: string;
+                                                            state?: string;
+                                                            toolName?: string;
+                                                            hasOutput: boolean;
+                                                        }) => `${d.type}|${d.state}|${d.toolName}|out:${d.hasOutput}`,
+                                                    )
+                                                    .join(", ")}
+                                            </div>
+                                            <div>videos: {videos.length}</div>
+                                        </div>
+                                    )}
                                     {buildInterleavedContent(text, videos).map((block, i) =>
                                         block.type === "text" ? (
                                             <div
