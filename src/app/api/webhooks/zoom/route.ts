@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { convex } from "@/lib/convex";
+import { getConvexInternalSecret } from "@/lib/env";
 import { api } from "../../../../../convex/_generated/api";
 
 const ZOOM_WEBHOOK_SECRET = process.env.ZOOM_WEBHOOK_SECRET_TOKEN;
@@ -109,7 +110,7 @@ export async function POST(req: Request) {
         // biome-ignore lint/suspicious/noExplicitAny: zoom module not yet in generated API types
         const alreadyProcessed = await convex.query((api as any).zoom.checkZoomEventProcessed, {
             eventId,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            secret: getConvexInternalSecret(),
         });
         if (alreadyProcessed) {
             console.log("[webhooks/zoom] 重複イベントをスキップ", { eventId });
@@ -185,7 +186,7 @@ export async function POST(req: Request) {
             recordingFileId: mp4File.id || `${meetingId}_${eventTs}`,
             duration,
             eventId,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            secret: getConvexInternalSecret(),
         });
     } catch (error: unknown) {
         console.error("[webhooks/zoom] エラー: Zoomドラフト動画作成失敗:", error);

@@ -5,7 +5,7 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
-import { safeCompare } from "./lib/safeCompare";
+import { validateInternalSecret } from "./lib/requireSecret";
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 100;
@@ -303,10 +303,7 @@ export const searchTranscriptions = action({
     },
     handler: async (ctx, args): Promise<SearchResult[]> => {
         console.log("[rag:searchTranscriptions] 開始", { query: args.query, limit: args.limit });
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            console.log("[rag:searchTranscriptions] 認証失敗: 無効なsecret");
-            throw new Error("Unauthorized: Invalid secret");
-        }
+        validateInternalSecret(args.secret);
 
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {

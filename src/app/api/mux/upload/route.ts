@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import Mux from "@mux/mux-node";
 import { type NextRequest, NextResponse } from "next/server";
 import { convex } from "@/lib/convex";
+import { getConvexInternalSecret } from "@/lib/env";
 import { api } from "../../../../../convex/_generated/api";
 
 const mux = new Mux({
@@ -21,7 +22,7 @@ export async function POST(_req: NextRequest) {
 
         const user = await convex.query(api.users.getUserByClerkIdServer, {
             clerkId: userId,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            secret: getConvexInternalSecret(),
         });
         if (!user?.isAdmin) {
             console.log("[mux/upload] 管理者権限なし", { userId });

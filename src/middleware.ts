@@ -98,28 +98,43 @@ export default clerkMiddleware(async (_auth, request) => {
         }
     }
 
-    // CSRF protection: validate Origin header on state-changing API requests.
+    // CSRF protection: validate Origin/Referer on state-changing API requests.
     // Webhooks are excluded since they use signature verification.
+    const STATE_CHANGING_METHODS = ["POST", "PUT", "DELETE", "PATCH"];
     if (
-        request.method === "POST" &&
+        STATE_CHANGING_METHODS.includes(request.method) &&
         request.nextUrl.pathname.startsWith("/api/") &&
         !request.nextUrl.pathname.startsWith("/api/webhooks/")
     ) {
         const origin = request.headers.get("origin");
+        const referer = request.headers.get("referer");
+
+        const allowedOrigins = [
+            process.env.NEXT_PUBLIC_BASE_URL,
+            process.env.NEXT_PUBLIC_APP_URL,
+            request.nextUrl.origin,
+            "http://localhost:3000",
+        ].filter(Boolean);
+
         if (origin) {
-            const allowedOrigins = [
-                process.env.NEXT_PUBLIC_BASE_URL,
-                process.env.NEXT_PUBLIC_APP_URL,
-                request.nextUrl.origin,
-                "http://localhost:3000",
-            ].filter(Boolean);
-
-            console.log(`[middleware] CSRF check: origin=${origin}, allowed=${JSON.stringify(allowedOrigins)}`);
-
             if (!allowedOrigins.includes(origin)) {
-                console.log(`[middleware] CSRF BLOCKED: origin=${origin} not in allowedOrigins`);
+                console.log(`[middleware] CSRF BLOCKED: origin=${origin}`);
                 return NextResponse.json({ error: "Forbidden" }, { status: 403 });
             }
+        } else if (referer) {
+            try {
+                const refererOrigin = new URL(referer).origin;
+                if (!allowedOrigins.includes(refererOrigin)) {
+                    console.log(`[middleware] CSRF BLOCKED: referer=${refererOrigin}`);
+                    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+                }
+            } catch {
+                return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+            }
+        } else {
+            // OriginもRefererもない場合はブロック（正規ブラウザは必ずどちらかを送信する）
+            console.log(`[middleware] CSRF BLOCKED: no origin or referer header`);
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
     }
 });

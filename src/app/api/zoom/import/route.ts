@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { convex } from "@/lib/convex";
+import { getConvexInternalSecret } from "@/lib/env";
 import { getZoomAccessToken } from "@/lib/zoom";
 import { api } from "../../../../../convex/_generated/api";
 
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
 
         const user = await convex.query(api.users.getUserByClerkIdServer, {
             clerkId: userId,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            secret: getConvexInternalSecret(),
         });
         if (!user?.isAdmin) {
             return NextResponse.json({ error: "Admin access required" }, { status: 403 });
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
             vttDownloadUrl: vttUrlWithToken,
             chatMessages: chatText || undefined,
             duration: Number(duration) || 0,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            secret: getConvexInternalSecret(),
         });
 
         return NextResponse.json({ videoId });

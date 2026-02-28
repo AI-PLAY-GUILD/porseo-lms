@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { convex } from "@/lib/convex";
+import { getConvexInternalSecret } from "@/lib/env";
 import { api } from "../../../../convex/_generated/api";
 
 const discordToken = process.env.DISCORD_BOT_TOKEN;
@@ -44,7 +45,7 @@ export async function POST(_req: Request) {
         // 1. Get user from Convex
         const user = await convex.query(api.users.getUserByClerkIdServer, {
             clerkId: userId,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            secret: getConvexInternalSecret(),
         });
 
         if (!user) {
@@ -115,7 +116,7 @@ export async function POST(_req: Request) {
                 discordId: user.discordId,
                 subscriptionStatus: "active",
                 roleId: roleId,
-                secret: process.env.CONVEX_INTERNAL_SECRET || "",
+                secret: getConvexInternalSecret(),
             });
             console.log("[check-subscription] 成功: サブスクリプションをアクティブに更新", {
                 discordId: user.discordId,

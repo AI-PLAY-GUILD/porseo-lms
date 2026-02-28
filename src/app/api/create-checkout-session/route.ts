@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { convex } from "@/lib/convex";
+import { getConvexInternalSecret } from "@/lib/env";
 import { stripe } from "@/lib/stripe";
 import { api } from "../../../../convex/_generated/api";
 
@@ -26,7 +27,7 @@ export async function POST(_req: Request) {
         try {
             const user = await convex.query(api.users.getUserByClerkIdServer, {
                 clerkId: userId,
-                secret: process.env.CONVEX_INTERNAL_SECRET || "",
+                secret: getConvexInternalSecret(),
             });
             if (user) {
                 stripeCustomerId = user.stripeCustomerId;

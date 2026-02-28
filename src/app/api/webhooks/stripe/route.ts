@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { convex } from "@/lib/convex";
+import { getConvexInternalSecret } from "@/lib/env";
 import { stripe } from "@/lib/stripe";
 import { api } from "../../../../../convex/_generated/api";
 
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
     try {
         const alreadyProcessed = await convex.query(api.users.checkStripeEventProcessed, {
             eventId: event.id,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            secret: getConvexInternalSecret(),
         });
         if (alreadyProcessed) {
             console.log("[webhooks/stripe] 重複イベントをスキップ", { eventId: event.id });
@@ -84,7 +85,7 @@ export async function POST(req: Request) {
         await convex.mutation(api.users.markStripeEventProcessed, {
             eventId: event.id,
             eventType: event.type,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            secret: getConvexInternalSecret(),
         });
     } catch (error) {
         console.error("Failed to mark event as processed:", error);
@@ -114,7 +115,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     try {
         const user = await convex.query(api.users.getUserByClerkIdServer, {
             clerkId: clerkUserId,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            secret: getConvexInternalSecret(),
         });
         discordId = user?.discordId;
     } catch (error) {
@@ -141,7 +142,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         subscriptionStatus: "active",
         subscriptionName: subscriptionName,
         roleId: roleId,
-        secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        secret: getConvexInternalSecret(),
     });
 
     console.log("[webhooks/stripe] handleCheckoutSessionCompleted: サブスクリプション更新完了", {
@@ -172,14 +173,14 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     await convex.mutation(api.users.updateSubscriptionStatusByCustomerId, {
         stripeCustomerId: customerId,
         subscriptionStatus: "past_due",
-        secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        secret: getConvexInternalSecret(),
     });
 
     // Issue #58: Send Discord DM to notify user about payment failure
     try {
         const user = await convex.query(api.users.getUserByStripeCustomerId, {
             stripeCustomerId: customerId,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            secret: getConvexInternalSecret(),
         });
 
         if (user?.discordId && discordToken) {
@@ -219,7 +220,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     await convex.mutation(api.users.updateSubscriptionStatusByCustomerId, {
         stripeCustomerId: customerId,
         subscriptionStatus: "canceled",
-        secret: process.env.CONVEX_INTERNAL_SECRET || "",
+        secret: getConvexInternalSecret(),
     });
 
     // Remove Discord Role using user's discordId from Convex
@@ -227,7 +228,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     try {
         const user = await convex.query(api.users.getUserByStripeCustomerId, {
             stripeCustomerId: customerId,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            secret: getConvexInternalSecret(),
         });
 
         if (user?.discordId && discordToken && guildId && roleId) {

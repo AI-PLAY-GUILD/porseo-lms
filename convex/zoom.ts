@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { safeCompare } from "./lib/safeCompare";
+import { validateInternalSecret } from "./lib/requireSecret";
 
 // ============================
 // Query: Get latest Zoom recording date
@@ -11,9 +11,7 @@ export const getLatestZoomVideoDate = query({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            throw new Error("Unauthorized: Invalid secret");
-        }
+        validateInternalSecret(args.secret);
 
         const latestZoomVideo = await ctx.db
             .query("videos")
@@ -38,9 +36,7 @@ export const checkZoomEventProcessed = query({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            throw new Error("Unauthorized: Invalid secret");
-        }
+        validateInternalSecret(args.secret);
         const existing = await ctx.db
             .query("processedZoomEvents")
             .withIndex("by_event_id", (q) => q.eq("eventId", args.eventId))
@@ -66,9 +62,7 @@ export const createZoomDraftVideo = mutation({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            throw new Error("Unauthorized: Invalid secret");
-        }
+        validateInternalSecret(args.secret);
 
         // Atomic idempotency check + mark within the same mutation (prevents TOCTOU race)
         const alreadyProcessed = await ctx.db
@@ -158,9 +152,7 @@ export const isZoomMeetingImported = query({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            throw new Error("Unauthorized: Invalid secret");
-        }
+        validateInternalSecret(args.secret);
 
         const existing = await ctx.db
             .query("videos")
@@ -184,9 +176,7 @@ export const createZoomManualImportVideo = mutation({
         secret: v.string(),
     },
     handler: async (ctx, args) => {
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            throw new Error("Unauthorized: Invalid secret");
-        }
+        validateInternalSecret(args.secret);
 
         const safeTopic = args.meetingTopic.slice(0, 200);
         const title = `【Zoom】${safeTopic}`.slice(0, 200);

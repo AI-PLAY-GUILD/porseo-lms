@@ -5,6 +5,9 @@ const MAX_TAG_NAME_LENGTH = 50;
 
 export const getTags = query({
     handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return [];
+
         return await ctx.db.query("tags").order("desc").collect();
     },
 });

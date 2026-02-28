@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { DatabaseReader, MutationCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { safeCompare } from "./lib/safeCompare";
+import { validateInternalSecret } from "./lib/requireSecret";
 
 // Issue #59: Audit log helper — records user mutations for compliance
 async function writeAuditLog(
@@ -39,7 +39,12 @@ export const webhookSyncUser = mutation({
     },
     handler: async (ctx, args) => {
         console.log("[users:webhookSyncUser] 開始", { clerkId: args.clerkId, email: args.email });
-        if (!safeCompare(args.secret, process.env.CLERK_WEBHOOK_SECRET || "")) {
+        const expectedSecret = process.env.CLERK_WEBHOOK_SECRET;
+        if (!expectedSecret) {
+            throw new Error("Server configuration error: CLERK_WEBHOOK_SECRET is not set");
+        }
+        const { safeCompare } = await import("./lib/safeCompare");
+        if (!safeCompare(args.secret, expectedSecret)) {
             console.log("[users:webhookSyncUser] 認証失敗: 無効なsecret");
             throw new Error("Unauthorized: Invalid secret");
         }
@@ -199,10 +204,7 @@ export const getUserByClerkIdServer = query({
     },
     handler: async (ctx, args) => {
         console.log("[users:getUserByClerkIdServer] 開始", { clerkId: args.clerkId });
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            console.log("[users:getUserByClerkIdServer] 認証失敗: 無効なsecret");
-            throw new Error("Unauthorized: Invalid secret");
-        }
+        validateInternalSecret(args.secret);
 
         const result = await ctx.db
             .query("users")
@@ -222,10 +224,7 @@ export const getUserByStripeCustomerId = query({
     },
     handler: async (ctx, args) => {
         console.log("[users:getUserByStripeCustomerId] 開始", { stripeCustomerId: args.stripeCustomerId });
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            console.log("[users:getUserByStripeCustomerId] 認証失敗: 無効なsecret");
-            throw new Error("Unauthorized: Invalid secret");
-        }
+        validateInternalSecret(args.secret);
 
         const result = await ctx.db
             .query("users")
@@ -248,12 +247,13 @@ export const updateSubscriptionStatus = mutation({
     },
     handler: async (ctx, args) => {
         console.log("[users:updateSubscriptionStatus] 開始", {
-            discordId: args.discordId,
             subscriptionStatus: args.subscriptionStatus,
         });
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            console.log("[users:updateSubscriptionStatus] 認証失敗: 無効なsecret");
-            throw new Error("Unauthorized: Invalid secret");
+        validateInternalSecret(args.secret);
+
+        const VALID_STATUSES = ["active", "canceled", "past_due", "trialing", "inactive", "unpaid"];
+        if (!VALID_STATUSES.includes(args.subscriptionStatus)) {
+            throw new Error("Invalid subscription status");
         }
 
         const user = await ctx.db
@@ -262,8 +262,8 @@ export const updateSubscriptionStatus = mutation({
             .first();
 
         if (!user) {
-            console.log("[users:updateSubscriptionStatus] ユーザー未検出", { discordId: args.discordId });
-            throw new Error(`User with Discord ID ${args.discordId} not found`);
+            console.log("[users:updateSubscriptionStatus] ユーザー未検出");
+            throw new Error("User not found for the provided Discord ID");
         }
 
         // ロールIDがあれば、既存のリストに追加する（重複チェック付き）
@@ -317,12 +317,13 @@ export const updateSubscriptionStatusByCustomerId = mutation({
     },
     handler: async (ctx, args) => {
         console.log("[users:updateSubscriptionStatusByCustomerId] 開始", {
-            stripeCustomerId: args.stripeCustomerId,
             subscriptionStatus: args.subscriptionStatus,
         });
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            console.log("[users:updateSubscriptionStatusByCustomerId] 認証失敗: 無効なsecret");
-            throw new Error("Unauthorized: Invalid secret");
+        validateInternalSecret(args.secret);
+
+        const VALID_STATUSES = ["active", "canceled", "past_due", "trialing", "inactive", "unpaid"];
+        if (!VALID_STATUSES.includes(args.subscriptionStatus)) {
+            throw new Error("Invalid subscription status");
         }
 
         const user = await ctx.db
@@ -331,10 +332,7 @@ export const updateSubscriptionStatusByCustomerId = mutation({
             .first();
 
         if (!user) {
-            // Issue #61: Log warning instead of silently returning
-            console.warn(
-                `[updateSubscriptionStatusByCustomerId] User not found for stripeCustomerId: ${args.stripeCustomerId}`,
-            );
+            console.warn("[updateSubscriptionStatusByCustomerId] User not found for provided stripeCustomerId");
             return;
         }
 
@@ -604,10 +602,7 @@ export const checkStripeEventProcessed = query({
     },
     handler: async (ctx, args) => {
         console.log("[users:checkStripeEventProcessed] 開始", { eventId: args.eventId });
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            console.log("[users:checkStripeEventProcessed] 認証失敗: 無効なsecret");
-            throw new Error("Unauthorized: Invalid secret");
-        }
+        validateInternalSecret(args.secret);
         const existing = await ctx.db
             .query("processedStripeEvents")
             .withIndex("by_event_id", (q) => q.eq("eventId", args.eventId))
@@ -625,10 +620,7 @@ export const markStripeEventProcessed = mutation({
     },
     handler: async (ctx, args) => {
         console.log("[users:markStripeEventProcessed] 開始", { eventId: args.eventId, eventType: args.eventType });
-        if (!safeCompare(args.secret, process.env.CONVEX_INTERNAL_SECRET || "")) {
-            console.log("[users:markStripeEventProcessed] 認証失敗: 無効なsecret");
-            throw new Error("Unauthorized: Invalid secret");
-        }
+        validateInternalSecret(args.secret);
         await ctx.db.insert("processedStripeEvents", {
             eventId: args.eventId,
             eventType: args.eventType,

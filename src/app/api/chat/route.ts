@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { convertToModelMessages, stepCountIs, streamText, tool } from "ai";
 import { z } from "zod";
 import { convex } from "@/lib/convex";
+import { getConvexInternalSecret } from "@/lib/env";
 import { api } from "../../../../convex/_generated/api";
 
 const SYSTEM_PROMPT = `あなたはPORSEOの学習アシスタントです。
@@ -49,24 +50,20 @@ export async function POST(req: Request) {
         // サブスクリプション確認（HTTPクライアントはJWT認証なし → secret認証のServerクエリを使用）
         console.log("[chat] STEP 2: Convexユーザー取得開始", {
             hasSecret: !!process.env.CONVEX_INTERNAL_SECRET,
-            secretLength: process.env.CONVEX_INTERNAL_SECRET?.length,
-            convexUrl: process.env.CONVEX_URL || process.env.NEXT_PUBLIC_CONVEX_URL,
         });
         // biome-ignore lint: Convex型は動的生成のため明示的な型定義が困難
         let user: any;
         try {
             user = await convex.query(api.users.getUserByClerkIdServer, {
                 clerkId: userId,
-                secret: process.env.CONVEX_INTERNAL_SECRET || "",
+                secret: getConvexInternalSecret(),
             });
         } catch (convexError: unknown) {
             const msg = convexError instanceof Error ? convexError.message : String(convexError);
             console.error("[chat] STEP 2 ERROR: Convexクエリ失敗", { error: msg });
             return new Response(
                 JSON.stringify({
-                    error: "Convex query failed",
-                    detail: msg,
-                    hint: "CONVEX_INTERNAL_SECRET がVercelとConvexで一致しているか確認してください",
+                    error: "Internal server error",
                 }),
                 { status: 500, headers: { "Content-Type": "application/json" } },
             );
@@ -101,7 +98,6 @@ export async function POST(req: Request) {
 
         console.log("[chat] STEP 5: GEMINI_API_KEY確認", {
             hasKey: !!process.env.GEMINI_API_KEY,
-            keyPrefix: process.env.GEMINI_API_KEY?.substring(0, 8),
         });
         if (!process.env.GEMINI_API_KEY) {
             console.error("[chat] STEP 5 FAIL: GEMINI_API_KEY が未設定です");
@@ -174,7 +170,7 @@ export async function POST(req: Request) {
                         limit: z.number().default(8).describe("返す結果の最大数"),
                     }),
                     execute: async ({ query, limit }) => {
-                        const secret = process.env.CONVEX_INTERNAL_SECRET || "";
+                        const secret = getConvexInternalSecret();
                         try {
                             const results = await convex.action(api.rag.searchTranscriptions, {
                                 query,
@@ -220,7 +216,7 @@ export async function POST(req: Request) {
         const detail = error instanceof Error ? error.message : String(error);
         const stack = error instanceof Error ? error.stack : undefined;
         console.error("[chat] エラー詳細:", { detail, stack });
-        return new Response(JSON.stringify({ error: "Internal server error", detail }), {
+        return new Response(JSON.stringify({ error: "Internal server error" }), {
             status: 500,
             headers: { "Content-Type": "application/json" },
         });

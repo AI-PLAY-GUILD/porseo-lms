@@ -37,7 +37,18 @@ const nextConfig: NextConfig = {
                     },
                     {
                         key: "Content-Security-Policy",
-                        value: "frame-ancestors 'self' https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com",
+                        value: [
+                            "default-src 'self'",
+                            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.com https://*.clerk.accounts.dev https://*.mux.com https://challenges.cloudflare.com",
+                            "style-src 'self' 'unsafe-inline'",
+                            "img-src 'self' data: blob: https://image.mux.com https://*.convex.cloud https://img.clerk.com https://pbs.twimg.com https://media.licdn.com",
+                            "font-src 'self' data:",
+                            "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.clerk.com https://*.clerk.accounts.dev https://api.mux.com https://api.stripe.com",
+                            "media-src 'self' https://stream.mux.com blob:",
+                            "frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://*.stripe.com https://challenges.cloudflare.com",
+                            "frame-ancestors 'self' https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com",
+                            "worker-src 'self' blob:",
+                        ].join("; "),
                     },
                     {
                         key: "X-Content-Type-Options",

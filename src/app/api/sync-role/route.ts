@@ -3,6 +3,7 @@ import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
 import { NextResponse } from "next/server";
 import { convex } from "@/lib/convex";
+import { getConvexInternalSecret } from "@/lib/env";
 import { api } from "../../../../convex/_generated/api";
 
 const discordToken = process.env.DISCORD_BOT_TOKEN;
@@ -24,7 +25,7 @@ export async function POST(_req: Request) {
         // 1. Get user from Convex to check subscription and Discord ID
         const user = await convex.query(api.users.getUserByClerkIdServer, {
             clerkId: userId,
-            secret: process.env.CONVEX_INTERNAL_SECRET || "",
+            secret: getConvexInternalSecret(),
         });
 
         if (!user) {
