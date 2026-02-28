@@ -267,7 +267,7 @@ ${timestampInfo}
                 });
 
                 const response = await client.models.generateContent({
-                    model: "gemini-2.0-flash",
+                    model: "gemini-3.1-pro-preview",
                     contents: [{ role: "user", parts }],
                     config: { responseMimeType: "application/json" },
                 });
