@@ -97,6 +97,25 @@ function VideoList() {
                                             処理中...
                                         </Badge>
                                     )}
+                                    {video.securityScanStatus === "warning" && (
+                                        <Badge
+                                            variant="outline"
+                                            className="text-xs border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20"
+                                        >
+                                            セキュリティ警告
+                                        </Badge>
+                                    )}
+                                    {(video.securityScanStatus === "pending" ||
+                                        video.securityScanStatus === "scanning") && (
+                                        <Badge variant="outline" className="text-xs border-blue-400 text-blue-500">
+                                            スキャン中
+                                        </Badge>
+                                    )}
+                                    {video.securityScanStatus === "error" && (
+                                        <Badge variant="outline" className="text-xs border-yellow-400 text-yellow-600">
+                                            スキャンエラー
+                                        </Badge>
+                                    )}
                                 </div>
                             </td>
                             <td className="py-3 px-4">

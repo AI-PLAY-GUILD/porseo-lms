@@ -55,6 +55,19 @@ export default defineSchema({
         zoomRecordingId: v.optional(v.string()),
         zoomChatMessages: v.optional(v.string()),
         source: v.optional(v.string()), // "zoom" | "manual" | "upload"
+        // Security scan fields
+        securityScanStatus: v.optional(v.string()), // "pending" | "scanning" | "clean" | "warning" | "error"
+        securityFindings: v.optional(
+            v.array(
+                v.object({
+                    timestamp: v.number(),
+                    severity: v.string(),
+                    type: v.string(),
+                    description: v.string(),
+                    detectedText: v.optional(v.string()),
+                }),
+            ),
+        ),
         createdAt: v.number(),
         updatedAt: v.number(),
     }).index("by_zoom_recording_id", ["zoomRecordingId"]),

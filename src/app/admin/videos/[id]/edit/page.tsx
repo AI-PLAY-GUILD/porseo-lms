@@ -143,9 +143,122 @@ export default function EditVideoPage() {
     if (!userData?.isAdmin) return null;
     if (video === null) return <div className="p-8">動画が見つかりません</div>;
 
+    // Helper: format seconds to mm:ss
+    const formatTimestamp = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return `${m}:${String(s).padStart(2, "0")}`;
+    };
+
+    const severityLabel: Record<string, { text: string; className: string }> = {
+        critical: { text: "重大", className: "bg-red-600 text-white" },
+        high: { text: "高", className: "bg-orange-500 text-white" },
+        medium: { text: "中", className: "bg-yellow-500 text-white" },
+        low: { text: "低", className: "bg-blue-500 text-white" },
+    };
+
+    const typeLabel: Record<string, string> = {
+        env_variable: "環境変数",
+        api_key: "APIキー",
+        password: "パスワード",
+        connection_string: "DB接続文字列",
+        ssh_key: "SSH鍵",
+        token: "トークン",
+        pii: "個人情報",
+        other: "その他",
+    };
+
     return (
         <div className="p-8 max-w-4xl mx-auto">
             <h1 className="text-2xl font-bold mb-8">動画編集</h1>
+
+            {/* Security Scan Results */}
+            {video.securityScanStatus === "warning" && video.securityFindings && video.securityFindings.length > 0 && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-lg">
+                    <div className="flex items-start gap-3 mb-3">
+                        <span className="text-2xl flex-shrink-0">🔴</span>
+                        <div>
+                            <h3 className="font-bold text-red-900 dark:text-red-300 text-lg">セキュリティ警告</h3>
+                            <p className="text-sm text-red-700 dark:text-red-400">
+                                この動画内で{video.securityFindings.length}件のセキュリティ上の問題が検出されました。
+                                公開前に確認してください。
+                            </p>
+                        </div>
+                    </div>
+                    <div className="space-y-2 ml-9">
+                        {video.securityFindings.map(
+                            (
+                                finding: {
+                                    timestamp: number;
+                                    severity: string;
+                                    type: string;
+                                    description: string;
+                                    detectedText?: string;
+                                },
+                                idx: number,
+                            ) => {
+                                const sev = severityLabel[finding.severity] || severityLabel.medium;
+                                return (
+                                    <div
+                                        key={idx}
+                                        className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded border border-red-200 dark:border-red-900"
+                                    >
+                                        <span className="font-mono text-sm text-red-600 dark:text-red-400 whitespace-nowrap min-w-[4rem]">
+                                            {formatTimestamp(finding.timestamp)}
+                                        </span>
+                                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${sev.className}`}>
+                                            {sev.text}
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                            {typeLabel[finding.type] || finding.type}
+                                        </span>
+                                        <div className="flex-1">
+                                            <p className="text-sm text-gray-800 dark:text-gray-200">
+                                                {finding.description}
+                                            </p>
+                                            {finding.detectedText && (
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">
+                                                    {finding.detectedText}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            },
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {(video.securityScanStatus === "pending" || video.securityScanStatus === "scanning") && (
+                <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-800 rounded-lg">
+                    <div className="flex items-center gap-3">
+                        <span className="animate-spin text-xl">↻</span>
+                        <div>
+                            <h3 className="font-bold text-blue-900 dark:text-blue-300">セキュリティスキャン中...</h3>
+                            <p className="text-sm text-blue-700 dark:text-blue-400">
+                                動画内の機密情報を自動検出しています。数分後に結果が表示されます。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {video.securityScanStatus === "error" && (
+                <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-800 rounded-lg">
+                    <div className="flex items-center gap-3">
+                        <span className="text-xl">⚠️</span>
+                        <div>
+                            <h3 className="font-bold text-yellow-900 dark:text-yellow-300">
+                                セキュリティスキャンエラー
+                            </h3>
+                            <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                                自動スキャンに失敗しました。手動で動画内容を確認してください。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <form
                 onSubmit={(e) => {

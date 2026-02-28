@@ -43,6 +43,7 @@ export const createVideo = mutation({
             duration: args.duration ?? 0,
             order: 0,
             isPublished: false,
+            securityScanStatus: "pending",
             uploadedBy: user._id,
             createdAt: Date.now(),
             updatedAt: Date.now(),
@@ -55,6 +56,12 @@ export const createVideo = mutation({
             targetId: videoId,
             details: args.title,
             createdAt: Date.now(),
+        });
+
+        // Schedule security scan (3-minute delay for Mux processing)
+        // biome-ignore lint/suspicious/noExplicitAny: videoSecurity module not yet in generated API types
+        await ctx.scheduler.runAfter(180_000, (internal as any).videoSecurity.runSecurityScan, {
+            videoId,
         });
 
         return videoId;

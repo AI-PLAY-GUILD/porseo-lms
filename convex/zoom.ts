@@ -204,7 +204,14 @@ export const updateVideoMuxInfo = internalMutation({
         await ctx.db.patch(args.videoId, {
             muxAssetId: args.muxAssetId,
             muxPlaybackId: args.muxPlaybackId,
+            securityScanStatus: "pending",
             updatedAt: Date.now(),
+        });
+
+        // Schedule security scan (1-minute delay for Mux processing)
+        // biome-ignore lint/suspicious/noExplicitAny: videoSecurity module not yet in generated API types
+        await ctx.scheduler.runAfter(60_000, (internal as any).videoSecurity.runSecurityScan, {
+            videoId: args.videoId,
         });
     },
 });
