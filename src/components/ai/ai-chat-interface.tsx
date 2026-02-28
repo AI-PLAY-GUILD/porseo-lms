@@ -67,19 +67,31 @@ function extractVideosFromParts(parts: Array<any>): VideoInfo[] {
     const seen = new Set<string>();
 
     for (const part of parts) {
+        // テキストパーツはスキップ
+        if (part.type === "text" || part.type === "step-start") continue;
+
+        // ツールパーツのみ処理（完了状態のみ）
         if (part.state !== "output-available") continue;
 
         // AI SDK v6: 静的ツール → type="tool-{name}", 動的ツール → type="dynamic-tool" + toolName
         let toolName: string | undefined;
         if (part.type === "dynamic-tool" && part.toolName) {
-            toolName = part.toolName;
-        } else if (part.type?.startsWith("tool-")) {
+            toolName = String(part.toolName);
+        } else if (typeof part.type === "string" && part.type.startsWith("tool-")) {
             toolName = part.type.slice(5);
         }
         if (!toolName) continue;
 
-        const result = part.output;
-        if (!result) continue;
+        // output はオブジェクトまたはJSON文字列の可能性がある
+        let result = part.output;
+        if (typeof result === "string") {
+            try {
+                result = JSON.parse(result);
+            } catch {
+                continue;
+            }
+        }
+        if (!result || typeof result !== "object") continue;
 
         if (toolName === "listVideos" && Array.isArray(result.videos)) {
             for (const v of result.videos) {
@@ -121,22 +133,30 @@ function getMessageText(parts: Array<{ type: string; text?: string }>): string {
 type ContentBlock = { type: "text"; content: string } | { type: "video"; video: VideoInfo };
 
 function buildInterleavedContent(text: string, videos: VideoInfo[]): ContentBlock[] {
-    if (!text) return [];
+    if (!text && videos.length === 0) return [];
     if (videos.length === 0) return [{ type: "text", content: text }];
 
-    // 番号付きセクション（1. 2. 3. ...）で分割
+    // 番号付きセクション（1. 2. 3. ...）で分割して動画カードを挟む
     const sections = text.split(/(?=(?:^|\n)\d+\.\s)/m);
     const blocks: ContentBlock[] = [];
     let videoIdx = 0;
 
     for (const section of sections) {
-        blocks.push({ type: "text", content: section });
+        if (section.trim()) {
+            blocks.push({ type: "text", content: section });
+        }
 
         // 番号付きセクションにはツール結果の動画を順番に紐付ける
         if (/(?:^|\n)\d+\.\s/.test(section) && videoIdx < videos.length) {
             blocks.push({ type: "video", video: videos[videoIdx] });
             videoIdx++;
         }
+    }
+
+    // 番号付きセクションにマッチしなかった残りの動画をまとめて末尾に表示
+    while (videoIdx < videos.length) {
+        blocks.push({ type: "video", video: videos[videoIdx] });
+        videoIdx++;
     }
 
     return blocks;
@@ -220,6 +240,22 @@ export function AiChatInterface() {
                         const parts = message.parts || [];
                         const text = getMessageText(parts);
                         const videos = message.role === "assistant" ? extractVideosFromParts(parts) : [];
+                        if (message.role === "assistant" && parts.length > 0) {
+                            console.log(
+                                "[AiChat] parts:",
+                                JSON.stringify(
+                                    parts.map((p: Record<string, unknown>) => ({
+                                        type: p.type,
+                                        state: p.state,
+                                        toolName: p.toolName,
+                                        hasOutput: !!p.output,
+                                    })),
+                                    null,
+                                    2,
+                                ),
+                            );
+                            console.log("[AiChat] extracted videos:", videos.length);
+                        }
                         if (!text && videos.length === 0) return null;
 
                         return (
