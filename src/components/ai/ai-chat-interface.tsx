@@ -112,19 +112,6 @@ function getMessageText(parts: Array<{ type: string; text?: string }>): string {
 
 type ContentBlock = { type: "text"; content: string } | { type: "video"; video: VideoInfo };
 
-function fuzzyTitleMatch(section: string, title: string): boolean {
-    const s = section.toLowerCase();
-    const t = title.toLowerCase();
-    // 完全一致
-    if (s.includes(t)) return true;
-    // タイトルの先頭から徐々に短くして部分一致を試みる（最低8文字）
-    const minLen = Math.min(8, t.length);
-    for (let len = t.length; len >= minLen; len--) {
-        if (s.includes(t.slice(0, len))) return true;
-    }
-    return false;
-}
-
 function buildInterleavedContent(text: string, videos: VideoInfo[]): ContentBlock[] {
     if (!text) return [];
     if (videos.length === 0) return [{ type: "text", content: text }];
@@ -132,32 +119,15 @@ function buildInterleavedContent(text: string, videos: VideoInfo[]): ContentBloc
     // 番号付きセクション（1. 2. 3. ...）で分割
     const sections = text.split(/(?=(?:^|\n)\d+\.\s)/m);
     const blocks: ContentBlock[] = [];
-    const usedIds = new Set<string>();
-    let nextIdx = 0;
+    let videoIdx = 0;
 
     for (const section of sections) {
         blocks.push({ type: "text", content: section });
 
-        // 番号付きセクションでなければスキップ（イントロ等）
-        if (!/(?:^|\n)\d+\.\s/.test(section)) continue;
-
-        // あいまいタイトルマッチを試みる
-        let match = videos.find((v) => !usedIds.has(v.videoId) && fuzzyTitleMatch(section, v.title));
-
-        // マッチしなければ順番で次の動画を割り当て
-        if (!match) {
-            while (nextIdx < videos.length && usedIds.has(videos[nextIdx].videoId)) {
-                nextIdx++;
-            }
-            if (nextIdx < videos.length) {
-                match = videos[nextIdx];
-                nextIdx++;
-            }
-        }
-
-        if (match) {
-            usedIds.add(match.videoId);
-            blocks.push({ type: "video", video: match });
+        // 番号付きセクションにはツール結果の動画を順番に紐付ける
+        if (/(?:^|\n)\d+\.\s/.test(section) && videoIdx < videos.length) {
+            blocks.push({ type: "video", video: videos[videoIdx] });
+            videoIdx++;
         }
     }
 
