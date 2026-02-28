@@ -3,7 +3,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 120_000; // 2 minutes
@@ -11,48 +11,10 @@ const THUMBNAIL_WIDTH = 1280;
 const BATCH_SIZE = 50; // images per Gemini request
 const CONCURRENT_DOWNLOADS = 10;
 
-// biome-ignore lint/suspicious/noExplicitAny: videoSecurity module not yet in generated API types
-const vs = (internal as any).videoSecurity;
-
-// ============================
-// Internal Mutations
-// ============================
-
-export const updateSecurityScanStatus = internalMutation({
-    args: {
-        videoId: v.id("videos"),
-        status: v.string(),
-    },
-    handler: async (ctx, args) => {
-        await ctx.db.patch(args.videoId, {
-            securityScanStatus: args.status,
-            updatedAt: Date.now(),
-        });
-    },
-});
-
-export const updateSecurityFindings = internalMutation({
-    args: {
-        videoId: v.id("videos"),
-        status: v.string(),
-        findings: v.array(
-            v.object({
-                timestamp: v.number(),
-                severity: v.string(),
-                type: v.string(),
-                description: v.string(),
-                detectedText: v.optional(v.string()),
-            }),
-        ),
-    },
-    handler: async (ctx, args) => {
-        await ctx.db.patch(args.videoId, {
-            securityScanStatus: args.status,
-            securityFindings: args.findings,
-            updatedAt: Date.now(),
-        });
-    },
-});
+// biome-ignore lint/suspicious/noExplicitAny: videoSecurityDb module not yet in generated API types
+const vsDb = (internal as any).videoSecurityDb;
+// biome-ignore lint/suspicious/noExplicitAny: self-reference for scheduler
+const vsSelf = (internal as any).videoSecurity;
 
 // ============================
 // Security Scan Action
@@ -73,7 +35,7 @@ export const runSecurityScan = internalAction({
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
             console.error("[videoSecurity:runSecurityScan] GEMINI_API_KEY未設定");
-            await ctx.runMutation(vs.updateSecurityScanStatus, {
+            await ctx.runMutation(vsDb.updateSecurityScanStatus, {
                 videoId: args.videoId,
                 status: "error",
             });
@@ -81,7 +43,7 @@ export const runSecurityScan = internalAction({
         }
 
         // 1. Get video info
-        const video = await ctx.runQuery(vs.getVideoForScan, {
+        const video = await ctx.runQuery(vsDb.getVideoForScan, {
             videoId: args.videoId,
         });
 
@@ -96,7 +58,7 @@ export const runSecurityScan = internalAction({
         }
 
         // 2. Update status to scanning
-        await ctx.runMutation(vs.updateSecurityScanStatus, {
+        await ctx.runMutation(vsDb.updateSecurityScanStatus, {
             videoId: args.videoId,
             status: "scanning",
         });
@@ -110,18 +72,18 @@ export const runSecurityScan = internalAction({
                     console.log("[videoSecurity:runSecurityScan] Muxアセット未準備、リトライスケジュール", {
                         retryCount: retryCount + 1,
                     });
-                    await ctx.runMutation(vs.updateSecurityScanStatus, {
+                    await ctx.runMutation(vsDb.updateSecurityScanStatus, {
                         videoId: args.videoId,
                         status: "pending",
                     });
-                    await ctx.scheduler.runAfter(RETRY_DELAY_MS, vs.runSecurityScan, {
+                    await ctx.scheduler.runAfter(RETRY_DELAY_MS, vsSelf.runSecurityScan, {
                         videoId: args.videoId,
                         retryCount: retryCount + 1,
                     });
                     return;
                 }
                 console.error("[videoSecurity:runSecurityScan] Muxアセット取得失敗、リトライ上限");
-                await ctx.runMutation(vs.updateSecurityScanStatus, {
+                await ctx.runMutation(vsDb.updateSecurityScanStatus, {
                     videoId: args.videoId,
                     status: "error",
                 });
@@ -130,17 +92,17 @@ export const runSecurityScan = internalAction({
         } catch (error) {
             console.error("[videoSecurity:runSecurityScan] サムネイルテストエラー:", error);
             if (retryCount < MAX_RETRIES) {
-                await ctx.runMutation(vs.updateSecurityScanStatus, {
+                await ctx.runMutation(vsDb.updateSecurityScanStatus, {
                     videoId: args.videoId,
                     status: "pending",
                 });
-                await ctx.scheduler.runAfter(RETRY_DELAY_MS, vs.runSecurityScan, {
+                await ctx.scheduler.runAfter(RETRY_DELAY_MS, vsSelf.runSecurityScan, {
                     videoId: args.videoId,
                     retryCount: retryCount + 1,
                 });
                 return;
             }
-            await ctx.runMutation(vs.updateSecurityScanStatus, {
+            await ctx.runMutation(vsDb.updateSecurityScanStatus, {
                 videoId: args.videoId,
                 status: "error",
             });
@@ -186,7 +148,7 @@ export const runSecurityScan = internalAction({
 
         if (thumbnails.length === 0) {
             console.error("[videoSecurity:runSecurityScan] サムネイル取得失敗");
-            await ctx.runMutation(vs.updateSecurityScanStatus, {
+            await ctx.runMutation(vsDb.updateSecurityScanStatus, {
                 videoId: args.videoId,
                 status: "error",
             });
@@ -343,7 +305,7 @@ ${timestampInfo}
 
         // 7. Save results
         const status = allFindings.length > 0 ? "warning" : "clean";
-        await ctx.runMutation(vs.updateSecurityFindings, {
+        await ctx.runMutation(vsDb.updateSecurityFindings, {
             videoId: args.videoId,
             status,
             findings: allFindings,
@@ -354,23 +316,5 @@ ${timestampInfo}
             status,
             findingsCount: allFindings.length,
         });
-    },
-});
-
-// ============================
-// Internal Query (for scan action to read video data)
-// ============================
-
-export const getVideoForScan = internalQuery({
-    args: {
-        videoId: v.id("videos"),
-    },
-    handler: async (ctx, args) => {
-        const video = await ctx.db.get(args.videoId);
-        if (!video) return null;
-        return {
-            muxPlaybackId: video.muxPlaybackId,
-            duration: video.duration,
-        };
     },
 });
