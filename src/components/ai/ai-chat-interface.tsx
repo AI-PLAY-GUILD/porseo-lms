@@ -67,11 +67,13 @@ function extractVideosFromParts(parts: Array<any>): VideoInfo[] {
     const seen = new Set<string>();
 
     for (const part of parts) {
-        if (part.type !== "tool-invocation" || part.state !== "result") continue;
-        const result = part.result;
+        // AI SDK v6: ツールパーツは type="tool-{toolName}", state="output-available", 結果は output
+        if (!part.type?.startsWith("tool-") || part.state !== "output-available") continue;
+        const toolName = part.type.slice(5);
+        const result = part.output;
         if (!result) continue;
 
-        if (part.toolName === "listVideos" && Array.isArray(result.videos)) {
+        if (toolName === "listVideos" && Array.isArray(result.videos)) {
             for (const v of result.videos) {
                 if (v.videoId && !seen.has(v.videoId)) {
                     seen.add(v.videoId);
@@ -84,7 +86,7 @@ function extractVideosFromParts(parts: Array<any>): VideoInfo[] {
             }
         }
 
-        if (part.toolName === "searchVideos" && Array.isArray(result.results)) {
+        if (toolName === "searchVideos" && Array.isArray(result.results)) {
             for (const r of result.results) {
                 if (r.videoId && !seen.has(r.videoId)) {
                     seen.add(r.videoId);
