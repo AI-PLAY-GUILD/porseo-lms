@@ -26,6 +26,14 @@ interface ZoomRecordingData {
     };
 }
 
+interface ZoomRecentRecording {
+    meetingId: string;
+    topic: string;
+    startTime: string;
+    duration: number;
+    totalSize: number;
+}
+
 function formatFileSize(bytes: number): string {
     if (bytes >= 1_000_000_000) return `${(bytes / 1_000_000_000).toFixed(1)} GB`;
     if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`;
@@ -62,6 +70,8 @@ export default function VideoUploadPage() {
     const [zoomLoading, setZoomLoading] = useState(false);
     const [zoomImporting, setZoomImporting] = useState(false);
     const [zoomSuccess, setZoomSuccess] = useState(false);
+    const [zoomSelectMode, setZoomSelectMode] = useState(false);
+    const [zoomRecentRecordings, setZoomRecentRecordings] = useState<ZoomRecentRecording[]>([]);
 
     // Bulk import state
     const [bulkLoading, setBulkLoading] = useState(false);
@@ -140,23 +150,35 @@ export default function VideoUploadPage() {
     };
 
     // ===== Zoom =====
-    const handleZoomSearch = async () => {
-        if (!zoomInput.trim()) return;
+    const handleZoomSearch = async (meetingIdOverride?: string) => {
+        const searchInput = meetingIdOverride || zoomInput.trim();
+        if (!searchInput) return;
         setZoomLoading(true);
         setError(null);
         setZoomRecordings(null);
         setZoomSuccess(false);
+        if (!meetingIdOverride) {
+            setZoomSelectMode(false);
+            setZoomRecentRecordings([]);
+        }
         try {
             const res = await fetch("/api/zoom/recordings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ input: zoomInput.trim() }),
+                body: JSON.stringify({ input: searchInput }),
             });
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.error || "録画の取得に失敗しました");
             }
-            setZoomRecordings(data);
+            if (data.type === "selectRecording") {
+                setZoomSelectMode(true);
+                setZoomRecentRecordings(data.recordings || []);
+            } else {
+                setZoomSelectMode(false);
+                setZoomRecentRecordings([]);
+                setZoomRecordings(data);
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : "エラーが発生しました");
         } finally {
@@ -197,6 +219,8 @@ export default function VideoUploadPage() {
         setZoomInput("");
         setZoomRecordings(null);
         setZoomSuccess(false);
+        setZoomSelectMode(false);
+        setZoomRecentRecordings([]);
         setError(null);
     };
 
@@ -407,16 +431,22 @@ export default function VideoUploadPage() {
                         ) : (
                             <>
                                 <div className="p-4 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-md">
-                                    <p className="font-medium mb-1">ZoomミーティングIDを入力してください。</p>
+                                    <p className="font-medium mb-1">
+                                        ZoomミーティングIDまたは共有録画URLを入力してください。
+                                    </p>
                                     <p className="text-sm">
                                         クラウドレコーディングされた録画を取得し、非公開として登録します。
                                         文字起こし・チャットメッセージも自動で取得されます。
+                                        <br />
+                                        <span className="text-purple-500 dark:text-purple-400">
+                                            共有録画URL（/rec/share/形式）にも対応しています。
+                                        </span>
                                     </p>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium mb-1">
-                                        ミーティングID または ミーティングURL
+                                        ミーティングID / ミーティングURL / 共有録画URL
                                     </label>
                                     <input
                                         type="text"
@@ -429,17 +459,57 @@ export default function VideoUploadPage() {
                                             }
                                         }}
                                         className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                                        placeholder="例: 12345678901 または https://zoom.us/j/12345678901"
+                                        placeholder="例: 12345678901 / https://zoom.us/j/... / https://...zoom.us/rec/share/..."
                                     />
                                 </div>
 
                                 <button
-                                    onClick={handleZoomSearch}
+                                    onClick={() => handleZoomSearch()}
                                     disabled={zoomLoading || !zoomInput.trim()}
                                     className="bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {zoomLoading ? "検索中..." : "録画を検索"}
                                 </button>
+
+                                {/* Recording Selection (Fallback for share URL) */}
+                                {zoomSelectMode && zoomRecentRecordings.length > 0 && (
+                                    <div className="border-t pt-4 mt-2">
+                                        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-md text-sm mb-3">
+                                            共有URLからミーティングIDを自動取得できませんでした。以下の直近30日の録画から選択してください。
+                                        </div>
+                                        <h3 className="font-bold text-lg mb-3">直近の録画一覧</h3>
+                                        <div className="space-y-2 max-h-80 overflow-y-auto">
+                                            {zoomRecentRecordings.map((rec) => (
+                                                <button
+                                                    key={rec.meetingId}
+                                                    onClick={() => {
+                                                        setZoomSelectMode(false);
+                                                        setZoomRecentRecordings([]);
+                                                        handleZoomSearch(rec.meetingId);
+                                                    }}
+                                                    className="w-full text-left p-3 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 dark:hover:border-purple-600 border border-transparent transition-colors"
+                                                >
+                                                    <div className="font-medium text-sm">{rec.topic}</div>
+                                                    <div className="flex gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                        <span>
+                                                            {new Date(rec.startTime).toLocaleString("ja-JP", {
+                                                                year: "numeric",
+                                                                month: "2-digit",
+                                                                day: "2-digit",
+                                                                hour: "2-digit",
+                                                                minute: "2-digit",
+                                                            })}
+                                                        </span>
+                                                        {rec.duration > 0 && <span>{rec.duration}分</span>}
+                                                        {rec.totalSize > 0 && (
+                                                            <span>{formatFileSize(rec.totalSize)}</span>
+                                                        )}
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Search Results */}
                                 {zoomRecordings && (

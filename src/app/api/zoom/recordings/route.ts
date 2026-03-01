@@ -2,20 +2,34 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { convex } from "@/lib/convex";
 import { getConvexInternalSecret } from "@/lib/env";
-import { getZoomAccessToken } from "@/lib/zoom";
+import { getZoomAccessToken, resolveShareUrl } from "@/lib/zoom";
 import { api } from "../../../../../convex/_generated/api";
 
-function extractMeetingId(input: string): string {
-    // パターン1: /j/ 形式のURL (https://zoom.us/j/12345678901)
-    const meetingUrlMatch = input.match(/zoom\.us\/j\/(\d+)/);
-    if (meetingUrlMatch) return meetingUrlMatch[1];
+type ParsedInput = { type: "meetingId"; meetingId: string } | { type: "shareUrl"; shareUrl: string };
 
-    // パターン2: 数字のみ (ミーティングID直接入力)
+function parseZoomInput(input: string): ParsedInput {
+    // パターン1: /rec/share/ 形式の共有URL
+    if (/zoom\.us\/rec\/share\//.test(input)) {
+        try {
+            const url = new URL(input);
+            if (url.hostname.endsWith(".zoom.us")) {
+                return { type: "shareUrl", shareUrl: input };
+            }
+        } catch {
+            // URL解析失敗 → 下のパターンへ
+        }
+    }
+
+    // パターン2: /j/ 形式のURL (https://zoom.us/j/12345678901)
+    const meetingUrlMatch = input.match(/zoom\.us\/j\/(\d+)/);
+    if (meetingUrlMatch) return { type: "meetingId", meetingId: meetingUrlMatch[1] };
+
+    // パターン3: 数字のみ (ミーティングID直接入力)
     const cleanId = input.replace(/[\s-]/g, "");
-    if (/^\d{9,11}$/.test(cleanId)) return cleanId;
+    if (/^\d{9,11}$/.test(cleanId)) return { type: "meetingId", meetingId: cleanId };
 
     throw new Error(
-        "無効な入力です。ZoomミーティングID（数字9〜11桁）またはミーティングURL（/j/形式）を入力してください。",
+        "無効な入力です。ZoomミーティングID（数字9〜11桁）、ミーティングURL（/j/形式）、または共有録画URL（/rec/share/形式）を入力してください。",
     );
 }
 
@@ -27,6 +41,104 @@ interface ZoomRecordingFile {
     status: string;
     recording_start: string;
     recording_end: string;
+}
+
+interface ZoomMeeting {
+    uuid: string;
+    id: number;
+    topic: string;
+    start_time: string;
+    duration: number;
+    total_size: number;
+    recording_files: ZoomRecordingFile[];
+}
+
+async function fetchRecordingsByMeetingId(meetingId: string, accessToken: string) {
+    const zoomRes = await fetch(`https://api.zoom.us/v2/meetings/${meetingId}/recordings`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!zoomRes.ok) {
+        if (zoomRes.status === 404) {
+            return { error: "録画が見つかりません。ミーティングIDを確認してください。", status: 404 };
+        }
+        const errText = await zoomRes.text();
+        console.error("[zoom/recordings] Zoom APIエラー:", zoomRes.status, errText);
+        return { error: `Zoom APIエラー: ${zoomRes.status}`, status: 500 };
+    }
+
+    const data = await zoomRes.json();
+    const files: ZoomRecordingFile[] = data.recording_files || [];
+
+    const mp4Files = files.filter((f: ZoomRecordingFile) => f.file_type === "MP4" && f.status === "completed");
+    const mp4 = mp4Files.sort((a: ZoomRecordingFile, b: ZoomRecordingFile) => b.file_size - a.file_size)[0] || null;
+    const vtt = files.find((f: ZoomRecordingFile) => f.file_type === "TRANSCRIPT") || null;
+    const chat = files.find((f: ZoomRecordingFile) => f.file_type === "CHAT") || null;
+
+    if (!mp4) {
+        return {
+            error: "MP4録画ファイルが見つかりません。クラウドレコーディングが完了していることを確認してください。",
+            status: 404,
+        };
+    }
+
+    let durationSeconds = 0;
+    if (mp4.recording_start && mp4.recording_end) {
+        durationSeconds = Math.round(
+            (new Date(mp4.recording_end).getTime() - new Date(mp4.recording_start).getTime()) / 1000,
+        );
+    }
+
+    return {
+        data: {
+            type: "recording" as const,
+            meetingId,
+            topic: data.topic || "Zoom録画",
+            duration: durationSeconds,
+            recordings: {
+                mp4: {
+                    download_url: mp4.download_url,
+                    file_size: mp4.file_size,
+                    recording_start: mp4.recording_start,
+                    recording_end: mp4.recording_end,
+                },
+                vtt: vtt ? { download_url: vtt.download_url } : null,
+                chat: chat ? { download_url: chat.download_url } : null,
+            },
+        },
+    };
+}
+
+async function fetchRecentRecordings(accessToken: string): Promise<ZoomMeeting[]> {
+    const today = new Date();
+    const toDate = today.toISOString().split("T")[0];
+    const from = new Date();
+    from.setDate(from.getDate() - 30);
+    const fromDate = from.toISOString().split("T")[0];
+
+    const params = new URLSearchParams({
+        from: fromDate,
+        to: toDate,
+        page_size: "100",
+    });
+
+    const zoomRes = await fetch(`https://api.zoom.us/v2/users/me/recordings?${params}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!zoomRes.ok) {
+        console.error("[zoom/recordings] 録画一覧取得失敗:", zoomRes.status);
+        return [];
+    }
+
+    const data = await zoomRes.json();
+    const meetings: ZoomMeeting[] = data.meetings || [];
+
+    // MP4録画があるミーティングのみ返す
+    return meetings.filter((m) => {
+        const files = m.recording_files || [];
+        return files.some((f) => f.file_type === "MP4" && f.status === "completed");
+    });
 }
 
 export async function POST(req: Request) {
@@ -50,75 +162,65 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "入力が必要です" }, { status: 400 });
         }
 
-        let meetingId: string;
+        let parsed: ParsedInput;
         try {
-            meetingId = extractMeetingId(input.trim());
+            parsed = parseZoomInput(input.trim());
         } catch (e) {
             return NextResponse.json({ error: (e as Error).message }, { status: 400 });
         }
 
         const accessToken = await getZoomAccessToken();
-        const zoomRes = await fetch(`https://api.zoom.us/v2/meetings/${meetingId}/recordings`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
 
-        if (!zoomRes.ok) {
-            if (zoomRes.status === 404) {
+        // 共有URL: まずミーティングIDの抽出を試行
+        if (parsed.type === "shareUrl") {
+            const resolvedId = await resolveShareUrl(parsed.shareUrl);
+
+            if (resolvedId) {
+                // 抽出成功 → 既存のAPIフロー
+                const result = await fetchRecordingsByMeetingId(resolvedId, accessToken);
+                if ("error" in result) {
+                    return NextResponse.json({ error: result.error }, { status: result.status });
+                }
+                return NextResponse.json(result.data);
+            }
+
+            // 抽出失敗 → 直近録画一覧を返す
+            const recentMeetings = await fetchRecentRecordings(accessToken);
+
+            if (recentMeetings.length === 0) {
                 return NextResponse.json(
-                    { error: "録画が見つかりません。ミーティングIDを確認してください。" },
+                    {
+                        error: "共有URLからミーティングIDを取得できず、直近30日の録画も見つかりませんでした。ミーティングIDを直接入力してください。",
+                    },
                     { status: 404 },
                 );
             }
-            const errText = await zoomRes.text();
-            console.error("[zoom/recordings] Zoom APIエラー:", zoomRes.status, errText);
-            return NextResponse.json({ error: `Zoom APIエラー: ${zoomRes.status}` }, { status: 500 });
+
+            return NextResponse.json({
+                type: "selectRecording",
+                message: "共有URLからミーティングIDを自動取得できませんでした。以下の直近録画から選択してください。",
+                recordings: recentMeetings.map((m) => {
+                    const mp4Files = (m.recording_files || []).filter(
+                        (f) => f.file_type === "MP4" && f.status === "completed",
+                    );
+                    const mp4 = mp4Files.sort((a, b) => b.file_size - a.file_size)[0];
+                    return {
+                        meetingId: String(m.id),
+                        topic: m.topic || "Zoom録画",
+                        startTime: m.start_time,
+                        duration: m.duration,
+                        totalSize: m.total_size || mp4?.file_size || 0,
+                    };
+                }),
+            });
         }
 
-        const data = await zoomRes.json();
-        const files: ZoomRecordingFile[] = data.recording_files || [];
-
-        // MP4: 最大サイズのファイルを選択
-        const mp4Files = files.filter((f: ZoomRecordingFile) => f.file_type === "MP4" && f.status === "completed");
-        const mp4 = mp4Files.sort((a: ZoomRecordingFile, b: ZoomRecordingFile) => b.file_size - a.file_size)[0] || null;
-
-        // VTT (文字起こし)
-        const vtt = files.find((f: ZoomRecordingFile) => f.file_type === "TRANSCRIPT") || null;
-
-        // CHAT
-        const chat = files.find((f: ZoomRecordingFile) => f.file_type === "CHAT") || null;
-
-        if (!mp4) {
-            return NextResponse.json(
-                {
-                    error: "MP4録画ファイルが見つかりません。クラウドレコーディングが完了していることを確認してください。",
-                },
-                { status: 404 },
-            );
+        // ミーティングID: 既存フロー
+        const result = await fetchRecordingsByMeetingId(parsed.meetingId, accessToken);
+        if ("error" in result) {
+            return NextResponse.json({ error: result.error }, { status: result.status });
         }
-
-        // 録画時間を秒に変換
-        let durationSeconds = 0;
-        if (mp4.recording_start && mp4.recording_end) {
-            durationSeconds = Math.round(
-                (new Date(mp4.recording_end).getTime() - new Date(mp4.recording_start).getTime()) / 1000,
-            );
-        }
-
-        return NextResponse.json({
-            meetingId,
-            topic: data.topic || "Zoom録画",
-            duration: durationSeconds,
-            recordings: {
-                mp4: {
-                    download_url: mp4.download_url,
-                    file_size: mp4.file_size,
-                    recording_start: mp4.recording_start,
-                    recording_end: mp4.recording_end,
-                },
-                vtt: vtt ? { download_url: vtt.download_url } : null,
-                chat: chat ? { download_url: chat.download_url } : null,
-            },
-        });
+        return NextResponse.json(result.data);
     } catch (error) {
         console.error("[zoom/recordings] エラー:", error);
         return NextResponse.json({ error: "内部エラーが発生しました" }, { status: 500 });
