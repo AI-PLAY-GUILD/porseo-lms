@@ -475,7 +475,7 @@ export default function VideoUploadPage() {
                                 {zoomSelectMode && zoomRecentRecordings.length > 0 && (
                                     <div className="border-t pt-4 mt-2">
                                         <div className="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-md text-sm mb-3">
-                                            共有URLからミーティングIDを自動取得できませんでした。以下の直近30日の録画から選択してください。
+                                            共有URLからミーティングIDを自動取得できませんでした。以下の直近録画から選択してください。
                                         </div>
                                         <h3 className="font-bold text-lg mb-3">直近の録画一覧</h3>
                                         <div className="space-y-2 max-h-80 overflow-y-auto">

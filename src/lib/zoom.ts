@@ -70,7 +70,10 @@ export async function resolveShareUrl(shareUrl: string): Promise<string | null> 
             const res = await fetch(shareUrl, {
                 signal: controller.signal,
                 headers: {
-                    "User-Agent": "Mozilla/5.0 (compatible; PORSEO-LMS/1.0)",
+                    "User-Agent":
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
                 },
                 redirect: "follow",
             });
@@ -81,9 +84,17 @@ export async function resolveShareUrl(shareUrl: string): Promise<string | null> 
                 return null;
             }
 
-            const html = await res.text();
+            // リダイレクト後のURLからミーティングIDを探す
+            const finalUrl = res.url;
+            const redirectMatch = finalUrl.match(/\/j\/(\d{9,11})/);
+            if (redirectMatch) return redirectMatch[1];
+            const redirectParamMatch = finalUrl.match(/[?&]meetingId=(\d{9,11})/);
+            if (redirectParamMatch) return redirectParamMatch[1];
 
-            // パターン1: meetingId in JSON-like structures (e.g., "meetingId":"12345678901" or meetingId: 12345678901)
+            const html = await res.text();
+            console.log("[zoom] resolveShareUrl: HTML length:", html.length, "finalUrl:", finalUrl);
+
+            // パターン1: meetingId in JSON-like structures
             const jsonMatch = html.match(/["']?meetingId["']?\s*[:=]\s*["']?(\d{9,11})["']?/i);
             if (jsonMatch) return jsonMatch[1];
 
@@ -95,9 +106,37 @@ export async function resolveShareUrl(shareUrl: string): Promise<string | null> 
             const numMatch = html.match(/["']?meeting[_]?[Nn]umber["']?\s*[:=]\s*["']?(\d{9,11})["']?/i);
             if (numMatch) return numMatch[1];
 
-            // パターン4: fileId containing meeting info (UUID pattern not useful for API, skip)
+            // パターン4: og:url meta tag
+            const ogUrlMatch = html.match(/<meta[^>]+property=["']og:url["'][^>]+content=["']([^"']+)["']/i);
+            if (ogUrlMatch) {
+                const ogMeetingMatch = ogUrlMatch[1].match(/(\d{9,11})/);
+                if (ogMeetingMatch) return ogMeetingMatch[1];
+            }
+
+            // パターン5: window.__data__ or similar embedded JSON
+            const dataMatch = html.match(
+                /(?:window\.__data__|window\.__NEXT_DATA__|__zm_config__)\s*=\s*(\{[\s\S]*?\});?\s*<\/script>/,
+            );
+            if (dataMatch) {
+                const idInData = dataMatch[1].match(
+                    /["']?(?:meetingId|meeting_id|mid)["']?\s*[:=]\s*["']?(\d{9,11})["']?/i,
+                );
+                if (idInData) return idInData[1];
+            }
+
+            // パターン6: /rec/play/ URL in page (meeting ID might be in there)
+            const playMatch = html.match(/\/rec\/play\/[^"'\s]*/);
+            if (playMatch) {
+                const playIdMatch = playMatch[0].match(/(\d{9,11})/);
+                if (playIdMatch) return playIdMatch[1];
+            }
+
+            // パターン7: any 9-11 digit number near "meeting" keyword
+            const nearMeetingMatch = html.match(/meeting[^<>]{0,50}?(\d{9,11})/i);
+            if (nearMeetingMatch) return nearMeetingMatch[1];
 
             console.warn("[zoom] resolveShareUrl: ミーティングID抽出失敗");
+            console.warn("[zoom] resolveShareUrl: HTML先頭500文字:", html.substring(0, 500));
             return null;
         } catch (fetchErr) {
             clearTimeout(timeout);

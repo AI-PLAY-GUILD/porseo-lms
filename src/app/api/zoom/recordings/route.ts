@@ -110,35 +110,53 @@ async function fetchRecordingsByMeetingId(meetingId: string, accessToken: string
 }
 
 async function fetchRecentRecordings(accessToken: string): Promise<ZoomMeeting[]> {
+    // Zoom APIは1リクエストあたり最大1ヶ月の日付範囲のみ対応
+    // 直近90日を30日チャンクに分割して取得
     const today = new Date();
-    const toDate = today.toISOString().split("T")[0];
-    const from = new Date();
-    from.setDate(from.getDate() - 30);
-    const fromDate = from.toISOString().split("T")[0];
+    const allMeetings: ZoomMeeting[] = [];
 
-    const params = new URLSearchParams({
-        from: fromDate,
-        to: toDate,
-        page_size: "100",
-    });
+    for (let i = 0; i < 3; i++) {
+        const chunkEnd = new Date(today);
+        chunkEnd.setDate(chunkEnd.getDate() - i * 30);
+        const chunkStart = new Date(today);
+        chunkStart.setDate(chunkStart.getDate() - (i + 1) * 30);
 
-    const zoomRes = await fetch(`https://api.zoom.us/v2/users/me/recordings?${params}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-    });
+        const params = new URLSearchParams({
+            from: chunkStart.toISOString().split("T")[0],
+            to: chunkEnd.toISOString().split("T")[0],
+            page_size: "100",
+        });
 
-    if (!zoomRes.ok) {
-        console.error("[zoom/recordings] 録画一覧取得失敗:", zoomRes.status);
-        return [];
+        console.log(
+            `[zoom/recordings] 録画一覧取得中: ${chunkStart.toISOString().split("T")[0]} ~ ${chunkEnd.toISOString().split("T")[0]}`,
+        );
+
+        const zoomRes = await fetch(`https://api.zoom.us/v2/users/me/recordings?${params}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        if (!zoomRes.ok) {
+            const errBody = await zoomRes.text();
+            console.error("[zoom/recordings] 録画一覧取得失敗:", zoomRes.status, errBody);
+            continue;
+        }
+
+        const data = await zoomRes.json();
+        const meetings: ZoomMeeting[] = data.meetings || [];
+        console.log(`[zoom/recordings] ${meetings.length}件のミーティング取得 (total_records: ${data.total_records})`);
+        allMeetings.push(...meetings);
+
+        // 十分な件数があれば早期終了
+        if (allMeetings.length >= 50) break;
     }
 
-    const data = await zoomRes.json();
-    const meetings: ZoomMeeting[] = data.meetings || [];
-
-    // MP4録画があるミーティングのみ返す
-    return meetings.filter((m) => {
-        const files = m.recording_files || [];
-        return files.some((f) => f.file_type === "MP4" && f.status === "completed");
-    });
+    // MP4録画があるミーティングのみ返す（新しい順）
+    return allMeetings
+        .filter((m) => {
+            const files = m.recording_files || [];
+            return files.some((f) => f.file_type === "MP4" && f.status === "completed");
+        })
+        .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
 }
 
 export async function POST(req: Request) {
@@ -188,9 +206,10 @@ export async function POST(req: Request) {
             const recentMeetings = await fetchRecentRecordings(accessToken);
 
             if (recentMeetings.length === 0) {
+                console.warn("[zoom/recordings] 共有URL解決失敗かつ直近90日の録画なし");
                 return NextResponse.json(
                     {
-                        error: "共有URLからミーティングIDを取得できず、直近30日の録画も見つかりませんでした。ミーティングIDを直接入力してください。",
+                        error: "共有URLからミーティングIDを取得できず、直近90日の録画も見つかりませんでした。ミーティングIDを直接入力してください。",
                     },
                     { status: 404 },
                 );
