@@ -48,7 +48,7 @@ export default function AdminLayout({
                         <span className="font-black text-black">管理者コンソール</span>
                     </div>
                 </header>
-                <div className="flex flex-1 flex-col gap-6 p-6 pt-6">{children}</div>
+                <div className="flex flex-1 flex-col gap-4 p-3 sm:gap-6 sm:p-6">{children}</div>
             </SidebarInset>
         </SidebarProvider>
     );

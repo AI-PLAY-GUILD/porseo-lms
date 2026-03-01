@@ -36,6 +36,7 @@ export async function getZoomAccessToken(): Promise<string> {
 
     if (!response.ok) {
         const errorText = await response.text();
+        console.error("[zoom] トークン取得失敗:", response.status, errorText);
         throw new Error(`Zoom OAuth token request failed: ${response.status} ${errorText}`);
     }
 

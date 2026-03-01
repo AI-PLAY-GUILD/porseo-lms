@@ -226,30 +226,30 @@ export default function VideoUploadPage() {
     if (!userData?.isAdmin) return null;
 
     const tabClass = (tabMode: UploadMode) =>
-        `px-4 py-2 rounded-md text-sm font-medium transition-all ${
+        `px-3 py-2 rounded-md text-sm font-medium transition-all text-center ${
             mode === tabMode
                 ? "bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white"
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
         }`;
 
     return (
-        <div className="p-8 max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">動画アップロード</h1>
+        <div className="p-4 sm:p-8 max-w-2xl mx-auto">
+            <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">動画アップロード</h1>
 
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border shadow-sm">
+            <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border shadow-sm">
                 {error && <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-md">{error}</div>}
 
                 {/* Tab Switcher */}
                 <div className="flex justify-center mb-6">
-                    <div className="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg inline-flex">
+                    <div className="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg grid grid-cols-2 sm:grid-cols-4 gap-1 w-full sm:w-auto">
                         <button onClick={() => handleModeChange("file")} className={tabClass("file")}>
-                            ファイルアップロード
+                            ファイル
                         </button>
                         <button onClick={() => handleModeChange("manual")} className={tabClass("manual")}>
-                            Mux ID 手動入力
+                            Mux ID入力
                         </button>
                         <button onClick={() => handleModeChange("zoom")} className={tabClass("zoom")}>
-                            Zoom録画取得
+                            Zoom録画
                         </button>
                         <button onClick={() => handleModeChange("bulk")} className={tabClass("bulk")}>
                             一括取込
