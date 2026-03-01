@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { convex } from "@/lib/convex";
 import { getConvexInternalSecret } from "@/lib/env";
-import { getZoomAccessToken, resolveShareUrl } from "@/lib/zoom";
+import { getZoomAccessToken, listZoomUsers, resolveShareUrl } from "@/lib/zoom";
 import { api } from "../../../../../convex/_generated/api";
 
 type ParsedInput = { type: "meetingId"; meetingId: string } | { type: "shareUrl"; shareUrl: string };
@@ -50,6 +50,7 @@ interface ZoomMeeting {
     start_time: string;
     duration: number;
     total_size: number;
+    share_url?: string;
     recording_files: ZoomRecordingFile[];
 }
 
@@ -109,11 +110,12 @@ async function fetchRecordingsByMeetingId(meetingId: string, accessToken: string
     };
 }
 
-async function fetchRecentRecordings(accessToken: string): Promise<ZoomMeeting[]> {
-    // Zoom APIは1リクエストあたり最大1ヶ月の日付範囲のみ対応
-    // 直近90日を30日チャンクに分割して取得
+/**
+ * 特定ユーザーの録画を30日チャンクで最大90日分取得する。
+ */
+async function fetchRecordingsForUser(accessToken: string, userId: string): Promise<ZoomMeeting[]> {
     const today = new Date();
-    const allMeetings: ZoomMeeting[] = [];
+    const meetings: ZoomMeeting[] = [];
 
     for (let i = 0; i < 3; i++) {
         const chunkEnd = new Date(today);
@@ -127,36 +129,90 @@ async function fetchRecentRecordings(accessToken: string): Promise<ZoomMeeting[]
             page_size: "100",
         });
 
-        console.log(
-            `[zoom/recordings] 録画一覧取得中: ${chunkStart.toISOString().split("T")[0]} ~ ${chunkEnd.toISOString().split("T")[0]}`,
-        );
-
-        const zoomRes = await fetch(`https://api.zoom.us/v2/users/me/recordings?${params}`, {
+        const zoomRes = await fetch(`https://api.zoom.us/v2/users/${userId}/recordings?${params}`, {
             headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         if (!zoomRes.ok) {
             const errBody = await zoomRes.text();
-            console.error("[zoom/recordings] 録画一覧取得失敗:", zoomRes.status, errBody);
+            console.error(`[zoom/recordings] 録画一覧取得失敗 (user=${userId}):`, zoomRes.status, errBody);
             continue;
         }
 
         const data = await zoomRes.json();
-        const meetings: ZoomMeeting[] = data.meetings || [];
-        console.log(`[zoom/recordings] ${meetings.length}件のミーティング取得 (total_records: ${data.total_records})`);
-        allMeetings.push(...meetings);
+        const chunk: ZoomMeeting[] = data.meetings || [];
+        console.log(
+            `[zoom/recordings] user=${userId} ${chunkStart.toISOString().split("T")[0]}~${chunkEnd.toISOString().split("T")[0]}: ${chunk.length}件`,
+        );
+        meetings.push(...chunk);
 
-        // 十分な件数があれば早期終了
+        if (meetings.length >= 50) break;
+    }
+
+    return meetings;
+}
+
+/**
+ * 直近90日の録画を取得する。
+ * まず users/me を試行し、空の場合はユーザー一覧から各ユーザーの録画を取得する。
+ */
+async function fetchRecentRecordings(accessToken: string): Promise<ZoomMeeting[]> {
+    // Step 1: users/me を試行（一部のS2S OAuth設定で動作する）
+    console.log("[zoom/recordings] users/me で録画一覧取得を試行...");
+    const meRecordings = await fetchRecordingsForUser(accessToken, "me");
+
+    if (meRecordings.length > 0) {
+        return filterAndSort(meRecordings);
+    }
+
+    // Step 2: users/me が空 → 実際のユーザーIDで取得
+    console.log("[zoom/recordings] users/me が空のため、ユーザー一覧から取得...");
+    const userIds = await listZoomUsers(accessToken);
+    const allMeetings: ZoomMeeting[] = [];
+
+    for (const uid of userIds.slice(0, 5)) {
+        const recordings = await fetchRecordingsForUser(accessToken, uid);
+        allMeetings.push(...recordings);
         if (allMeetings.length >= 50) break;
     }
 
-    // MP4録画があるミーティングのみ返す（新しい順）
-    return allMeetings
+    return filterAndSort(allMeetings);
+}
+
+function filterAndSort(meetings: ZoomMeeting[]): ZoomMeeting[] {
+    return meetings
         .filter((m) => {
             const files = m.recording_files || [];
             return files.some((f) => f.file_type === "MP4" && f.status === "completed");
         })
         .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+}
+
+/**
+ * 共有URLのトークン部分を抽出する（比較用）。
+ * 例: https://us06web.zoom.us/rec/share/TOKEN.SUFFIX → TOKEN
+ */
+function extractShareToken(url: string): string | null {
+    const match = url.match(/\/rec\/share\/([^?.\s]+)/);
+    return match ? match[1] : null;
+}
+
+/**
+ * 録画一覧の share_url から入力された共有URLにマッチする録画を探す。
+ */
+function findMatchingRecording(shareUrl: string, meetings: ZoomMeeting[]): ZoomMeeting | null {
+    const inputToken = extractShareToken(shareUrl);
+    if (!inputToken || inputToken.length < 10) return null;
+
+    for (const m of meetings) {
+        if (!m.share_url) continue;
+        const apiToken = extractShareToken(m.share_url);
+        if (apiToken && inputToken === apiToken) {
+            return m;
+        }
+    }
+
+    return null;
 }
 
 export async function POST(req: Request) {
@@ -189,12 +245,12 @@ export async function POST(req: Request) {
 
         const accessToken = await getZoomAccessToken();
 
-        // 共有URL: まずミーティングIDの抽出を試行
+        // 共有URL処理
         if (parsed.type === "shareUrl") {
+            // Step 1: HTMLスクレイピングでミーティングID抽出を試行（低確率で成功）
             const resolvedId = await resolveShareUrl(parsed.shareUrl);
-
             if (resolvedId) {
-                // 抽出成功 → 既存のAPIフロー
+                console.log("[zoom/recordings] HTMLからミーティングID抽出成功:", resolvedId);
                 const result = await fetchRecordingsByMeetingId(resolvedId, accessToken);
                 if ("error" in result) {
                     return NextResponse.json({ error: result.error }, { status: result.status });
@@ -202,14 +258,25 @@ export async function POST(req: Request) {
                 return NextResponse.json(result.data);
             }
 
-            // 抽出失敗 → 直近録画一覧を返す
+            // Step 2: API録画一覧を取得し、share_urlでマッチング
+            console.log("[zoom/recordings] HTMLスクレイピング失敗、API経由でshare_urlマッチングを試行...");
             const recentMeetings = await fetchRecentRecordings(accessToken);
 
+            const matched = findMatchingRecording(parsed.shareUrl, recentMeetings);
+            if (matched) {
+                console.log("[zoom/recordings] share_urlマッチ成功:", matched.id, matched.topic);
+                const result = await fetchRecordingsByMeetingId(String(matched.id), accessToken);
+                if (!("error" in result)) {
+                    return NextResponse.json(result.data);
+                }
+            }
+
+            // Step 3: マッチなし → 録画一覧を返して手動選択
             if (recentMeetings.length === 0) {
                 console.warn("[zoom/recordings] 共有URL解決失敗かつ直近90日の録画なし");
                 return NextResponse.json(
                     {
-                        error: "共有URLからミーティングIDを取得できず、直近90日の録画も見つかりませんでした。ミーティングIDを直接入力してください。",
+                        error: "共有URLからの自動検出に失敗しました。このURLが他のZoomアカウントの録画の場合、API経由ではアクセスできません。録画の所有者にミーティングIDを確認してください。",
                     },
                     { status: 404 },
                 );
@@ -217,7 +284,7 @@ export async function POST(req: Request) {
 
             return NextResponse.json({
                 type: "selectRecording",
-                message: "共有URLからミーティングIDを自動取得できませんでした。以下の直近録画から選択してください。",
+                message: "共有URLからの自動検出に失敗しました。以下の直近録画から該当するものを選択してください。",
                 recordings: recentMeetings.map((m) => {
                     const mp4Files = (m.recording_files || []).filter(
                         (f) => f.file_type === "MP4" && f.status === "completed",

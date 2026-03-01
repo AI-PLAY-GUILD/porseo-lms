@@ -50,6 +50,31 @@ export async function getZoomAccessToken(): Promise<string> {
 }
 
 /**
+ * Zoomアカウント内のアクティブユーザーID一覧を取得する。
+ * S2S OAuthでは `users/me` が動作しない場合があるため、
+ * 実際のユーザーIDを使用する必要がある。
+ */
+export async function listZoomUsers(accessToken: string): Promise<string[]> {
+    try {
+        const res = await fetch("https://api.zoom.us/v2/users?page_size=30&status=active", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) {
+            const errBody = await res.text();
+            console.error("[zoom] ユーザー一覧取得失敗:", res.status, errBody);
+            return [];
+        }
+        const data = await res.json();
+        const users: string[] = (data.users || []).map((u: { id: string }) => u.id);
+        console.log(`[zoom] ${users.length}人のアクティブユーザー取得`);
+        return users;
+    } catch (err) {
+        console.error("[zoom] ユーザー一覧取得エラー:", err);
+        return [];
+    }
+}
+
+/**
  * Zoom共有録画URL（/rec/share/...）からミーティングIDを抽出する。
  * HTMLページをfetchしてメタデータや埋め込みスクリプトからIDを探す。
  * SSRF防止: zoom.usドメインのみ許可。
