@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { convex } from "@/lib/convex";
 import { getConvexInternalSecret } from "@/lib/env";
-import { getZoomAccessToken } from "@/lib/zoom";
+import { getZoomAccessToken, listZoomUsers } from "@/lib/zoom";
 import { api } from "../../../../../convex/_generated/api";
 
 // Validate that URLs are from Zoom domains (SSRF prevention)
@@ -46,6 +46,75 @@ interface ZoomRecordingsListResponse {
     meetings: ZoomMeeting[];
 }
 
+/**
+ * 特定ユーザーの録画を30日チャンクで取得する。
+ * Zoom APIは1リクエストあたり最大1ヶ月の日付範囲制限があるため分割する。
+ */
+async function fetchRecordingsForUser(
+    accessToken: string,
+    userId: string,
+    fromDate: Date,
+    toDate: Date,
+): Promise<ZoomMeeting[]> {
+    const meetings: ZoomMeeting[] = [];
+    const chunkStart = new Date(fromDate);
+
+    while (chunkStart < toDate) {
+        const chunkEnd = new Date(chunkStart);
+        chunkEnd.setDate(chunkEnd.getDate() + 30);
+        if (chunkEnd > toDate) {
+            chunkEnd.setTime(toDate.getTime());
+        }
+
+        const fromStr = chunkStart.toISOString().split("T")[0];
+        const toStr = chunkEnd.toISOString().split("T")[0];
+
+        // 同じ日付の場合はスキップ
+        if (fromStr === toStr) {
+            chunkStart.setDate(chunkStart.getDate() + 30);
+            continue;
+        }
+
+        let nextPageToken = "";
+        do {
+            const params = new URLSearchParams({
+                from: fromStr,
+                to: toStr,
+                page_size: "300",
+            });
+            if (nextPageToken) {
+                params.set("next_page_token", nextPageToken);
+            }
+
+            const zoomRes = await fetch(`https://api.zoom.us/v2/users/${userId}/recordings?${params}`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+
+            if (!zoomRes.ok) {
+                const errBody = await zoomRes.text();
+                console.error(
+                    `[zoom/bulk-import] 録画一覧取得失敗 (user=${userId}, ${fromStr}~${toStr}):`,
+                    zoomRes.status,
+                    errBody,
+                );
+                break;
+            }
+
+            const data: ZoomRecordingsListResponse = await zoomRes.json();
+            if (data.meetings) {
+                meetings.push(...data.meetings);
+            }
+            nextPageToken = data.next_page_token || "";
+        } while (nextPageToken);
+
+        console.log(`[zoom/bulk-import] user=${userId} ${fromStr}~${toStr}: ${meetings.length}件（累計）`);
+
+        chunkStart.setDate(chunkStart.getDate() + 30);
+    }
+
+    return meetings;
+}
+
 export async function POST(req: Request) {
     try {
         const { userId } = await auth();
@@ -68,51 +137,49 @@ export async function POST(req: Request) {
 
         // Calculate date range
         const today = new Date();
-        const toDate = today.toISOString().split("T")[0]; // YYYY-MM-DD
 
-        let fromDate: string;
+        let fromDate: Date;
         if (latestDate) {
-            // Start from the day of the last recording
-            const d = new Date(latestDate);
-            fromDate = d.toISOString().split("T")[0];
+            fromDate = new Date(latestDate);
         } else {
-            // No existing recordings - go back 30 days
-            const d = new Date();
-            d.setDate(d.getDate() - 30);
-            fromDate = d.toISOString().split("T")[0];
+            fromDate = new Date();
+            fromDate.setDate(fromDate.getDate() - 30);
         }
 
-        // 2. Fetch all recordings from Zoom API (with pagination)
+        const fromDateStr = fromDate.toISOString().split("T")[0];
+        const toDateStr = today.toISOString().split("T")[0];
+
+        // 2. Fetch all recordings from Zoom API
+        // S2S OAuthではusers/meが動作しない場合があるため、
+        // まずusers/meを試行し、失敗時はユーザー一覧から取得する。
         const accessToken = await getZoomAccessToken();
-        const allMeetings: ZoomMeeting[] = [];
-        let nextPageToken = "";
+        let allMeetings: ZoomMeeting[] = [];
 
-        do {
-            const params = new URLSearchParams({
-                from: fromDate,
-                to: toDate,
-                page_size: "300",
-            });
-            if (nextPageToken) {
-                params.set("next_page_token", nextPageToken);
+        // Step 1: users/me を試行
+        console.log("[zoom/bulk-import] users/me で録画一覧取得を試行...");
+        const meMeetings = await fetchRecordingsForUser(accessToken, "me", fromDate, today);
+
+        if (meMeetings.length > 0) {
+            allMeetings = meMeetings;
+        } else {
+            // Step 2: users/me が空 → 実際のユーザーIDで取得
+            console.log("[zoom/bulk-import] users/me が空のため、ユーザー一覧から取得...");
+            const userIds = await listZoomUsers(accessToken);
+
+            if (userIds.length === 0) {
+                return NextResponse.json(
+                    { error: "Zoomユーザー一覧の取得に失敗しました。Zoom OAuthアプリのスコープを確認してください。" },
+                    { status: 500 },
+                );
             }
 
-            const zoomRes = await fetch(`https://api.zoom.us/v2/users/me/recordings?${params}`, {
-                headers: { Authorization: `Bearer ${accessToken}` },
-            });
-
-            if (!zoomRes.ok) {
-                const errText = await zoomRes.text();
-                console.error("[zoom/bulk-import] Zoom APIエラー:", zoomRes.status, errText);
-                return NextResponse.json({ error: `Zoom APIエラー: ${zoomRes.status}` }, { status: 500 });
+            for (const uid of userIds.slice(0, 10)) {
+                const recordings = await fetchRecordingsForUser(accessToken, uid, fromDate, today);
+                allMeetings.push(...recordings);
             }
+        }
 
-            const data: ZoomRecordingsListResponse = await zoomRes.json();
-            if (data.meetings) {
-                allMeetings.push(...data.meetings);
-            }
-            nextPageToken = data.next_page_token || "";
-        } while (nextPageToken);
+        console.log(`[zoom/bulk-import] 合計 ${allMeetings.length} 件の録画を取得`);
 
         // 3. Process each meeting and import
         const results: {
@@ -232,8 +299,8 @@ export async function POST(req: Request) {
         const errors = results.filter((r) => r.status === "error").length;
 
         return NextResponse.json({
-            fromDate,
-            toDate,
+            fromDate: fromDateStr,
+            toDate: toDateStr,
             totalFound: allMeetings.length,
             imported,
             skipped,
