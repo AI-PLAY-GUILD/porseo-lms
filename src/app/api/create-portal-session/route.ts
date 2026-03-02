@@ -5,13 +5,10 @@ import { getConvexInternalSecret } from "@/lib/env";
 import { getStripe } from "@/lib/stripe";
 import { api } from "../../../../convex/_generated/api";
 
-export async function POST() {
+export async function POST(req: Request) {
     console.log("[create-portal-session] リクエスト受信", { method: "POST" });
     try {
-        if (!process.env.NEXT_PUBLIC_BASE_URL) {
-            console.error("NEXT_PUBLIC_BASE_URL is not set");
-            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
-        }
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
 
         const { userId } = await auth();
         if (!userId) {
@@ -31,7 +28,7 @@ export async function POST() {
         }
 
         const stripe = getStripe();
-        const returnUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/profile`;
+        const returnUrl = `${baseUrl}/profile`;
         const subscriptions = await stripe.subscriptions.list({
             customer: user.stripeCustomerId,
             status: "all",

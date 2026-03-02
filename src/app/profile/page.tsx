@@ -39,6 +39,11 @@ export default function ProfilePage() {
                 method: "POST",
             });
             const data = await res.json();
+            if (!res.ok) {
+                const message = data?.error || `HTTP ${res.status}`;
+                alert(`カスタマーポータルのURL取得に失敗しました。\n${message}`);
+                return;
+            }
             console.log("[ProfilePage] ポータルセッション取得結果:", { hasUrl: !!data.url });
             if (data.url) {
                 console.log("[ProfilePage] ポータルURLへリダイレクト");
