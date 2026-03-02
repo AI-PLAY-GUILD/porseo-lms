@@ -5,7 +5,7 @@ import { getConvexInternalSecret } from "@/lib/env";
 import { getStripe } from "@/lib/stripe";
 import { api } from "../../../../convex/_generated/api";
 
-export async function POST(_req: Request) {
+export async function POST() {
     console.log("[create-portal-session] リクエスト受信", { method: "POST" });
     try {
         if (!process.env.NEXT_PUBLIC_BASE_URL) {
@@ -30,11 +30,47 @@ export async function POST(_req: Request) {
             return NextResponse.json({ error: "No billing information found" }, { status: 404 });
         }
 
-        // Create Portal Session
-        const session = await getStripe().billingPortal.sessions.create({
+        const stripe = getStripe();
+        const returnUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/profile`;
+        const subscriptions = await stripe.subscriptions.list({
             customer: user.stripeCustomerId,
-            return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/profile`,
+            status: "all",
+            limit: 20,
         });
+        const targetSubscription = subscriptions.data.find((sub) =>
+            ["active", "trialing", "past_due", "unpaid"].includes(sub.status),
+        );
+
+        let session;
+        if (targetSubscription) {
+            try {
+                session = await stripe.billingPortal.sessions.create({
+                    customer: user.stripeCustomerId,
+                    return_url: returnUrl,
+                    flow_data: {
+                        type: "subscription_update",
+                        subscription_update: {
+                            subscription: targetSubscription.id,
+                        },
+                    },
+                });
+            } catch (flowError) {
+                console.warn("[create-portal-session] subscription_update フローの作成に失敗。通常ポータルへフォールバック", {
+                    customerId: user.stripeCustomerId,
+                    subscriptionId: targetSubscription.id,
+                    flowError,
+                });
+                session = await stripe.billingPortal.sessions.create({
+                    customer: user.stripeCustomerId,
+                    return_url: returnUrl,
+                });
+            }
+        } else {
+            session = await stripe.billingPortal.sessions.create({
+                customer: user.stripeCustomerId,
+                return_url: returnUrl,
+            });
+        }
 
         console.log("[create-portal-session] 成功: ポータルセッション作成完了", { customerId: user.stripeCustomerId });
         return NextResponse.json({ url: session.url });
