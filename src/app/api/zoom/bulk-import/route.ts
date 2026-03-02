@@ -130,24 +130,44 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Admin access required" }, { status: 403 });
         }
 
-        // 1. Get the latest Zoom video date from DB
-        const latestDate = await convex.query(api.zoom.getLatestZoomVideoDate, {
-            secret: getConvexInternalSecret(),
-        });
+        // Parse optional request body for date range and filters
+        let bodyFromDate: string | undefined;
+        let bodyToDate: string | undefined;
+        let minDuration = 0; // minutes, 0 = no filter
+        try {
+            const body = await req.json();
+            bodyFromDate = body.fromDate;
+            bodyToDate = body.toDate;
+            if (typeof body.minDuration === "number") {
+                minDuration = body.minDuration;
+            }
+        } catch {
+            // No body or invalid JSON — use defaults
+        }
 
         // Calculate date range
         const today = new Date();
 
         let fromDate: Date;
-        if (latestDate) {
-            fromDate = new Date(latestDate);
+        if (bodyFromDate) {
+            fromDate = new Date(bodyFromDate);
         } else {
-            fromDate = new Date();
-            fromDate.setDate(fromDate.getDate() - 30);
+            // Fallback: latest Zoom video date or 30 days ago
+            const latestDate = await convex.query(api.zoom.getLatestZoomVideoDate, {
+                secret: getConvexInternalSecret(),
+            });
+            if (latestDate) {
+                fromDate = new Date(latestDate);
+            } else {
+                fromDate = new Date();
+                fromDate.setDate(fromDate.getDate() - 30);
+            }
         }
 
+        const toDate = bodyToDate ? new Date(bodyToDate) : today;
+
         const fromDateStr = fromDate.toISOString().split("T")[0];
-        const toDateStr = today.toISOString().split("T")[0];
+        const toDateStr = toDate.toISOString().split("T")[0];
 
         // 2. Fetch all recordings from Zoom API
         // S2S OAuthではusers/meが動作しない場合があるため、
@@ -157,7 +177,7 @@ export async function POST(req: Request) {
 
         // Step 1: users/me を試行
         console.log("[zoom/bulk-import] users/me で録画一覧取得を試行...");
-        const meMeetings = await fetchRecordingsForUser(accessToken, "me", fromDate, today);
+        const meMeetings = await fetchRecordingsForUser(accessToken, "me", fromDate, toDate);
 
         if (meMeetings.length > 0) {
             allMeetings = meMeetings;
@@ -174,7 +194,7 @@ export async function POST(req: Request) {
             }
 
             for (const uid of userIds.slice(0, 10)) {
-                const recordings = await fetchRecordingsForUser(accessToken, uid, fromDate, today);
+                const recordings = await fetchRecordingsForUser(accessToken, uid, fromDate, toDate);
                 allMeetings.push(...recordings);
             }
         }
@@ -189,7 +209,12 @@ export async function POST(req: Request) {
             reason?: string;
         }[] = [];
 
-        for (const meeting of allMeetings) {
+        // Filter by minimum duration (in minutes)
+        const filteredMeetings = minDuration > 0 ? allMeetings.filter((m) => m.duration >= minDuration) : allMeetings;
+
+        console.log(`[zoom/bulk-import] フィルタ後: ${filteredMeetings.length} 件 (最低${minDuration}分)`);
+
+        for (const meeting of filteredMeetings) {
             const meetingId = String(meeting.id);
             const files = meeting.recording_files || [];
 
@@ -304,7 +329,9 @@ export async function POST(req: Request) {
         return NextResponse.json({
             fromDate: fromDateStr,
             toDate: toDateStr,
-            totalFound: allMeetings.length,
+            totalFound: filteredMeetings.length,
+            totalBeforeFilter: allMeetings.length,
+            minDuration,
             imported,
             skipped,
             errors,

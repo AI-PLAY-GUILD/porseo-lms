@@ -75,10 +75,15 @@ export default function VideoUploadPage() {
 
     // Bulk import state
     const [bulkLoading, setBulkLoading] = useState(false);
+    const [bulkFromDate, setBulkFromDate] = useState("2025-10-01");
+    const [bulkToDate, setBulkToDate] = useState(new Date().toISOString().split("T")[0]);
+    const [bulkMinDuration, setBulkMinDuration] = useState(15);
     const [bulkResults, setBulkResults] = useState<{
         fromDate: string;
         toDate: string;
         totalFound: number;
+        totalBeforeFilter?: number;
+        minDuration?: number;
         imported: number;
         skipped: number;
         errors: number;
@@ -233,6 +238,11 @@ export default function VideoUploadPage() {
             const res = await fetch("/api/zoom/bulk-import", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    fromDate: bulkFromDate,
+                    toDate: bulkToDate,
+                    minDuration: bulkMinDuration,
+                }),
             });
             const data = await res.json();
             if (!res.ok) {
@@ -578,19 +588,53 @@ export default function VideoUploadPage() {
                         <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-md">
                             <p className="font-medium mb-1">Zoom録画の一括取り込み</p>
                             <p className="text-sm">
-                                アプリに最後に登録されたZoom録画以降の、すべてのクラウドレコーディングを自動で取り込みます。
+                                指定した期間のクラウドレコーディングを自動で取り込みます。
                                 文字起こし・チャットメッセージも自動で取得されます。
                             </p>
                         </div>
 
                         {!bulkResults ? (
-                            <button
-                                onClick={handleBulkImport}
-                                disabled={bulkLoading}
-                                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {bulkLoading ? "取り込み中... (しばらくお待ちください)" : "一括取り込みを開始する"}
-                            </button>
+                            <>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">開始日</label>
+                                        <input
+                                            type="date"
+                                            value={bulkFromDate}
+                                            onChange={(e) => setBulkFromDate(e.target.value)}
+                                            className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">終了日</label>
+                                        <input
+                                            type="date"
+                                            value={bulkToDate}
+                                            onChange={(e) => setBulkToDate(e.target.value)}
+                                            className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">最低録画時間（分）</label>
+                                    <input
+                                        type="number"
+                                        value={bulkMinDuration}
+                                        onChange={(e) => setBulkMinDuration(Number(e.target.value))}
+                                        min={0}
+                                        className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 text-sm"
+                                        placeholder="0 = フィルタなし"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">0にするとすべての録画を取り込みます</p>
+                                </div>
+                                <button
+                                    onClick={handleBulkImport}
+                                    disabled={bulkLoading}
+                                    className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {bulkLoading ? "取り込み中... (しばらくお待ちください)" : "一括取り込みを開始する"}
+                                </button>
+                            </>
                         ) : (
                             <div className="space-y-4">
                                 {/* Summary */}
@@ -601,6 +645,13 @@ export default function VideoUploadPage() {
                                     </p>
                                     <p className="text-sm">
                                         <span className="font-medium">検出数:</span> {bulkResults.totalFound}件
+                                        {bulkResults.totalBeforeFilter &&
+                                            bulkResults.totalBeforeFilter !== bulkResults.totalFound && (
+                                                <span className="text-gray-400 ml-1">
+                                                    （全{bulkResults.totalBeforeFilter}件中、{bulkResults.minDuration}
+                                                    分以上）
+                                                </span>
+                                            )}
                                     </p>
                                     <div className="flex gap-4 text-sm">
                                         <span className="text-green-600 font-bold">取込: {bulkResults.imported}件</span>
