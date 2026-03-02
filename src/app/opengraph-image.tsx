@@ -1,6 +1,5 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
 export const alt = "PORSEO LMS - プロフェッショナル学習管理システム";
 export const size = {
     width: 1200,
