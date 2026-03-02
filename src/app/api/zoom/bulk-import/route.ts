@@ -193,9 +193,15 @@ export async function POST(req: Request) {
             const meetingId = String(meeting.id);
             const files = meeting.recording_files || [];
 
-            // Check if already imported
+            // Find MP4 (largest) - moved up for recordingFileId
+            const mp4Files = files.filter((f) => f.file_type === "MP4" && f.status === "completed");
+            const mp4 = mp4Files.sort((a, b) => b.file_size - a.file_size)[0] || null;
+            const recordingFileId = mp4?.id ? String(mp4.id) : undefined;
+
+            // Check if already imported (by recordingFileId for recurring meetings)
             const alreadyImported = await convex.query(api.zoom.isZoomMeetingImported, {
                 meetingId,
+                recordingFileId,
                 secret: getConvexInternalSecret(),
             });
             if (alreadyImported) {
@@ -207,10 +213,6 @@ export async function POST(req: Request) {
                 });
                 continue;
             }
-
-            // Find MP4 (largest)
-            const mp4Files = files.filter((f) => f.file_type === "MP4" && f.status === "completed");
-            const mp4 = mp4Files.sort((a, b) => b.file_size - a.file_size)[0] || null;
 
             if (!mp4) {
                 results.push({
@@ -274,6 +276,7 @@ export async function POST(req: Request) {
                     mp4DownloadUrl: mp4UrlWithToken,
                     vttDownloadUrl: vttUrlWithToken,
                     chatMessages: chatText || undefined,
+                    recordingFileId,
                     duration: durationSeconds,
                     secret: getConvexInternalSecret(),
                 });

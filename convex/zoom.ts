@@ -149,11 +149,23 @@ export const createZoomDraftVideo = mutation({
 export const isZoomMeetingImported = query({
     args: {
         meetingId: v.string(),
+        recordingFileId: v.optional(v.string()),
         secret: v.string(),
     },
     handler: async (ctx, args) => {
         validateInternalSecret(args.secret);
 
+        // recordingFileIdがある場合はインデックスで正確に重複チェック
+        // （定期会議で同じmeetingIdが再利用されるため）
+        if (args.recordingFileId) {
+            const existing = await ctx.db
+                .query("videos")
+                .withIndex("by_zoom_recording_id", (q) => q.eq("zoomRecordingId", args.recordingFileId))
+                .first();
+            return !!existing;
+        }
+
+        // フォールバック: recordingFileIdなしの場合はmeetingIdで検索
         const existing = await ctx.db
             .query("videos")
             .filter((q) => q.eq(q.field("zoomMeetingId"), args.meetingId))
@@ -172,11 +184,23 @@ export const createZoomManualImportVideo = mutation({
         mp4DownloadUrl: v.string(),
         vttDownloadUrl: v.string(),
         chatMessages: v.optional(v.string()),
+        recordingFileId: v.optional(v.string()),
         duration: v.number(),
         secret: v.string(),
     },
     handler: async (ctx, args) => {
         validateInternalSecret(args.secret);
+
+        // recordingFileIdがある場合、重複チェック
+        if (args.recordingFileId) {
+            const existing = await ctx.db
+                .query("videos")
+                .withIndex("by_zoom_recording_id", (q) => q.eq("zoomRecordingId", args.recordingFileId))
+                .first();
+            if (existing) {
+                return existing._id;
+            }
+        }
 
         const safeTopic = args.meetingTopic.slice(0, 200);
         const title = `【Zoom】${safeTopic}`.slice(0, 200);
@@ -202,6 +226,7 @@ export const createZoomManualImportVideo = mutation({
             isPublished: false,
             duration: Math.round(args.duration),
             zoomMeetingId: args.meetingId,
+            zoomRecordingId: args.recordingFileId || undefined,
             zoomChatMessages: args.chatMessages || undefined,
             source: "zoom",
             tags: unpublishedTag ? [unpublishedTag._id] : [],
