@@ -17,6 +17,7 @@ const SYSTEM_PROMPT = `あなたはPORSEOの学習アシスタントです。
 - **簡潔に要点をまとめる**（長文は避ける）
 - 動画は最大3つまで紹介（多すぎると読みにくい）
 - 検索結果がない場合は一般知識で回答し「該当する動画は見つかりませんでした」と伝える
+- **重要**: 動画に言及・紹介する場合は、以前のツール結果を再利用せず、**必ず毎回ツールを呼び出す**こと。ツール結果がないとUIに動画カードが表示されないため
 
 ## マークダウン記法（必ず使用すること）
 回答には以下のマークダウンを積極的に使ってください：
@@ -143,6 +144,7 @@ export async function POST(req: Request) {
                                             .includes(kw)
                                     );
                                 })
+                                .slice(0, 3)
                                 .map((v) => ({
                                     videoId: v._id,
                                     title: v.title,
@@ -167,7 +169,7 @@ export async function POST(req: Request) {
                         "動画の文字起こしデータをベクトル検索して、ユーザーの質問に関連する動画とタイムスタンプを見つけます",
                     inputSchema: z.object({
                         query: z.string().describe("検索クエリ"),
-                        limit: z.number().default(8).describe("返す結果の最大数"),
+                        limit: z.number().default(3).describe("返す結果の最大数（最大3）"),
                     }),
                     execute: async ({ query, limit }) => {
                         const secret = getConvexInternalSecret();
@@ -175,7 +177,7 @@ export async function POST(req: Request) {
                             const results = await convex.action(api.rag.searchTranscriptions, {
                                 query,
                                 secret,
-                                limit: limit || 8,
+                                limit: Math.min(limit || 3, 3),
                             });
                             if (!results || !Array.isArray(results) || results.length === 0) {
                                 return {
