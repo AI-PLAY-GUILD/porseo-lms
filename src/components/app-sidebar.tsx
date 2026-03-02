@@ -73,6 +73,11 @@ const data = {
                     url: "/videos",
                     icon: Video,
                 },
+                {
+                    title: "コース",
+                    url: "/courses",
+                    icon: BookOpen,
+                },
             ],
         },
         {

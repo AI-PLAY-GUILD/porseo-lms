@@ -10,6 +10,7 @@
 
 import type * as admin from "../admin.js";
 import type * as ai from "../ai.js";
+import type * as courses from "../courses.js";
 import type * as dashboard from "../dashboard.js";
 import type * as debug_user from "../debug_user.js";
 import type * as discord from "../discord.js";
@@ -39,6 +40,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   ai: typeof ai;
+  courses: typeof courses;
   dashboard: typeof dashboard;
   debug_user: typeof debug_user;
   discord: typeof discord;
