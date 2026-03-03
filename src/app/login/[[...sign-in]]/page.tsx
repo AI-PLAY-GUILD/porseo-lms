@@ -2,9 +2,13 @@
 
 import { useSignIn } from "@clerk/nextjs";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function LoginPage() {
+function LoginContent() {
     const { signIn, isLoaded } = useSignIn();
+    const searchParams = useSearchParams();
+    const isStripeLink = searchParams.get("stripe_link") === "1";
 
     const handleDiscordLogin = async () => {
         if (!isLoaded) return;
@@ -12,7 +16,7 @@ export default function LoginPage() {
             await signIn.authenticateWithRedirect({
                 strategy: "oauth_discord",
                 redirectUrl: "/sso-callback",
-                redirectUrlComplete: "/dashboard",
+                redirectUrlComplete: isStripeLink ? "/dashboard?stripe_link=1" : "/dashboard",
             });
         } catch (err) {
             console.error("Login failed:", err);
@@ -33,6 +37,23 @@ export default function LoginPage() {
             <main className="auth-card-wrap">
                 <h2 className="auth-heading">ログイン</h2>
                 <p className="auth-sub">おかえりなさい！</p>
+
+                {isStripeLink && (
+                    <div
+                        style={{
+                            width: "100%",
+                            padding: "0.75rem 1rem",
+                            background: "rgba(14, 165, 233, 0.1)",
+                            border: "1px solid rgba(14, 165, 233, 0.3)",
+                            borderRadius: "12px",
+                            fontSize: "0.85rem",
+                            color: "#0c4a6e",
+                            textAlign: "center",
+                        }}
+                    >
+                        既存会員の連携のため、Discordでログインしてください
+                    </div>
+                )}
 
                 {/* Custom Sign-In Button */}
                 <div
@@ -295,5 +316,13 @@ export default function LoginPage() {
                 }
             `}</style>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense>
+            <LoginContent />
+        </Suspense>
     );
 }

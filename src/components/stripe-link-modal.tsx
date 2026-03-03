@@ -1,6 +1,7 @@
 "use client";
 
-import { useAction } from "convex/react";
+import { useAction, useConvexAuth } from "convex/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { setPendingStripeLink } from "@/lib/stripe-link";
 import { api } from "../../convex/_generated/api";
 
 interface StripeLinkModalProps {
@@ -26,11 +28,20 @@ export function StripeLinkModal({ triggerClassName, triggerLabel }: StripeLinkMo
     const [open, setOpen] = useState(false);
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
+    const { isAuthenticated } = useConvexAuth();
+    const router = useRouter();
     const linkStripeCustomer = useAction(api.stripe.linkStripeCustomerByEmail);
 
     const handleLink = async () => {
         if (!email.trim()) {
             toast.error("メールアドレスを入力してください");
+            return;
+        }
+
+        if (!isAuthenticated) {
+            setPendingStripeLink(email.trim());
+            setOpen(false);
+            router.push("/login?stripe_link=1");
             return;
         }
 
@@ -89,6 +100,11 @@ export function StripeLinkModal({ triggerClassName, triggerLabel }: StripeLinkMo
                             className="bg-white/10 border-white/20 text-white placeholder:text-gray-500"
                         />
                     </div>
+                    {!isAuthenticated && (
+                        <p className="text-xs text-amber-400">
+                            連携にはログインが必要です。メールアドレス入力後、ログインページへ移動します。
+                        </p>
+                    )}
                 </div>
                 <DialogFooter className="gap-2">
                     <Button
@@ -103,7 +119,7 @@ export function StripeLinkModal({ triggerClassName, triggerLabel }: StripeLinkMo
                         disabled={loading || !email.trim()}
                         className="bg-blue-600 hover:bg-blue-500 text-white"
                     >
-                        {loading ? "連携中..." : "連携する"}
+                        {loading ? "連携中..." : isAuthenticated ? "連携する" : "ログインして連携する"}
                     </Button>
                 </DialogFooter>
             </DialogContent>
