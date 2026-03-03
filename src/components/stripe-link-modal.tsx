@@ -100,6 +100,16 @@ export function StripeLinkModal({ triggerClassName, triggerLabel }: StripeLinkMo
                                     }}
                                     className="bg-white/10 border-white/20 text-white placeholder:text-gray-500"
                                 />
+                                <p className="text-xs text-gray-500">
+                                    メールアドレスがご不明な場合は{" "}
+                                    <a
+                                        href="mailto:taiyo.kimura.3w@stu.hosei.ac.jp"
+                                        className="text-blue-400 hover:text-blue-300 underline"
+                                    >
+                                        taiyo.kimura.3w@stu.hosei.ac.jp
+                                    </a>{" "}
+                                    までお問い合わせください。
+                                </p>
                             </div>
                         </div>
                         <DialogFooter className="gap-2">
