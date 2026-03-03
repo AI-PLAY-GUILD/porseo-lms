@@ -52,11 +52,14 @@ export async function POST(req: Request) {
                     },
                 });
             } catch (flowError) {
-                console.warn("[create-portal-session] subscription_update フローの作成に失敗。通常ポータルへフォールバック", {
-                    customerId: user.stripeCustomerId,
-                    subscriptionId: targetSubscription.id,
-                    flowError,
-                });
+                console.warn(
+                    "[create-portal-session] subscription_update フローの作成に失敗。通常ポータルへフォールバック",
+                    {
+                        customerId: user.stripeCustomerId,
+                        subscriptionId: targetSubscription.id,
+                        flowError,
+                    },
+                );
                 session = await stripe.billingPortal.sessions.create({
                     customer: user.stripeCustomerId,
                     return_url: returnUrl,

@@ -3,6 +3,7 @@
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { StripeLinkModal } from "@/components/stripe-link-modal";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { WaveButton } from "@/components/ui/wave-button";
@@ -77,7 +78,11 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                             </Button>
                         </div>
                     ) : (
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 items-center">
+                            <StripeLinkModal
+                                triggerClassName="text-sm font-medium text-slate-500 hover:text-slate-900 underline underline-offset-4 decoration-slate-300 hover:decoration-slate-900 transition-all"
+                                triggerLabel="既存会員の連携"
+                            />
                             <Button
                                 asChild
                                 variant="ghost"
@@ -155,6 +160,10 @@ export function BrutalistHeader({ isSignedIn, isMember, isAdmin }: BrutalistHead
                                         >
                                             <Link href="/join">今すぐ参加</Link>
                                         </Button>
+                                        <StripeLinkModal
+                                            triggerClassName="text-sm font-medium text-slate-500 hover:text-slate-900 underline underline-offset-4 decoration-slate-300 hover:decoration-slate-900 transition-all mt-2"
+                                            triggerLabel="既存会員の連携はこちら"
+                                        />
                                     </div>
                                 )}
                             </div>

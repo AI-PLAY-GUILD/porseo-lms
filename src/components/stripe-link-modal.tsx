@@ -17,7 +17,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "../../convex/_generated/api";
 
-export function StripeLinkModal() {
+interface StripeLinkModalProps {
+    triggerClassName?: string;
+    triggerLabel?: string;
+}
+
+export function StripeLinkModal({ triggerClassName, triggerLabel }: StripeLinkModalProps = {}) {
     const [open, setOpen] = useState(false);
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
@@ -51,9 +56,12 @@ export function StripeLinkModal() {
             <DialogTrigger asChild>
                 <Button
                     variant="link"
-                    className="text-gray-400 hover:text-white text-xs font-bold underline decoration-gray-600 hover:decoration-white transition-all"
+                    className={
+                        triggerClassName ??
+                        "text-gray-400 hover:text-white text-xs font-bold underline decoration-gray-600 hover:decoration-white transition-all"
+                    }
                 >
-                    AIで遊ぼうコミュニティだった方はこちら
+                    {triggerLabel ?? "AIで遊ぼうコミュニティだった方はこちら"}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] bg-black/90 border-white/10 text-white">
