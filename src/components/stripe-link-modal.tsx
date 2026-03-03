@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { setPendingStripeLink } from "@/lib/stripe-link";
 import { api } from "../../convex/_generated/api";
 
 interface StripeLinkModalProps {
@@ -38,13 +37,6 @@ export function StripeLinkModal({ triggerClassName, triggerLabel }: StripeLinkMo
             return;
         }
 
-        if (!isAuthenticated) {
-            setPendingStripeLink(email.trim());
-            setOpen(false);
-            router.push("/login?stripe_link=1");
-            return;
-        }
-
         setLoading(true);
         try {
             const result = await linkStripeCustomer({ email: email.trim() });
@@ -60,6 +52,11 @@ export function StripeLinkModal({ triggerClassName, triggerLabel }: StripeLinkMo
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleDiscordLogin = () => {
+        setOpen(false);
+        router.push("/login?stripe_link=1");
     };
 
     return (
@@ -79,49 +76,63 @@ export function StripeLinkModal({ triggerClassName, triggerLabel }: StripeLinkMo
                 <DialogHeader>
                     <DialogTitle>既存アカウントの連携</DialogTitle>
                     <DialogDescription className="text-gray-400">
-                        以前「AIで遊ぼう」コミュニティでご利用いただいていた方は、
-                        登録時のメールアドレスを入力してください。 既存のサブスクリプションを引き継ぎます。
+                        {isAuthenticated
+                            ? "以前「AIで遊ぼう」コミュニティでご利用いただいていた方は、登録時のメールアドレスを入力してください。既存のサブスクリプションを引き継ぎます。"
+                            : "以前「AIで遊ぼう」コミュニティでご利用いただいていた方は、まずDiscordでログインしてください。ログイン後にメールアドレスを入力して連携を行います。"}
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="email" className="text-white">
-                            メールアドレス
-                        </Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            placeholder="example@email.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") handleLink();
-                            }}
-                            className="bg-white/10 border-white/20 text-white placeholder:text-gray-500"
-                        />
-                    </div>
-                    {!isAuthenticated && (
-                        <p className="text-xs text-amber-400">
-                            連携にはログインが必要です。メールアドレス入力後、ログインページへ移動します。
-                        </p>
-                    )}
-                </div>
-                <DialogFooter className="gap-2">
-                    <Button
-                        onClick={() => setOpen(false)}
-                        variant="outline"
-                        className="border-white/20 text-white hover:bg-white/10"
-                    >
-                        キャンセル
-                    </Button>
-                    <Button
-                        onClick={handleLink}
-                        disabled={loading || !email.trim()}
-                        className="bg-blue-600 hover:bg-blue-500 text-white"
-                    >
-                        {loading ? "連携中..." : isAuthenticated ? "連携する" : "ログインして連携する"}
-                    </Button>
-                </DialogFooter>
+
+                {isAuthenticated ? (
+                    <>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="email" className="text-white">
+                                    メールアドレス
+                                </Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="example@email.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") handleLink();
+                                    }}
+                                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-500"
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter className="gap-2">
+                            <Button
+                                onClick={() => setOpen(false)}
+                                variant="outline"
+                                className="border-white/20 text-white hover:bg-white/10"
+                            >
+                                キャンセル
+                            </Button>
+                            <Button
+                                onClick={handleLink}
+                                disabled={loading || !email.trim()}
+                                className="bg-blue-600 hover:bg-blue-500 text-white"
+                            >
+                                {loading ? "連携中..." : "連携する"}
+                            </Button>
+                        </DialogFooter>
+                    </>
+                ) : (
+                    <DialogFooter className="gap-2 pt-4">
+                        <Button
+                            onClick={() => setOpen(false)}
+                            variant="outline"
+                            className="border-white/20 text-white hover:bg-white/10"
+                        >
+                            キャンセル
+                        </Button>
+                        <Button onClick={handleDiscordLogin} className="bg-[#5865F2] hover:bg-[#4752C4] text-white">
+                            Discordでログインする
+                        </Button>
+                    </DialogFooter>
+                )}
             </DialogContent>
         </Dialog>
     );
