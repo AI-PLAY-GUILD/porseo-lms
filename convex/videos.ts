@@ -93,10 +93,16 @@ export const getVideos = query({
 
                 const views = progress.filter((p) => p.videoId === video._id).length;
 
+                let thumbnailUrl = null;
+                if (video.customThumbnailStorageId) {
+                    thumbnailUrl = await ctx.storage.getUrl(video.customThumbnailStorageId);
+                }
+
                 return {
                     ...video,
                     tags: tags.filter((t) => t !== null),
                     views,
+                    thumbnailUrl,
                 };
             }),
         );

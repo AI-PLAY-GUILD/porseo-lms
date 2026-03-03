@@ -63,6 +63,7 @@ function VideoList() {
             <table className="w-full text-left border-collapse">
                 <thead>
                     <tr className="border-b dark:border-gray-700">
+                        <th className="py-3 px-4 w-20">サムネイル</th>
                         <th className="py-3 px-4">タイトル</th>
                         <th className="py-3 px-4">タグ</th>
                         <th className="py-3 px-4">状態</th>
@@ -77,6 +78,22 @@ function VideoList() {
                             key={video._id}
                             className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                         >
+                            <td className="py-3 px-4">
+                                {video.thumbnailUrl || video.muxPlaybackId ? (
+                                    <img
+                                        src={
+                                            video.thumbnailUrl ||
+                                            `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=120&height=68&fit_mode=smartcrop`
+                                        }
+                                        alt={video.title}
+                                        className="w-20 h-12 object-cover rounded"
+                                    />
+                                ) : (
+                                    <div className="w-20 h-12 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center text-xs text-gray-400">
+                                        No Image
+                                    </div>
+                                )}
+                            </td>
                             <td className="py-3 px-4 font-medium">
                                 <div className="flex items-center gap-2">
                                     <a
