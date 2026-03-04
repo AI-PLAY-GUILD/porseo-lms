@@ -282,9 +282,6 @@ export const autoIndexVideoTranscription = internalAction({
     },
 });
 
-// ============================
-// ベクトル検索 (API Route から呼び出し用)
-// ============================
 interface SearchResult {
     videoId: Id<"videos">;
     videoTitle: string;
@@ -295,6 +292,214 @@ interface SearchResult {
     score: number;
 }
 
+// ============================
+// 認証付きベクトル検索 (クライアントから直接呼び出し用)
+// ============================
+export const searchTranscriptionsAuthenticated = action({
+    args: {
+        query: v.string(),
+        limit: v.optional(v.number()),
+    },
+    handler: async (ctx, args): Promise<SearchResult[]> => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized: Authentication required");
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+        const client = new GoogleGenAI({ apiKey });
+
+        const response = await client.models.embedContent({
+            model: EMBEDDING_MODEL,
+            contents: args.query,
+            config: { outputDimensionality: EMBEDDING_DIMENSIONS },
+        });
+        const queryEmbedding = response.embeddings?.[0]?.values;
+        if (!queryEmbedding) throw new Error("Failed to generate query embedding");
+
+        const results = await ctx.vectorSearch("transcription_chunks", "by_embedding", {
+            vector: queryEmbedding,
+            limit: args.limit || 10,
+        });
+
+        const enrichedResults: (SearchResult | null)[] = await Promise.all(
+            results.map(async (result): Promise<SearchResult | null> => {
+                const chunk = await ctx.runQuery(api.ragDb.getChunk, { id: result._id });
+                if (!chunk) return null;
+                const video = await ctx.runQuery(api.videos.getById, { videoId: chunk.videoId });
+                if (!video || !video.isPublished) return null;
+                return {
+                    videoId: chunk.videoId,
+                    videoTitle: video.title || "Unknown",
+                    muxPlaybackId: video.muxPlaybackId || null,
+                    text: chunk.text,
+                    startTime: chunk.startTime,
+                    endTime: chunk.endTime,
+                    score: result._score,
+                };
+            }),
+        );
+        return enrichedResults.filter((r): r is SearchResult => r !== null);
+    },
+});
+
+export const searchTranscriptionsAdmin = action({
+    args: {
+        query: v.string(),
+        limit: v.optional(v.number()),
+    },
+    handler: async (ctx, args): Promise<SearchResult[]> => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized: Authentication required");
+
+        const user = await ctx.runQuery(api.users.getUserByClerkIdQuery, {
+            clerkId: identity.subject,
+        });
+        if (!user?.isAdmin) throw new Error("Unauthorized: Admin access required");
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+        const client = new GoogleGenAI({ apiKey });
+
+        const response = await client.models.embedContent({
+            model: EMBEDDING_MODEL,
+            contents: args.query,
+            config: { outputDimensionality: EMBEDDING_DIMENSIONS },
+        });
+        const queryEmbedding = response.embeddings?.[0]?.values;
+        if (!queryEmbedding) throw new Error("Failed to generate query embedding");
+
+        const results = await ctx.vectorSearch("transcription_chunks", "by_embedding", {
+            vector: queryEmbedding,
+            limit: args.limit || 10,
+        });
+
+        const enrichedResults: (SearchResult | null)[] = await Promise.all(
+            results.map(async (result): Promise<SearchResult | null> => {
+                const chunk = await ctx.runQuery(api.ragDb.getChunk, { id: result._id });
+                if (!chunk) return null;
+                const video = await ctx.runQuery(api.videos.getById, { videoId: chunk.videoId });
+                return {
+                    videoId: chunk.videoId,
+                    videoTitle: video?.title || "Unknown",
+                    muxPlaybackId: video?.muxPlaybackId || null,
+                    text: chunk.text,
+                    startTime: chunk.startTime,
+                    endTime: chunk.endTime,
+                    score: result._score,
+                };
+            }),
+        );
+        return enrichedResults.filter((r): r is SearchResult => r !== null);
+    },
+});
+
+// ============================
+// バッチベクトル化 (管理者用)
+// ============================
+export const batchIndexUnindexedVideos = action({
+    args: {
+        dryRun: v.optional(v.boolean()),
+    },
+    handler: async (
+        ctx,
+        args,
+    ): Promise<{
+        total: number;
+        indexed: number;
+        failed: number;
+        noTranscription: number;
+        details: Array<{ videoId: string; title: string; status: string; chunks?: number }>;
+    }> => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized: Authentication required");
+
+        const user = await ctx.runQuery(api.users.getUserByClerkIdQuery, {
+            clerkId: identity.subject,
+        });
+        if (!user?.isAdmin) throw new Error("Unauthorized: Admin access required");
+
+        const allVideos = await ctx.runQuery(api.videos.getAllVideosInternal, {});
+        const details: Array<{ videoId: string; title: string; status: string; chunks?: number }> = [];
+        let indexed = 0;
+        let failed = 0;
+        let noTranscription = 0;
+
+        for (const video of allVideos) {
+            const hasExistingChunks = await ctx.runQuery(api.ragDb.hasChunks, { videoId: video._id });
+            if (hasExistingChunks) continue;
+
+            if (!video.transcription) {
+                noTranscription++;
+                details.push({ videoId: video._id, title: video.title, status: "no_transcription" });
+                continue;
+            }
+
+            if (args.dryRun) {
+                details.push({ videoId: video._id, title: video.title, status: "needs_indexing" });
+                continue;
+            }
+
+            try {
+                const apiKey = process.env.GEMINI_API_KEY;
+                if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+                const client = new GoogleGenAI({ apiKey });
+
+                await ctx.runMutation(internal.ragDb.deleteChunksByVideoId, { videoId: video._id });
+
+                const transcription: string = video.transcription;
+                const isVtt: boolean = transcription.includes("-->") || transcription.startsWith("WEBVTT");
+                const chunks: TextChunk[] = isVtt
+                    ? createChunks(parseVtt(transcription))
+                    : createPlainTextChunks(transcription);
+
+                if (chunks.length === 0) {
+                    failed++;
+                    details.push({ videoId: video._id, title: video.title, status: "no_chunks" });
+                    continue;
+                }
+
+                const texts: string[] = chunks.map((c: TextChunk) => c.text);
+                const embeddings = await generateEmbeddings(client, texts);
+
+                const dbChunks = chunks.map((chunk: TextChunk, i: number) => ({
+                    videoId: video._id,
+                    text: chunk.text,
+                    startTime: chunk.startTime,
+                    endTime: chunk.endTime,
+                    embedding: embeddings[i],
+                }));
+
+                const saveBatchSize = 50;
+                for (let i = 0; i < dbChunks.length; i += saveBatchSize) {
+                    await ctx.runMutation(internal.ragDb.saveChunks, {
+                        chunks: dbChunks.slice(i, i + saveBatchSize),
+                    });
+                }
+
+                indexed++;
+                details.push({ videoId: video._id, title: video.title, status: "indexed", chunks: chunks.length });
+
+                // Gemini APIレート制限対策
+                await new Promise((resolve) => setTimeout(resolve, 200));
+            } catch (error) {
+                failed++;
+                details.push({ videoId: video._id, title: video.title, status: `error: ${error}` });
+            }
+        }
+
+        return {
+            total: allVideos.length,
+            indexed,
+            failed,
+            noTranscription,
+            details,
+        };
+    },
+});
+
+// ============================
+// ベクトル検索 (API Route から呼び出し用)
+// ============================
 export const searchTranscriptions = action({
     args: {
         query: v.string(),

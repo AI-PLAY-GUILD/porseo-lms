@@ -363,6 +363,12 @@ export const updateVideoAiMetadata = internalMutation({
     },
 });
 
+export const getAllVideosInternal = query({
+    handler: async (ctx) => {
+        return await ctx.db.query("videos").collect();
+    },
+});
+
 export const deleteVideo = mutation({
     args: { videoId: v.id("videos") },
     handler: async (ctx, args) => {

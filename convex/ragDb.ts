@@ -34,6 +34,17 @@ export const deleteChunksByVideoId = internalMutation({
     },
 });
 
+export const hasChunks = query({
+    args: { videoId: v.id("videos") },
+    handler: async (ctx, args) => {
+        const chunk = await ctx.db
+            .query("transcription_chunks")
+            .withIndex("by_video_id", (q) => q.eq("videoId", args.videoId))
+            .first();
+        return chunk !== null;
+    },
+});
+
 // Security: Added auth check to prevent unauthenticated access to transcript data (Issue #18)
 export const getChunk = query({
     args: { id: v.id("transcription_chunks") },
