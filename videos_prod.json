@@ -1,0 +1,530 @@
+[
+  {
+    "_id": "jh71n5n17vfyhp4q313fjzvk7s7xamgk",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【AI駆動開発の最適解】Linearでissue駆動開発講座"
+  },
+  {
+    "_id": "jh796er65z9be9v1pq8xgnr6y17xbh8k",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【Github Actions初心者講座】Github Actionsでスマホで業務自動化ワークフローを作成"
+  },
+  {
+    "_id": "jh78s11ewdxc9n89112x7qa84s7xbbjf",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【Github基礎編】コミット、プッシュ、ブランチとは？"
+  },
+  {
+    "_id": "jh71pca01vnrkph6mznx5se4m17xbgc9",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【ノーコードでMCP開発】composio講座 by ryoさん"
+  },
+  {
+    "_id": "jh71vy3c1g6tmb1qhsdg39ksr97xay6h",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【認証鬼簡単！Dify×Xで】AIエージェントが自動投稿　講座"
+  },
+  {
+    "_id": "jh7dcx03zra375s21a3mp0zcdd7xb1t1",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【要件定義駆動開発】ClaudeCodeのカスタムコマンド講座"
+  },
+  {
+    "_id": "jh7e8b7b6krk9hgnk3hw3cg17h7xar09",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【定期開催】みんななにやってるの？共有会"
+  },
+  {
+    "_id": "jh76249fcdspce10jh8wh218qh7xan6a",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【MCPを作ろう】作り方を大公開！"
+  },
+  {
+    "_id": "jh7e89amwwbrgcahbdyv569bxh7xb9aj",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【Supabaseは時代遅れ？】最先端DB「Convex」入門講座"
+  },
+  {
+    "_id": "jh7cjfqtnrj6ka9ssewjmrkpj57xaev3",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【Xで大バズり】note自動投稿　github actions講座　by go-nuts"
+  },
+  {
+    "_id": "jh75q9mvhxzqxf3xgvc9hyxmed7z16gy",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【n8n講座①】0からわかるn8nってどんなツール？part②"
+  },
+  {
+    "_id": "jh77hy03fs19jxq35z6x9z5jax7z06y2",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【n8n講座①】0からわかるn8nってどんなツール？"
+  },
+  {
+    "_id": "jh76acemxg34etbp98w7y0m9x57z061q",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【スマホでAI駆動開発】cursor bg agentとgithub codespaseでAI駆動開発！"
+  },
+  {
+    "_id": "jh70000cqk42gx9vm6z9akdknx7z0b17",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "音声版Gensaprkを作ろう！① livekitをマスターせよ！"
+  },
+  {
+    "_id": "jh7a4gfygt3zc0r0g6yneprned7z103t",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "1つのプロンプトで書籍1冊書きまで行けるワークフロープロンプトについて深掘りセミナー！＆全員自伝化計画♪　by hawk"
+  },
+  {
+    "_id": "jh7e9s3e45qnzcmyezwqx4c2th7z0trg",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【0→1シリーズ②】Next.js✖Supabase✖mastraでAIエージェントアプリを作る！"
+  },
+  {
+    "_id": "jh7f3yxf8r8ysvsr0zfe123ft17z1cn5",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【Gemini CLI大解剖！】自分だけのAIで遊ぶcodeを作る！"
+  },
+  {
+    "_id": "jh7ebm382xhentyy1kxj6ae41h7z139h",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【n8n応用編】Zoomが終わったらDiscordとyoutubeに投稿するシステムを作る！"
+  },
+  {
+    "_id": "jh72g3dyjf42h33ebh7h2bt5sh7z13c2",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【AIエージェントを１から作れるようになろうPart③】Mastraで複雑なワークフローを作る"
+  },
+  {
+    "_id": "jh75n4n3ysdx3dcj9c9r862mhd7z1wmb",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【初心者向け】データベースを理解しよう！の会"
+  },
+  {
+    "_id": "jh71nrayc6ppy60g3jejbypxpx7z12z9",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【AIエージェントを１から作れるようになろうPart②】Mastraで検索エージェント構築&ワークフロー作成"
+  },
+  {
+    "_id": "jh7b46yv4xqw7geqz5xwbdy9qx7z0chk",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 第二回！最近何してるの？会！"
+  },
+  {
+    "_id": "jh726gnw7pjcsaqyqm3cs8dq6x7z1d8s",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【MCP①】MCPの概要とVibe Kanbanによる開発効率化入門"
+  },
+  {
+    "_id": "jh7em9gx6gj9cz5ytsx4dx30zn7z0qe5",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【Open-SuperAgent】進捗報告Part①"
+  },
+  {
+    "_id": "jh77wxg8a0y09rrd28af3r4n6x7z0r6r",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【未来の拡張機能？】Open AI apps SDK講座！"
+  },
+  {
+    "_id": "jh7amd4vsm0gc5tnttke878f817z19g3",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【keitaroさん&ひかるさん　Genspark動画編集講座】AIの限界と今後の将来。"
+  },
+  {
+    "_id": "jh71n3h4thxza8m03yagxk4s1s7z026t",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " AITuberを作ろう講座 part1 技術スタックを知ろう"
+  },
+  {
+    "_id": "jh77h223b8btqnngpr71rvsp457z1b7h",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【Cursor講座①】Cursorを使ってLPを作ってみよう！"
+  },
+  {
+    "_id": "jh74az2x8m04yasn5je0dxah6s7z0zdp",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【全く新しい！？日本で知られていないIDE】Warp解説講座！by いち"
+  },
+  {
+    "_id": "jh7c81kv6akzt3aqj582y7ge717z054e",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " まじんさんにCursorを教えようの会！"
+  },
+  {
+    "_id": "jh73sxgn6h5kg0d4nvyyf6k7fs7z1ndf",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " Nano Banana Proもくもく会！"
+  },
+  {
+    "_id": "jh71pd833e4ygzx262vs3na6b17z035m",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " Antigravityを使ってみようの会！Google workspace flowの解説もちょっとあり！"
+  },
+  {
+    "_id": "jh74k0b3vv6rysqe4k67gdgdzs7z11ee",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【0→1シリーズ①】Next.js✖DB連携で匿名アプリ作るゾ！"
+  },
+  {
+    "_id": "jh75mhrmejv4zgw1483cze60yn7z1xw8",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【Dify実践講座②】YouTube動画の文字起こし＆Pythonコードブロック"
+  },
+  {
+    "_id": "jh77cewrpjbhfsa5wcykjar9b57z1q7w",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【0→1シリーズ③】ガチでアプリを一個作る！！！"
+  },
+  {
+    "_id": "jh7ad687rt1008xyhpkxh092vn7z075w",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": "【OSAを１から作れるようになろうパート①】Next.js✖️mastra初期構築"
+  },
+  {
+    "_id": "jh7c34zhe4nm80kfm0kgqacx6x7z01k0",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【Gemini CLI】初心者必見！インストール方法解説！"
+  },
+  {
+    "_id": "jh7e3y67dbggzhdd1qwybt6brh7z1vwd",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【Claude Code並列開発】初心者でもできる&実用的な並列開発の基礎"
+  },
+  {
+    "_id": "jh74v653aq3j7q2jk2a5pkmmpd7z0cj3",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【Open-SuperAgent】ローカルでOpen-SuperAgentを開いて使ってみよう！"
+  },
+  {
+    "_id": "jh74bykd40sa12ea8xmjv4j4nn7z0wkj",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【n8n講座①】0からわかるn8nってどんなツール？part②  "
+  },
+  {
+    "_id": "jh7dc2w78fbz6e9rkwt7z1am1s7z0g0t",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【なんで今MCPが熱いの？】MCP について解説講座！少しだけ作り方もやってます！"
+  },
+  {
+    "_id": "jh79hz66thkpj0f6fy3zwpta297z1g9s",
+    "hasThumbnail": true,
+    "isPublished": true,
+    "title": " 【X1万人までの道のり】てるさんをスペシャルゲストに今の時代のAI界隈X伸ばし方！"
+  },
+  {
+    "_id": "jh714e9p9qbsx5ga79xd4xwv9d8246kj",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【宮城(Miyagi)】話題のAIプロダクトをハンズオンで探求！"
+  },
+  {
+    "_id": "jh79b9besqjf1w38tdrrnk6cd9825h8x",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【Figma Make & UIツール】グラス系デザインとGoogle UIツール情報共有"
+  },
+  {
+    "_id": "jh73yeda9qzpwfpcvpp0k8gszd8250kb",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【大阪万博】裏話共有会！万博の楽しみ方を深掘り"
+  },
+  {
+    "_id": "jh7d2hfccqpb0gprpq86shsnss824b29",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【福岡帰省トラブル】深夜作業からのバス乗り過ごし体験談"
+  },
+  {
+    "_id": "jh71h6523swpr43b14a9edaq6x8256sx",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【話題のAPI連携ツール】業務効率化&アプリ開発を加速！"
+  },
+  {
+    "_id": "jh7359sbwmrcfgkk25g6rezhmx82469r",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【プラグイン開発入門】ChatGPTとMCP連携で可能性を広げよう"
+  },
+  {
+    "_id": "jh7d9hz6r91hngtg9b5vzwtvrh825v9d",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【宮城試用】自律型サブエージェントのタスク管理フレームワークとは？"
+  },
+  {
+    "_id": "jh7913bcq2gep7fc3qe0mm9cy98256s5",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【プログラミング学習】優先順位付けとAIトレンドキャッチアップのコツ"
+  },
+  {
+    "_id": "jh73x59aq9kf39agj8h29vkz2h825c2a",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "10/7 Zoomミーティング"
+  },
+  {
+    "_id": "jh7f2d41zzfdb7eygdsftt5q31824m24",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "10/7 Zoomミーティング"
+  },
+  {
+    "_id": "jh76ymgw455nwf2c8r910ftqqh824fdp",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【動画投稿】ログインからミス削除まで、太陽先生と学ぶ動画アップロード術"
+  },
+  {
+    "_id": "jh7dfcwpq93aevwmrpkh5bkcys825b07",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "10/6 Zoomミーティング"
+  },
+  {
+    "_id": "jh72y6tj4tqqzvbqzr7q61dbns8251hv",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "10/6 Zoomミーティング"
+  },
+  {
+    "_id": "jh79020f9q5mfb9dxj10xq5h45824qh8",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【note自動投稿】APIなしで実現！ワークフロー構築とシステムプロンプト調整術"
+  },
+  {
+    "_id": "jh74k4v123v77nya8gp51fxjb9824dk1",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【積木駆動開発】クラスメソッド式！主要駆動とテスト駆動を徹底解説"
+  },
+  {
+    "_id": "jh7c9behvg7x7395kw58y55ntx825qhy",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【AI動画編集】ショート動画特化戦略とコミュニティ活用術"
+  },
+  {
+    "_id": "jh74yvped9z798z03ae0wtqdzx825p5d",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【エンジニア雑談】AI駆動開発で激変！エラー解決の昔と今"
+  },
+  {
+    "_id": "jh7cqpys94x64ktfr52292x401825bhy",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【近況報告】木村さんとシュンさんの雑談会"
+  },
+  {
+    "_id": "jh7b40k8hm9egfhhffm1hqmdf1825h0p",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【AI大忘年会】イベント告知動画制作の裏側"
+  },
+  {
+    "_id": "jh7bjpry9fn2mxptrb0pa0m8hx824dj8",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【雑談】最近どう？みんなの活動共有&AIプロンプト談義"
+  },
+  {
+    "_id": "jh78qbmkd9g228fqrq37y6s95n8257p8",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【AI初心者向け】Gemini設定カスタマイズ術！チャット欄配置から拡張機能まで"
+  },
+  {
+    "_id": "jh78b9p8rk1bwqwj5dynkvf4td8248f3",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【アンチグラビティ】みんなで触ってワチャワチャ！情報共有会"
+  },
+  {
+    "_id": "jh7e90njyav443jwr08mh0sjbd825tfh",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【ツール制作共有会】代理店作業効率化！宣材写真作成ツール紹介"
+  },
+  {
+    "_id": "jh79gbnc81wh4a5qs31sz207qs825szg",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【AIアバター】感情表現＆低コスト音声合成で動かす方法"
+  },
+  {
+    "_id": "jh7dp3re1jv0e9p3rf5x5w9s1182545q",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【AIモデル比較】Finity vs Composer 最新モデルの使い心地レビュー"
+  },
+  {
+    "_id": "jh74qsd7qjva34srzbhxz6y3bx8250ns",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【個人開発】Cursor(カーソル)活用事例共有会"
+  },
+  {
+    "_id": "jh7a5xefnz7pcvbnec34ta3wrh825bgh",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【音声版ジェンスパーク】音声AIでスライド・画像・プログラミングを自動生成！"
+  },
+  {
+    "_id": "jh7fb1vb6qzxptjb2hdwj8xys5825r8n",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【セルフホストAI】クラウドGPUでAPI経由利用！切り紙アプリ開発ハンズオン"
+  },
+  {
+    "_id": "jh704sj8q615jvk8mjzxy4etvd824xm7",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【アンチグラビティ/Gemini】Google系AI開発サービス紹介＆ハンズオン"
+  },
+  {
+    "_id": "jh7erzd90e9x3rkxtkx9jqznfn824s0t",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【AIトレンド】GPT-5.2と最新情報ハンズオン！"
+  },
+  {
+    "_id": "jh7cdjjek4ezvhyxk73srkwzc9825nbb",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【切り紙サービス】ユーザー数・売上報告と今後の差別化戦略"
+  },
+  {
+    "_id": "jh76dyfqtc833hv3fky4k45rrh825d8t",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【Claude Code】アプリのエラーを自動修正！導入ハンズオン"
+  },
+  {
+    "_id": "jh74hbq5frkad225jar2k2a0x5824rtv",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【セミナー裏話】サービス販売戦略と今後のビジネス展開"
+  },
+  {
+    "_id": "jh7dm1gx09ynw2kgarhkcex6gd825evd",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【アプリ開発】セキュリティ対策の基礎とユーザー体験への影響"
+  },
+  {
+    "_id": "jh76vdvnxhfems50yn2a4gjfb9825ts5",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "1/26 Zoomミーティング"
+  },
+  {
+    "_id": "jh75y2v43vrf3y8qdzmwsc0yp5825n59",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【個人開発月間】Googleログイン/メール認証実装ハンズオン"
+  },
+  {
+    "_id": "jh728rtpevvwp8wvswss78ngsd825pef",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【個人開発】アプリ収益化のコツ：720万DL達成から学ぶ"
+  },
+  {
+    "_id": "jh7490cdqnm4q5vemy69dwmhsx824dje",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【切り紙】リリース記念！アプリ開発と結合テストの重要性"
+  },
+  {
+    "_id": "jh792de4n4yd3dpgdjxppt0tss825z70",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【爆速AIアプリ開発】外出中に要件定義からデプロイまで自動化！"
+  },
+  {
+    "_id": "jh70sgq1x2v2rx79sqk94kdmf5825tcb",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【Skills Cloud Code】Skillsとは？インストール方法も解説"
+  },
+  {
+    "_id": "jh7454k1cs2b7syx8j71j057v98245qg",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【AI学習の落とし穴】サブスク貧乏からの脱却！発信で収益化へ"
+  },
+  {
+    "_id": "jh79f5dc93xr825p314zanjnh5824eyk",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【Claude Code】AI最新動向と情報商材の現状共有会"
+  },
+  {
+    "_id": "jh778a9je6yqtz5z7p70whyy5n824d62",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【OpenCrowd】Discord連携ハンズオン！前回からの続き"
+  },
+  {
+    "_id": "jh77erq91kbtf4pdaa0nn86wwx8253w2",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【OpenClaw入門】PCスペックに依存しない2つの活用方法"
+  },
+  {
+    "_id": "jh79n54pygtd1g74bk0a3472ps8256c0",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "【太陽 木村 ミーティング】予算なし？アジモンとミントの謎"
+  },
+  {
+    "_id": "jh77nqtv5pqhe7xzqn3ax7fggx8257np",
+    "hasThumbnail": false,
+    "isPublished": false,
+    "title": "2/5 Zoomミーティング"
+  }
+]

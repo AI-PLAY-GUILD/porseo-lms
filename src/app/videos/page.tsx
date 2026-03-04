@@ -94,21 +94,25 @@ export default function AllVideosPage() {
                         </SignOutButton>
                     </div>
                 </header>
-                <div className="flex flex-1 flex-col gap-8 p-6">
+                <div className="flex flex-1 flex-col gap-4 sm:gap-8 p-3 sm:p-6">
                     {/* 学習中の動画セクション */}
                     {stats?.inProgressVideos && stats.inProgressVideos.length > 0 && (
                         <div className="space-y-4">
-                            <h2 className="text-3xl font-black tracking-tight flex items-center gap-2 text-black">
+                            <h2 className="text-xl sm:text-3xl font-black tracking-tight flex items-center gap-2 text-black">
                                 <span className="bg-pop-yellow px-2 border-2 border-black transform -rotate-1 inline-block brutal-shadow-sm text-lg align-middle mr-2 text-black">
                                     CONTINUE
                                 </span>
                                 学習中
                             </h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 sm:gap-6 pb-2 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible sm:snap-none sm:pb-0">
                                 {stats.inProgressVideos.map((video) => (
-                                    <Link href={`/videos/${video._id}`} key={video._id} className="group block h-full">
-                                        <Card className="h-full overflow-hidden hover:shadow-none transition-all duration-300 hover:translate-x-1 hover:translate-y-1 border-4 border-black bg-white brutal-shadow rounded-xl">
-                                            <div className="aspect-video bg-muted relative overflow-hidden border-b-4 border-black">
+                                    <Link
+                                        href={`/videos/${video._id}`}
+                                        key={video._id}
+                                        className="group block h-full min-w-[65vw] sm:min-w-0 snap-start"
+                                    >
+                                        <Card className="h-full overflow-hidden hover:shadow-none transition-all duration-300 hover:translate-x-1 hover:translate-y-1 border-2 sm:border-4 border-black bg-white brutal-shadow rounded-xl">
+                                            <div className="aspect-video bg-muted relative overflow-hidden border-b-2 sm:border-b-4 border-black">
                                                 <img
                                                     src={
                                                         video.thumbnailUrl ||
@@ -139,16 +143,16 @@ export default function AllVideosPage() {
                                                     </Badge>
                                                 </div>
                                             </div>
-                                            <CardHeader className="p-4 pb-2">
+                                            <CardHeader className="p-2 sm:p-4 pb-2">
                                                 <CardTitle
-                                                    className="line-clamp-2 text-lg font-black text-black group-hover:text-pop-purple transition-colors duration-300 leading-tight"
+                                                    className="line-clamp-2 text-sm sm:text-lg font-black text-black group-hover:text-pop-purple transition-colors duration-300 leading-tight"
                                                     title={video.title}
                                                 >
                                                     {video.title}
                                                 </CardTitle>
                                             </CardHeader>
-                                            <CardContent className="p-4 pt-0">
-                                                <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mt-2">
+                                            <CardContent className="p-2 sm:p-4 pt-0">
+                                                <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-gray-500 mt-2">
                                                     <Calendar className="w-3 h-3" />
                                                     <span>
                                                         最終視聴: {new Date(video.lastWatchedAt).toLocaleDateString()}
@@ -164,14 +168,14 @@ export default function AllVideosPage() {
 
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-3xl font-black tracking-tight text-black">ハンズオン動画</h2>
+                            <h2 className="text-xl sm:text-3xl font-black tracking-tight text-black">ハンズオン動画</h2>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                             {videos.map((video) => (
                                 <Link href={`/videos/${video._id}`} key={video._id} className="group block h-full">
-                                    <Card className="h-full overflow-hidden hover:shadow-none transition-all duration-300 hover:translate-x-1 hover:translate-y-1 border-4 border-black bg-white brutal-shadow rounded-xl">
-                                        <div className="aspect-video bg-muted relative overflow-hidden border-b-4 border-black">
+                                    <Card className="h-full overflow-hidden hover:shadow-none transition-all duration-300 hover:translate-x-1 hover:translate-y-1 border-2 sm:border-4 border-black bg-white brutal-shadow rounded-xl">
+                                        <div className="aspect-video bg-muted relative overflow-hidden border-b-2 sm:border-b-4 border-black">
                                             <img
                                                 src={
                                                     video.thumbnailUrl ||
@@ -214,16 +218,16 @@ export default function AllVideosPage() {
                                                 )}
                                             </div>
                                         </div>
-                                        <CardHeader className="p-4 pb-2">
+                                        <CardHeader className="p-2 sm:p-4 pb-2">
                                             <CardTitle
-                                                className="line-clamp-2 text-lg font-black text-black group-hover:text-pop-purple transition-colors duration-300 leading-tight"
+                                                className="line-clamp-2 text-sm sm:text-lg font-black text-black group-hover:text-pop-purple transition-colors duration-300 leading-tight"
                                                 title={video.title}
                                             >
                                                 {video.title}
                                             </CardTitle>
                                         </CardHeader>
-                                        <CardContent className="p-4 pt-0">
-                                            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mt-2">
+                                        <CardContent className="p-2 sm:p-4 pt-0">
+                                            <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-gray-500 mt-2">
                                                 <Calendar className="w-3 h-3" />
                                                 <span>{new Date(video.createdAt).toLocaleDateString()}</span>
                                             </div>

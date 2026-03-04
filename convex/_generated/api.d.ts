@@ -23,6 +23,7 @@ import type * as rag from "../rag.js";
 import type * as ragDb from "../ragDb.js";
 import type * as stripe from "../stripe.js";
 import type * as tags from "../tags.js";
+import type * as thumbnailUpload from "../thumbnailUpload.js";
 import type * as users from "../users.js";
 import type * as videoProgress from "../videoProgress.js";
 import type * as videoSecurity from "../videoSecurity.js";
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   ragDb: typeof ragDb;
   stripe: typeof stripe;
   tags: typeof tags;
+  thumbnailUpload: typeof thumbnailUpload;
   users: typeof users;
   videoProgress: typeof videoProgress;
   videoSecurity: typeof videoSecurity;

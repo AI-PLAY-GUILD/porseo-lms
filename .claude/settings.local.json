@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Edit",
+      "Write",
+      "Bash(gh api:*)",
+      "WebFetch(domain:aiplayguild.com)",
+      "Bash(vercel deploy --prod)",
+      "Bash(vercel deploy --prod --yes)",
+      "Bash(vercel inspect https://porseo-gchj6hrwp-4869nanataitai-gmailcoms-projects.vercel.app)",
+      "Bash(npm run build)",
+      "Bash(dos2unix next-env.d.ts)",
+      "WebSearch",
+      "WebFetch(domain:simonwillison.net)",
+      "WebFetch(domain:claudelog.com)",
+      "WebFetch(domain:devforum.zoom.us)",
+      "WebFetch(domain:developers.zoom.us)",
+      "WebFetch(domain:portal.stage.apis.huit.harvard.edu)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.recall.ai)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:portal.apis.huit.harvard.edu)",
+      "Skill(electron)",
+      "Skill(electron:*)",
+      "WebFetch(domain:image.mux.com)",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:blog.google)",
+      "WebFetch(domain:deepwiki.com)"
+    ]
+  },
+  "remote": {
+    "defaultEnvironmentId": "env_01TTW1KAR9S8TTGUasUeJNYU"
+  }
+}

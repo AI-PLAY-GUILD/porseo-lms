@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { api } from "../../../../convex/_generated/api";
 
 export default function VideoListPage() {
@@ -25,25 +25,31 @@ export default function VideoListPage() {
     }
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">動画管理</h2>
+        <div className="flex-1 space-y-4 p-4 sm:p-6 lg:p-8 pt-6">
+            <div className="flex items-center justify-between">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">動画管理</h2>
             </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>動画一覧</CardTitle>
-                    <CardDescription>アップロードされた動画の管理・編集ができます。</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <VideoList />
-                </CardContent>
-            </Card>
+            <p className="text-sm text-muted-foreground">アップロードされた動画の管理・編集ができます。</p>
+            <VideoList />
         </div>
     );
 }
 
-import { Badge } from "@/components/ui/badge";
+function VideoListSkeleton() {
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="rounded-xl border bg-card overflow-hidden animate-pulse">
+                    <div className="aspect-video bg-muted" />
+                    <div className="p-3 space-y-2">
+                        <div className="h-4 bg-muted rounded w-3/4" />
+                        <div className="h-3 bg-muted rounded w-1/2" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
 
 function VideoList() {
     const videos = useQuery(api.videos.getVideos);
@@ -51,126 +57,109 @@ function VideoList() {
     const deleteVideo = useMutation(api.videos.deleteVideo);
 
     if (videos === undefined) {
-        return <div>読み込み中...</div>;
+        return <VideoListSkeleton />;
     }
 
     if (videos.length === 0) {
-        return <div className="text-gray-500">動画がまだありません。</div>;
+        return <div className="text-muted-foreground text-center py-12">動画がまだありません。</div>;
     }
 
     return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-                <thead>
-                    <tr className="border-b dark:border-gray-700">
-                        <th className="py-3 px-4 w-20">サムネイル</th>
-                        <th className="py-3 px-4">タイトル</th>
-                        <th className="py-3 px-4">タグ</th>
-                        <th className="py-3 px-4">状態</th>
-                        <th className="py-3 px-4">再生回数</th>
-                        <th className="py-3 px-4">作成日</th>
-                        <th className="py-3 px-4">操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {videos.map((video) => (
-                        <tr
-                            key={video._id}
-                            className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {videos.map((video) => (
+                <div
+                    key={video._id}
+                    className="group rounded-xl border bg-card overflow-hidden hover:shadow-md transition-shadow"
+                >
+                    {/* サムネイル */}
+                    <div className="relative aspect-video bg-muted">
+                        {video.thumbnailUrl || video.muxPlaybackId ? (
+                            <img
+                                src={
+                                    video.thumbnailUrl ||
+                                    `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=480&height=270&fit_mode=smartcrop`
+                                }
+                                alt={video.title}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                                No Image
+                            </div>
+                        )}
+
+                        {/* オーバーレイバッジ群 */}
+                        <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+                            {video.source === "zoom" && (
+                                <Badge className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5">Zoom</Badge>
+                            )}
+                            {!video.muxAssetId && (
+                                <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0.5">処理中</Badge>
+                            )}
+                            {video.securityScanStatus === "warning" && (
+                                <Badge className="bg-red-600 text-white text-[10px] px-1.5 py-0.5">
+                                    セキュリティ警告
+                                </Badge>
+                            )}
+                            {(video.securityScanStatus === "pending" || video.securityScanStatus === "scanning") && (
+                                <Badge className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5">スキャン中</Badge>
+                            )}
+                            {video.securityScanStatus === "error" && (
+                                <Badge className="bg-yellow-500 text-white text-[10px] px-1.5 py-0.5">
+                                    スキャンエラー
+                                </Badge>
+                            )}
+                        </div>
+
+                        {/* 公開状態バッジ */}
+                        <div className="absolute top-2 right-2">
+                            <button
+                                onClick={() => updateVideo({ videoId: video._id, isPublished: !video.isPublished })}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                    video.isPublished ? "bg-green-500 text-white" : "bg-gray-700/80 text-gray-200"
+                                }`}
+                            >
+                                {video.isPublished ? "公開中" : "非公開"}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* コンテンツ */}
+                    <div className="p-3 space-y-2">
+                        <a
+                            href={`/videos/${video._id}`}
+                            className="text-sm font-semibold leading-tight line-clamp-2 hover:text-blue-600 transition-colors"
+                            target="_blank"
+                            rel="noopener noreferrer"
                         >
-                            <td className="py-3 px-4">
-                                {video.thumbnailUrl || video.muxPlaybackId ? (
-                                    <img
-                                        src={
-                                            video.thumbnailUrl ||
-                                            `https://image.mux.com/${video.muxPlaybackId}/thumbnail.png?width=120&height=68&fit_mode=smartcrop`
-                                        }
-                                        alt={video.title}
-                                        className="w-20 h-12 object-cover rounded"
-                                    />
-                                ) : (
-                                    <div className="w-20 h-12 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center text-xs text-gray-400">
-                                        No Image
-                                    </div>
-                                )}
-                            </td>
-                            <td className="py-3 px-4 font-medium">
-                                <div className="flex items-center gap-2">
-                                    <a
-                                        href={`/videos/${video._id}`}
-                                        className="text-blue-600 hover:underline"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        {video.title}
-                                    </a>
-                                    {video.source === "zoom" && (
-                                        <Badge variant="outline" className="text-xs border-blue-500 text-blue-600">
-                                            Zoom
-                                        </Badge>
-                                    )}
-                                    {!video.muxAssetId && (
-                                        <Badge variant="outline" className="text-xs border-orange-400 text-orange-500">
-                                            処理中...
-                                        </Badge>
-                                    )}
-                                    {video.securityScanStatus === "warning" && (
-                                        <Badge
-                                            variant="outline"
-                                            className="text-xs border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20"
-                                        >
-                                            セキュリティ警告
-                                        </Badge>
-                                    )}
-                                    {(video.securityScanStatus === "pending" ||
-                                        video.securityScanStatus === "scanning") && (
-                                        <Badge variant="outline" className="text-xs border-blue-400 text-blue-500">
-                                            スキャン中
-                                        </Badge>
-                                    )}
-                                    {video.securityScanStatus === "error" && (
-                                        <Badge variant="outline" className="text-xs border-yellow-400 text-yellow-600">
-                                            スキャンエラー
-                                        </Badge>
-                                    )}
-                                </div>
-                            </td>
-                            <td className="py-3 px-4">
-                                <div className="flex flex-wrap gap-1">
-                                    {video.tags && video.tags.length > 0 ? (
-                                        video.tags.map((tag: { _id: string; name: string }) => (
-                                            <Badge key={tag._id} variant="secondary" className="text-xs">
-                                                {tag.name}
-                                            </Badge>
-                                        ))
-                                    ) : (
-                                        <span className="text-xs text-gray-400">-</span>
-                                    )}
-                                </div>
-                            </td>
-                            <td className="py-3 px-4">
-                                <button
-                                    onClick={() => updateVideo({ videoId: video._id, isPublished: !video.isPublished })}
-                                    className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                        video.isPublished
-                                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                            : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                                    }`}
-                                >
-                                    {video.isPublished ? "公開中" : "非公開"}
-                                </button>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-500">
-                                {/* @ts-ignore */}
-                                {video.views ?? 0}回
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-500">
-                                {new Date(video.createdAt).toLocaleDateString()}
-                            </td>
-                            <td className="py-3 px-4 flex gap-2">
+                            {video.title}
+                        </a>
+
+                        {/* タグ */}
+                        {video.tags && video.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                                {video.tags.map((tag: { _id: string; name: string }) => (
+                                    <Badge key={tag._id} variant="secondary" className="text-[10px] px-1.5 py-0">
+                                        {tag.name}
+                                    </Badge>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* メタ情報 + 操作 */}
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
+                            <div className="flex items-center gap-2">
+                                <span>
+                                    {/* @ts-ignore */}
+                                    {video.views ?? 0}回再生
+                                </span>
+                                <span>·</span>
+                                <span>{new Date(video.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
                                 <a
                                     href={`/admin/videos/${video._id}/edit`}
-                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium px-2 py-1"
+                                    className="text-blue-600 hover:text-blue-800 font-medium px-1.5 py-0.5 rounded hover:bg-blue-50"
                                 >
                                     編集
                                 </a>
@@ -180,15 +169,15 @@ function VideoList() {
                                             deleteVideo({ videoId: video._id });
                                         }
                                     }}
-                                    className="text-red-600 hover:text-red-800 text-sm font-medium px-2 py-1"
+                                    className="text-red-500 hover:text-red-700 font-medium px-1.5 py-0.5 rounded hover:bg-red-50"
                                 >
                                     削除
                                 </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 }

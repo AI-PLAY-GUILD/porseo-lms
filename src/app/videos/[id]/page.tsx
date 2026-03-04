@@ -3,7 +3,7 @@
 import { SignOutButton } from "@clerk/nextjs";
 import MuxPlayer from "@mux/mux-player-react";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Calendar, FileText, LogOut, MessageSquare, Mic } from "lucide-react";
+import { ArrowLeft, Calendar, Check, Copy, FileText, LogOut, MessageSquare, Mic } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
@@ -99,6 +99,7 @@ export default function VideoPage() {
     // Transcription & Chat toggle
     const [showTranscription, setShowTranscription] = useState(false);
     const [showChat, setShowChat] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     // Parse transcription (VTT) into segments
     const transcriptionSegments = useMemo(() => {
@@ -184,7 +185,10 @@ export default function VideoPage() {
                     <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{video.title}</h1>
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
                         <Calendar className="w-4 h-4" />
-                        <span>{new Date(video.createdAt).toLocaleDateString()} に公開</span>
+                        <span>
+                            {new Date(video.createdAt).toLocaleDateString()}
+                            {video.source === "zoom" ? " に撮影" : video.isPublished ? " に公開" : " に登録"}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -344,20 +348,55 @@ export default function VideoPage() {
                         {transcriptionSegments.length > 0 && (
                             <Card>
                                 <CardHeader className="pb-3">
-                                    <button onClick={() => setShowTranscription(!showTranscription)} className="w-full">
-                                        <CardTitle className="flex items-center justify-between text-lg">
-                                            <span className="flex items-center gap-2">
-                                                <Mic className="w-5 h-5 text-primary" />
-                                                文字起こし
-                                                <Badge variant="secondary" className="text-xs">
-                                                    {transcriptionSegments.length}件
-                                                </Badge>
-                                            </span>
-                                            <span className="text-sm text-muted-foreground">
-                                                {showTranscription ? "閉じる" : "表示する"}
-                                            </span>
-                                        </CardTitle>
-                                    </button>
+                                    <div className="flex items-center justify-between">
+                                        <button
+                                            onClick={() => setShowTranscription(!showTranscription)}
+                                            className="flex-1 text-left"
+                                        >
+                                            <CardTitle className="flex items-center justify-between text-lg">
+                                                <span className="flex items-center gap-2">
+                                                    <Mic className="w-5 h-5 text-primary" />
+                                                    文字起こし
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {transcriptionSegments.length}件
+                                                    </Badge>
+                                                </span>
+                                                <span className="text-sm text-muted-foreground">
+                                                    {showTranscription ? "閉じる" : "表示する"}
+                                                </span>
+                                            </CardTitle>
+                                        </button>
+                                        {showTranscription && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="ml-2 shrink-0"
+                                                onClick={() => {
+                                                    const text = transcriptionSegments
+                                                        .map(
+                                                            (seg) =>
+                                                                `${formatSecondsToTime(seg.startTime)} ${seg.text}`,
+                                                        )
+                                                        .join("\n");
+                                                    navigator.clipboard.writeText(text);
+                                                    setCopied(true);
+                                                    setTimeout(() => setCopied(false), 2000);
+                                                }}
+                                            >
+                                                {copied ? (
+                                                    <>
+                                                        <Check className="w-3.5 h-3.5 mr-1" />
+                                                        コピー済
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Copy className="w-3.5 h-3.5 mr-1" />
+                                                        コピー
+                                                    </>
+                                                )}
+                                            </Button>
+                                        )}
+                                    </div>
                                 </CardHeader>
                                 {showTranscription && (
                                     <CardContent>
@@ -441,10 +480,33 @@ export default function VideoPage() {
                 {video.transcription && transcriptionSegments.length === 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <Mic className="w-5 h-5 text-primary" />
-                                文字起こし
-                            </CardTitle>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="flex items-center gap-2 text-lg">
+                                    <Mic className="w-5 h-5 text-primary" />
+                                    文字起こし
+                                </CardTitle>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(video.transcription || "");
+                                        setCopied(true);
+                                        setTimeout(() => setCopied(false), 2000);
+                                    }}
+                                >
+                                    {copied ? (
+                                        <>
+                                            <Check className="w-3.5 h-3.5 mr-1" />
+                                            コピー済
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy className="w-3.5 h-3.5 mr-1" />
+                                            コピー
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <ScrollArea className="h-[300px]">

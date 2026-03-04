@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
 
 // Note: getUserByStripeCustomerId, updateSubscriptionStatus, updateSubscriptionStatusByCustomerId
 // are defined in users.ts as public mutations with secret-based auth (for ConvexHttpClient access).
@@ -73,6 +73,65 @@ export const batchMigrateUsers = internalMutation({
         }
 
         return results;
+    },
+});
+
+// Admin: メールアドレスでStripe顧客IDを紐付け（手動運用用）
+export const adminLinkStripeByEmail = internalMutation({
+    args: {
+        email: v.string(),
+        stripeCustomerId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_email", (q) => q.eq("email", args.email))
+            .first();
+
+        if (!user) {
+            // emailインデックスで見つからない場合、filterで検索
+            const userByFilter = await ctx.db
+                .query("users")
+                .filter((q) => q.eq(q.field("email"), args.email))
+                .first();
+            if (!userByFilter) {
+                return { success: false, message: `ユーザーが見つかりません: ${args.email}` };
+            }
+            await ctx.db.patch(userByFilter._id, {
+                stripeCustomerId: args.stripeCustomerId,
+                updatedAt: Date.now(),
+            });
+            return {
+                success: true,
+                message: `紐付け完了: ${args.email} → ${args.stripeCustomerId}`,
+                userId: userByFilter._id,
+            };
+        }
+
+        await ctx.db.patch(user._id, {
+            stripeCustomerId: args.stripeCustomerId,
+            updatedAt: Date.now(),
+        });
+        return { success: true, message: `紐付け完了: ${args.email} → ${args.stripeCustomerId}`, userId: user._id };
+    },
+});
+
+// Admin: メールアドレスでユーザー情報を取得（調査用）
+export const adminGetUserByEmail = internalQuery({
+    args: { email: v.string() },
+    handler: async (ctx, args) => {
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_email", (q) => q.eq("email", args.email))
+            .first();
+        if (!user) {
+            const userByFilter = await ctx.db
+                .query("users")
+                .filter((q) => q.eq(q.field("email"), args.email))
+                .first();
+            return userByFilter;
+        }
+        return user;
     },
 });
 

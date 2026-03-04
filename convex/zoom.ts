@@ -105,8 +105,7 @@ export const createZoomDraftVideo = mutation({
         }
 
         // Truncate topic for safety
-        const safeTopic = args.meetingTopic.slice(0, 200);
-        const title = `【Zoom】${safeTopic}`.slice(0, 200);
+        const title = args.meetingTopic.slice(0, 200);
 
         const videoId = await ctx.db.insert("videos", {
             title,
@@ -126,7 +125,7 @@ export const createZoomDraftVideo = mutation({
             action: "video.create.zoom",
             targetType: "video",
             targetId: videoId,
-            details: `Zoom recording: ${safeTopic} (Meeting ID: ${args.meetingId})`.slice(0, 500),
+            details: `Zoom recording: ${title} (Meeting ID: ${args.meetingId})`.slice(0, 500),
             createdAt: Date.now(),
         });
 
@@ -202,8 +201,7 @@ export const createZoomManualImportVideo = mutation({
             }
         }
 
-        const safeTopic = args.meetingTopic.slice(0, 200);
-        const title = `【Zoom】${safeTopic}`.slice(0, 200);
+        const title = args.meetingTopic.slice(0, 200);
 
         // 「非公開」タグを取得 or 作成
         let unpublishedTag = await ctx.db
@@ -238,7 +236,7 @@ export const createZoomManualImportVideo = mutation({
             action: "video.create.zoom_manual",
             targetType: "video",
             targetId: videoId,
-            details: `Zoom manual import: ${safeTopic} (Meeting ID: ${args.meetingId})`.slice(0, 500),
+            details: `Zoom manual import: ${title} (Meeting ID: ${args.meetingId})`.slice(0, 500),
             createdAt: Date.now(),
         });
 
