@@ -131,10 +131,11 @@ export const createCustomer = action({
     },
 });
 
-// Re-implemented with security: requires auth + email must match the logged-in user's email
+// Re-implemented with security: requires auth + email verification
+// When email doesn't match logged-in user, requires additional name verification
 export const linkStripeCustomerByEmail = action({
-    args: { email: v.string() },
-    handler: async (ctx, args): Promise<{ success: boolean; message: string }> => {
+    args: { email: v.string(), customerName: v.optional(v.string()) },
+    handler: async (ctx, args): Promise<{ success: boolean; message: string; needsVerification?: boolean }> => {
         console.log("[stripe:linkStripeCustomerByEmail] 開始", { email: args.email });
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
@@ -150,14 +151,6 @@ export const linkStripeCustomerByEmail = action({
             throw new Error("User not found");
         }
 
-        // Security: verify the email matches the authenticated user's email
-        const inputEmail = args.email.trim().toLowerCase();
-        const userEmail = (user.email || "").trim().toLowerCase();
-        if (inputEmail !== userEmail) {
-            console.log("[stripe:linkStripeCustomerByEmail] メールアドレス不一致");
-            throw new Error("入力されたメールアドレスがアカウントのメールアドレスと一致しません");
-        }
-
         // Already linked
         if (user.stripeCustomerId) {
             console.log("[stripe:linkStripeCustomerByEmail] 完了 (既にリンク済み)", {
@@ -165,6 +158,10 @@ export const linkStripeCustomerByEmail = action({
             });
             return { success: true, message: "既にStripeアカウントと連携済みです" };
         }
+
+        const inputEmail = args.email.trim().toLowerCase();
+        const userEmail = (user.email || "").trim().toLowerCase();
+        const emailMatches = inputEmail === userEmail;
 
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
             apiVersion: "2025-12-15.clover",
@@ -184,8 +181,37 @@ export const linkStripeCustomerByEmail = action({
             };
         }
 
-        const customerId = existingCustomers.data[0].id;
+        const stripeCustomer = existingCustomers.data[0];
+        const customerId = stripeCustomer.id;
         console.log("[stripe:linkStripeCustomerByEmail] Stripe顧客発見", { customerId });
+
+        // If email doesn't match, require name verification
+        if (!emailMatches) {
+            if (!args.customerName) {
+                console.log("[stripe:linkStripeCustomerByEmail] メール不一致 → 名前確認要求");
+                return {
+                    success: false,
+                    needsVerification: true,
+                    message:
+                        "ログイン中のメールアドレスと異なるため、本人確認が必要です。Stripeに登録されているお名前を入力してください。",
+                };
+            }
+
+            // Verify name matches the Stripe customer
+            const stripeName = (stripeCustomer.name || "").trim().toLowerCase().replace(/\s+/g, "");
+            const inputName = args.customerName.trim().toLowerCase().replace(/\s+/g, "");
+
+            if (!stripeName || stripeName !== inputName) {
+                console.log("[stripe:linkStripeCustomerByEmail] 名前不一致", { stripeName, inputName });
+                return {
+                    success: false,
+                    needsVerification: true,
+                    message: "お名前が一致しません。Stripeに登録されているお名前を正確に入力してください。",
+                };
+            }
+
+            console.log("[stripe:linkStripeCustomerByEmail] 名前確認OK");
+        }
 
         // Check for active subscription
         const subscriptions = await stripe.subscriptions.list({

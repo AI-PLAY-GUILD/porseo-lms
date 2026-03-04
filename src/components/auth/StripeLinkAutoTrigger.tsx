@@ -26,6 +26,8 @@ export default function StripeLinkAutoTrigger() {
 
     const [open, setOpen] = useState(false);
     const [email, setEmail] = useState("");
+    const [customerName, setCustomerName] = useState("");
+    const [step, setStep] = useState<"email" | "name">("email");
     const [loading, setLoading] = useState(false);
 
     const isStripeLink = searchParams.get("stripe_link") === "1";
@@ -50,11 +52,25 @@ export default function StripeLinkAutoTrigger() {
             return;
         }
 
+        if (step === "name" && !customerName.trim()) {
+            toast.error("お名前を入力してください");
+            return;
+        }
+
         setLoading(true);
         try {
-            const result = await linkStripeCustomer({ email: email.trim() });
+            const result = await linkStripeCustomer({
+                email: email.trim(),
+                customerName: step === "name" ? customerName.trim() : undefined,
+            });
             if (result.success) {
                 toast.success(result.message);
+                handleClose();
+            } else if (result.needsVerification) {
+                setStep("name");
+                toast.info(result.message);
+                setLoading(false);
+                return;
             } else {
                 toast.error(result.message);
             }
@@ -62,15 +78,14 @@ export default function StripeLinkAutoTrigger() {
             toast.error(error instanceof Error ? error.message : "Stripe連携中にエラーが発生しました");
         } finally {
             setLoading(false);
-            setOpen(false);
-            setEmail("");
-            removeStripeLinkParam();
         }
     };
 
     const handleClose = () => {
         setOpen(false);
         setEmail("");
+        setCustomerName("");
+        setStep("email");
         removeStripeLinkParam();
     };
 
@@ -87,40 +102,78 @@ export default function StripeLinkAutoTrigger() {
                 <DialogHeader>
                     <DialogTitle>既存アカウントの連携</DialogTitle>
                     <DialogDescription className="text-gray-400">
-                        以前「AIで遊ぼう」コミュニティでご利用いただいていた方は、
-                        登録時のメールアドレスを入力してください。既存のサブスクリプションを引き継ぎます。
+                        {step === "email"
+                            ? "以前「AIで遊ぼう」コミュニティでご利用いただいていた方は、登録時のメールアドレスを入力してください。既存のサブスクリプションを引き継ぎます。"
+                            : "ログイン中のメールアドレスと異なるため、本人確認が必要です。Stripeに登録されているお名前を入力してください。"}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="stripe-link-email" className="text-white">
-                            メールアドレス
-                        </Label>
-                        <Input
-                            id="stripe-link-email"
-                            type="email"
-                            placeholder="example@email.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") handleLink();
-                            }}
-                            className="bg-white/10 border-white/20 text-white placeholder:text-gray-500"
-                            autoFocus
-                        />
-                        <p className="text-xs text-gray-500">
-                            メールアドレスがご不明な場合は{" "}
-                            <a
-                                href="mailto:taiyo.kimura.3w@stu.hosei.ac.jp"
-                                className="text-blue-400 hover:text-blue-300 underline"
-                            >
-                                taiyo.kimura.3w@stu.hosei.ac.jp
-                            </a>{" "}
-                            までお問い合わせください。
-                        </p>
-                    </div>
+                    {step === "email" ? (
+                        <div className="grid gap-2">
+                            <Label htmlFor="stripe-link-email" className="text-white">
+                                メールアドレス
+                            </Label>
+                            <Input
+                                id="stripe-link-email"
+                                type="email"
+                                placeholder="example@email.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleLink();
+                                }}
+                                className="bg-white/10 border-white/20 text-white placeholder:text-gray-500"
+                                autoFocus
+                            />
+                            <p className="text-xs text-gray-500">
+                                メールアドレスがご不明な場合は{" "}
+                                <a
+                                    href="mailto:taiyo.kimura.3w@stu.hosei.ac.jp"
+                                    className="text-blue-400 hover:text-blue-300 underline"
+                                >
+                                    taiyo.kimura.3w@stu.hosei.ac.jp
+                                </a>{" "}
+                                までお問い合わせください。
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-2">
+                            <div className="rounded-md bg-white/5 border border-white/10 p-3 mb-1">
+                                <p className="text-xs text-gray-400">入力されたメールアドレス</p>
+                                <p className="text-sm text-white">{email}</p>
+                            </div>
+                            <Label htmlFor="stripe-link-name" className="text-white">
+                                Stripeに登録されているお名前
+                            </Label>
+                            <Input
+                                id="stripe-link-name"
+                                type="text"
+                                placeholder="山田 太郎"
+                                value={customerName}
+                                onChange={(e) => setCustomerName(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleLink();
+                                }}
+                                className="bg-white/10 border-white/20 text-white placeholder:text-gray-500"
+                                autoFocus
+                            />
+                            <p className="text-xs text-gray-500">決済時に登録したお名前を正確に入力してください。</p>
+                        </div>
+                    )}
                 </div>
                 <DialogFooter className="gap-2">
+                    {step === "name" && (
+                        <Button
+                            onClick={() => {
+                                setStep("email");
+                                setCustomerName("");
+                            }}
+                            variant="ghost"
+                            className="text-gray-400 hover:text-white hover:bg-white/10 mr-auto"
+                        >
+                            戻る
+                        </Button>
+                    )}
                     <Button
                         onClick={handleClose}
                         variant="outline"
@@ -130,10 +183,10 @@ export default function StripeLinkAutoTrigger() {
                     </Button>
                     <Button
                         onClick={handleLink}
-                        disabled={loading || !email.trim()}
+                        disabled={loading || (step === "email" ? !email.trim() : !customerName.trim())}
                         className="bg-blue-600 hover:bg-blue-500 text-white"
                     >
-                        {loading ? "連携中..." : "連携する"}
+                        {loading ? "連携中..." : step === "email" ? "次へ" : "連携する"}
                     </Button>
                 </DialogFooter>
             </DialogContent>
