@@ -49,15 +49,10 @@ export async function POST(req: NextRequest) {
         const client = new GoogleGenAI({ apiKey });
 
         const response = await client.models.generateContent({
-            model: "gemini-2.0-flash-exp",
-            contents: [
-                {
-                    role: "user",
-                    parts: [{ text: prompt }],
-                },
-            ],
+            model: "gemini-3.1-flash-image-preview",
+            contents: prompt,
             config: {
-                responseModalities: ["image", "text"],
+                responseModalities: ["TEXT", "IMAGE"],
             },
         });
 
