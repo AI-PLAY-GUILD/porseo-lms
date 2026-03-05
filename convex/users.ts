@@ -39,15 +39,9 @@ export const webhookSyncUser = mutation({
     },
     handler: async (ctx, args) => {
         console.log("[users:webhookSyncUser] 開始", { clerkId: args.clerkId, email: args.email });
-        const expectedSecret = process.env.CLERK_WEBHOOK_SECRET;
-        if (!expectedSecret) {
-            throw new Error("Server configuration error: CLERK_WEBHOOK_SECRET is not set");
-        }
-        const { safeCompare } = await import("./lib/safeCompare");
-        if (!safeCompare(args.secret, expectedSecret)) {
-            console.log("[users:webhookSyncUser] 認証失敗: 無効なsecret");
-            throw new Error("Unauthorized: Invalid secret");
-        }
+        // Security: Use CONVEX_INTERNAL_SECRET instead of CLERK_WEBHOOK_SECRET
+        // to avoid reusing the Clerk webhook secret for Convex mutation auth
+        validateInternalSecret(args.secret);
 
         let existing = await ctx.db
             .query("users")

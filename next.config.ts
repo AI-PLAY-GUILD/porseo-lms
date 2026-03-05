@@ -35,7 +35,20 @@ const nextConfig: NextConfig = {
                         key: "X-Frame-Options",
                         value: "SAMEORIGIN",
                     },
-                    // CSP temporarily disabled for debugging login button issue
+                    {
+                        key: "Content-Security-Policy",
+                        value: [
+                            "default-src 'self'",
+                            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://challenges.cloudflare.com https://js.stripe.com https://stream.mux.com",
+                            "style-src 'self' 'unsafe-inline'",
+                            "img-src 'self' data: blob: https://image.mux.com https://*.convex.cloud https://img.clerk.com https://pbs.twimg.com https://media.licdn.com",
+                            "font-src 'self' data:",
+                            "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.clerk.accounts.dev https://api.stripe.com https://stream.mux.com https://generativelanguage.googleapis.com",
+                            "frame-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com https://js.stripe.com https://stream.mux.com",
+                            "media-src 'self' blob: https://stream.mux.com https://*.mux.com",
+                            "worker-src 'self' blob:",
+                        ].join("; "),
+                    },
                     {
                         key: "X-Content-Type-Options",
                         value: "nosniff",

@@ -2,6 +2,7 @@ import type { WebhookEvent } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
 import { Webhook } from "svix";
 import { convex } from "@/lib/convex";
+import { getConvexInternalSecret } from "@/lib/env";
 import { api } from "../../../../../convex/_generated/api";
 
 export async function POST(req: Request) {
@@ -78,7 +79,7 @@ export async function POST(req: Request) {
                 email: email,
                 name: name,
                 imageUrl: image_url,
-                secret: process.env.CLERK_WEBHOOK_SECRET!,
+                secret: getConvexInternalSecret(),
             });
         } catch (error) {
             console.error("[webhooks/clerk] エラー: Convexへのユーザー同期失敗:", error);

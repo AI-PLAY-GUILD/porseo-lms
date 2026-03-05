@@ -418,7 +418,7 @@ export const batchIndexUnindexedVideos = action({
         });
         if (!user?.isAdmin) throw new Error("Unauthorized: Admin access required");
 
-        const allVideos = await ctx.runQuery(api.videos.getAllVideosInternal, {});
+        const allVideos = await ctx.runQuery(internal.videos.getAllVideosInternal, {});
         const details: Array<{ videoId: string; title: string; status: string; chunks?: number }> = [];
         let indexed = 0;
         let failed = 0;

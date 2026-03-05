@@ -317,7 +317,7 @@ export const fixZoomVideoDates = internalAction({
         console.log("[fixZoomVideoDates] 開始");
 
         // Get all videos with zoom meeting IDs
-        const allVideos: VideoDateInfo[] = await ctx.runQuery(api.videos.getAllVideoDateInfo, {});
+        const allVideos: VideoDateInfo[] = await ctx.runQuery(internal.videos.getAllVideoDateInfo, {});
         const zoomVideos: VideoDateInfo[] = allVideos.filter((v) => v.source === "zoom" && v.zoomMeetingId);
 
         console.log(`[fixZoomVideoDates] Zoom動画: ${zoomVideos.length}本`);

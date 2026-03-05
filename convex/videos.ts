@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
-import { internalMutation, mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 
 // Input length limits
 const MAX_TITLE_LENGTH = 200;
@@ -363,14 +363,16 @@ export const updateVideoAiMetadata = internalMutation({
     },
 });
 
-export const getAllVideosInternal = query({
+// Security: internalQuery - only callable from server-side Convex functions
+export const getAllVideosInternal = internalQuery({
     handler: async (ctx) => {
         return await ctx.db.query("videos").collect();
     },
 });
 
 // 動画の日付・Zoom情報のみ取得（軽量）
-export const getAllVideoDateInfo = query({
+// Security: internalQuery - only callable from server-side Convex functions
+export const getAllVideoDateInfo = internalQuery({
     handler: async (ctx) => {
         const videos = await ctx.db.query("videos").order("desc").collect();
         return videos.map((v) => ({
@@ -405,6 +407,24 @@ export const batchUpdateCreatedAt = internalMutation({
             count++;
         }
         return { updated: count };
+    },
+});
+
+export const getVideosByIds = query({
+    args: { videoIds: v.array(v.id("videos")) },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+            .first();
+
+        if (!user?.isAdmin) throw new Error("Admin access required");
+
+        const results = await Promise.all(args.videoIds.map((id) => ctx.db.get(id)));
+        return results.filter((v) => v !== null);
     },
 });
 

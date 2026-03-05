@@ -91,6 +91,32 @@ export async function POST(req: Request) {
 
         console.log("[chat] STEP 4: リクエストボディ解析");
         const { messages: uiMessages } = await req.json();
+
+        // Security: Input validation to prevent abuse
+        const MAX_MESSAGES = 50;
+        const MAX_MESSAGE_LENGTH = 4000;
+        if (!Array.isArray(uiMessages)) {
+            return new Response(JSON.stringify({ error: "Invalid messages format" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" },
+            });
+        }
+        if (uiMessages.length > MAX_MESSAGES) {
+            return new Response(JSON.stringify({ error: `Too many messages (max ${MAX_MESSAGES})` }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" },
+            });
+        }
+        for (const msg of uiMessages) {
+            const content = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content);
+            if (content && content.length > MAX_MESSAGE_LENGTH) {
+                return new Response(
+                    JSON.stringify({ error: `Message too long (max ${MAX_MESSAGE_LENGTH} characters)` }),
+                    { status: 400, headers: { "Content-Type": "application/json" } },
+                );
+            }
+        }
+
         const messages = await convertToModelMessages(uiMessages);
         console.log("[chat] STEP 4 OK: メッセージ取得・変換完了", {
             userId,
