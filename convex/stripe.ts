@@ -135,7 +135,16 @@ export const createCustomer = action({
 // When email doesn't match logged-in user, requires additional name verification
 export const linkStripeCustomerByEmail = action({
     args: { email: v.string(), customerName: v.optional(v.string()) },
-    handler: async (ctx, args): Promise<{ success: boolean; message: string; needsVerification?: boolean }> => {
+    handler: async (
+        ctx,
+        args,
+    ): Promise<{
+        success: boolean;
+        message: string;
+        needsVerification?: boolean;
+        hasActiveSubscription?: boolean;
+        needsSubscription?: boolean;
+    }> => {
         console.log("[stripe:linkStripeCustomerByEmail] 開始", { email: args.email });
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
@@ -220,51 +229,60 @@ export const linkStripeCustomerByEmail = action({
             limit: 1,
         });
 
-        let subscriptionName: string | undefined;
-        if (subscriptions.data.length > 0) {
+        const hasActiveSubscription = subscriptions.data.length > 0;
+
+        if (hasActiveSubscription) {
+            // Has active subscription → set active immediately
             const sub = subscriptions.data[0];
-            subscriptionName =
+            const subscriptionName =
                 sub.items.data[0]?.price?.nickname || sub.items.data[0]?.plan?.nickname || "Premium Membership";
-        }
 
-        // Link Stripe customer and set subscription as active
-        // (both subscription holders and legacy one-time payment users get active status)
-        await ctx.runMutation(internal.internal.setStripeCustomerWithSubscription, {
-            userId: user._id,
-            stripeCustomerId: customerId,
-            subscriptionStatus: "active",
-            subscriptionName: subscriptionName,
-        });
+            await ctx.runMutation(internal.internal.setStripeCustomerWithSubscription, {
+                userId: user._id,
+                stripeCustomerId: customerId,
+                subscriptionStatus: "active",
+                subscriptionName: subscriptionName,
+            });
 
-        // Assign Discord role
-        try {
-            const discordBotToken = process.env.DISCORD_BOT_TOKEN;
-            const discordGuildId = process.env.DISCORD_GUILD_ID;
-            const discordRoleId = process.env.DISCORD_ROLE_ID;
+            // Assign Discord role
+            try {
+                const discordBotToken = process.env.DISCORD_BOT_TOKEN;
+                const discordGuildId = process.env.DISCORD_GUILD_ID;
+                const discordRoleId = process.env.DISCORD_ROLE_ID;
 
-            if (discordBotToken && discordGuildId && discordRoleId && user.discordId) {
-                const { REST } = await import("@discordjs/rest");
-                const { Routes } = await import("discord-api-types/v10");
-                const rest = new REST({ version: "10", timeout: 10_000 }).setToken(discordBotToken);
-                await rest.put(Routes.guildMemberRole(discordGuildId, user.discordId, discordRoleId));
-                console.log("[stripe:linkStripeCustomerByEmail] Discordロール付与成功", { discordId: user.discordId });
+                if (discordBotToken && discordGuildId && discordRoleId && user.discordId) {
+                    const { REST } = await import("@discordjs/rest");
+                    const { Routes } = await import("discord-api-types/v10");
+                    const rest = new REST({ version: "10", timeout: 10_000 }).setToken(discordBotToken);
+                    await rest.put(Routes.guildMemberRole(discordGuildId, user.discordId, discordRoleId));
+                    console.log("[stripe:linkStripeCustomerByEmail] Discordロール付与成功", {
+                        discordId: user.discordId,
+                    });
+                }
+            } catch (discordError) {
+                console.error("[stripe:linkStripeCustomerByEmail] Discordロール付与失敗:", discordError);
             }
-        } catch (discordError) {
-            console.error("[stripe:linkStripeCustomerByEmail] Discordロール付与失敗:", discordError);
-        }
 
-        if (subscriptions.data.length > 0) {
             console.log("[stripe:linkStripeCustomerByEmail] 完了 (アクティブなサブスクリプションあり)", { customerId });
             return {
                 success: true,
+                hasActiveSubscription: true,
                 message: "Stripeアカウントと連携し、アクティブなサブスクリプションを確認しました！",
             };
         }
 
-        console.log("[stripe:linkStripeCustomerByEmail] 完了 (旧単発決済ユーザー → active化)", { customerId });
+        // No subscription (legacy one-time payment user) → link customer ID only, don't set active
+        await ctx.runMutation(internal.internal.setStripeCustomerId, {
+            userId: user._id,
+            stripeCustomerId: customerId,
+        });
+
+        console.log("[stripe:linkStripeCustomerByEmail] 完了 (サブスクなし → サブスク購入へ誘導)", { customerId });
         return {
             success: true,
-            message: "Stripeアカウントと連携しました！ご利用いただけます。",
+            hasActiveSubscription: false,
+            needsSubscription: true,
+            message: "Stripeアカウントと連携しました！サービスを継続するにはサブスクリプションの登録が必要です。",
         };
     },
 });

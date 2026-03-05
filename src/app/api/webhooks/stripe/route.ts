@@ -159,6 +159,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
             console.error("[webhooks/stripe] エラー: Discordロール付与失敗:", error);
         }
     }
+
+    // Refund legacy one-time payments for migrating users
+    try {
+        await refundLegacyOneTimePayments(customerId);
+    } catch (error) {
+        console.error("[webhooks/stripe] エラー: 旧単発決済の返金処理失敗:", error);
+    }
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
@@ -238,4 +245,41 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
         console.error("[webhooks/stripe] エラー: ロール削除またはユーザー検索失敗:", e);
     }
     console.log("[webhooks/stripe] handleSubscriptionDeleted 完了", { customerId });
+}
+
+/**
+ * Refund legacy one-time (non-subscription) charges for migrating users.
+ * Only refunds charges that are not associated with a subscription invoice.
+ */
+async function refundLegacyOneTimePayments(customerId: string) {
+    const stripe = getStripe();
+
+    // Get recent charges for this customer (last 100)
+    const charges = await stripe.charges.list({
+        customer: customerId,
+        limit: 100,
+    });
+
+    for (const charge of charges.data) {
+        // Skip if already refunded or failed
+        if (charge.refunded || charge.status !== "succeeded") continue;
+        // Skip charges tied to an invoice (subscription-related)
+        const invoiceId = (charge as unknown as { invoice?: string | null }).invoice;
+        if (invoiceId) continue;
+
+        // This is a standalone (non-subscription) charge → refund it
+        try {
+            await stripe.refunds.create({ charge: charge.id });
+            console.log("[webhooks/stripe] 旧単発決済を返金しました", {
+                chargeId: charge.id,
+                amount: charge.amount,
+                customerId,
+            });
+        } catch (refundError) {
+            console.error("[webhooks/stripe] 単発決済の返金失敗:", {
+                chargeId: charge.id,
+                error: refundError,
+            });
+        }
+    }
 }
