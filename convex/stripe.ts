@@ -277,6 +277,13 @@ export const linkStripeCustomerByEmail = action({
             stripeCustomerId: customerId,
         });
 
+        // Cancel Wix recurring plan for this user
+        try {
+            await cancelWixOrders(inputEmail);
+        } catch (wixError) {
+            console.error("[stripe:linkStripeCustomerByEmail] Wixキャンセル失敗:", wixError);
+        }
+
         console.log("[stripe:linkStripeCustomerByEmail] 完了 (サブスクなし → サブスク購入へ誘導)", { customerId });
         return {
             success: true,
@@ -286,6 +293,104 @@ export const linkStripeCustomerByEmail = action({
         };
     },
 });
+
+/**
+ * Cancel active Wix pricing plan orders for a user by email.
+ * Uses Wix REST API to find and cancel recurring orders.
+ */
+async function cancelWixOrders(email: string) {
+    const wixApiKey = process.env.WIX_API_KEY;
+    const wixSiteId = process.env.WIX_SITE_ID;
+
+    if (!wixApiKey || !wixSiteId) {
+        console.log("[cancelWixOrders] WIX_API_KEY or WIX_SITE_ID not set, skipping");
+        return;
+    }
+
+    const headers = {
+        Authorization: wixApiKey,
+        "wix-site-id": wixSiteId,
+        "Content-Type": "application/json",
+    };
+
+    // 1. Find Wix member by email via Contacts API
+    const contactsRes = await fetch("https://www.wixapis.com/contacts/v4/contacts/query", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+            query: {
+                filter: JSON.stringify({
+                    "info.emails.email": { $eq: email },
+                }),
+            },
+        }),
+    });
+
+    if (!contactsRes.ok) {
+        const errorText = await contactsRes.text();
+        console.error("[cancelWixOrders] Wix Contacts検索失敗:", contactsRes.status, errorText);
+        return;
+    }
+
+    const contactsData = await contactsRes.json();
+    const contacts = contactsData.contacts || [];
+
+    if (contacts.length === 0) {
+        console.log("[cancelWixOrders] Wixコンタクト未検出", { email });
+        return;
+    }
+
+    const memberId = contacts[0].source?.memberId || contacts[0].id;
+    console.log("[cancelWixOrders] Wixメンバー発見", { email, memberId });
+
+    // 2. List pricing plan orders for this member
+    const ordersRes = await fetch("https://www.wixapis.com/pricing-plans/v2/orders/query", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+            query: {
+                filter: JSON.stringify({
+                    "buyer.memberId": memberId,
+                    status: "ACTIVE",
+                }),
+            },
+        }),
+    });
+
+    if (!ordersRes.ok) {
+        const errorText = await ordersRes.text();
+        console.error("[cancelWixOrders] Wix注文一覧取得失敗:", ordersRes.status, errorText);
+        return;
+    }
+
+    const ordersData = await ordersRes.json();
+    const orders = ordersData.orders || [];
+
+    if (orders.length === 0) {
+        console.log("[cancelWixOrders] アクティブな注文なし", { email });
+        return;
+    }
+
+    // 3. Cancel each active order
+    for (const order of orders) {
+        const cancelRes = await fetch(`https://www.wixapis.com/pricing-plans/v2/orders/${order._id}/cancel`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ effectiveAt: "IMMEDIATELY" }),
+        });
+
+        if (cancelRes.ok) {
+            console.log("[cancelWixOrders] Wix注文キャンセル成功", { orderId: order._id, email });
+        } else {
+            const errorText = await cancelRes.text();
+            console.error("[cancelWixOrders] Wix注文キャンセル失敗:", {
+                orderId: order._id,
+                status: cancelRes.status,
+                error: errorText,
+            });
+        }
+    }
+}
 
 // Security fix: Save Discord roles server-side only, return sync status (not raw role IDs)
 export const getDiscordRolesV2 = action({
