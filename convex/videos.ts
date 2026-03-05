@@ -369,6 +369,45 @@ export const getAllVideosInternal = query({
     },
 });
 
+// 動画の日付・Zoom情報のみ取得（軽量）
+export const getAllVideoDateInfo = query({
+    handler: async (ctx) => {
+        const videos = await ctx.db.query("videos").order("desc").collect();
+        return videos.map((v) => ({
+            _id: v._id,
+            title: v.title,
+            createdAt: v.createdAt,
+            _creationTime: v._creationTime,
+            source: v.source,
+            zoomMeetingId: v.zoomMeetingId,
+            zoomRecordingId: v.zoomRecordingId,
+        }));
+    },
+});
+
+// 動画の日付を一括更新（Zoom録画日付修正用）
+export const batchUpdateCreatedAt = internalMutation({
+    args: {
+        updates: v.array(
+            v.object({
+                videoId: v.id("videos"),
+                createdAt: v.number(),
+            }),
+        ),
+    },
+    handler: async (ctx, args) => {
+        let count = 0;
+        for (const update of args.updates) {
+            await ctx.db.patch(update.videoId, {
+                createdAt: update.createdAt,
+                updatedAt: Date.now(),
+            });
+            count++;
+        }
+        return { updated: count };
+    },
+});
+
 export const deleteVideo = mutation({
     args: { videoId: v.id("videos") },
     handler: async (ctx, args) => {

@@ -3,7 +3,8 @@
 import { GoogleGenAI } from "@google/genai";
 import Mux from "@mux/mux-node";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { internalAction } from "./_generated/server";
 
 // Validate that URLs are from Zoom domains (defense-in-depth SSRF prevention)
@@ -270,5 +271,254 @@ ${args.transcription}
             console.error("[zoomActions:processAiMetadata] エラー:", error);
             // Non-fatal: admin can trigger AI analysis manually
         }
+    },
+});
+
+// ============================
+// Zoom録画の元の日付を取得して動画のcreatedAtを修正
+// ============================
+async function getZoomAccessToken(): Promise<string> {
+    const accountId = process.env.ZOOM_ACCOUNT_ID;
+    const clientId = process.env.ZOOM_CLIENT_ID;
+    const clientSecret = process.env.ZOOM_CLIENT_SECRET;
+    if (!accountId || !clientId || !clientSecret) {
+        throw new Error("Missing Zoom OAuth credentials");
+    }
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+    const response = await fetch("https://zoom.us/oauth/token", {
+        method: "POST",
+        headers: {
+            Authorization: `Basic ${credentials}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+            grant_type: "account_credentials",
+            account_id: accountId,
+        }),
+    });
+    if (!response.ok) throw new Error(`Zoom OAuth failed: ${response.status}`);
+    const data = await response.json();
+    return data.access_token;
+}
+
+interface VideoDateInfo {
+    _id: string;
+    title: string;
+    createdAt: number;
+    _creationTime: number;
+    source?: string;
+    zoomMeetingId?: string;
+    zoomRecordingId?: string;
+}
+
+export const fixZoomVideoDates = internalAction({
+    args: {},
+    handler: async (ctx): Promise<{ total: number; updated: number; apiCalls: number }> => {
+        console.log("[fixZoomVideoDates] 開始");
+
+        // Get all videos with zoom meeting IDs
+        const allVideos: VideoDateInfo[] = await ctx.runQuery(api.videos.getAllVideoDateInfo, {});
+        const zoomVideos: VideoDateInfo[] = allVideos.filter((v) => v.source === "zoom" && v.zoomMeetingId);
+
+        console.log(`[fixZoomVideoDates] Zoom動画: ${zoomVideos.length}本`);
+
+        const accessToken = await getZoomAccessToken();
+
+        // Group by meetingId to reduce API calls (recurring meetings share the same ID)
+        const meetingMap = new Map<string, Array<{ _id: string; zoomRecordingId?: string; title: string }>>();
+        for (const v of zoomVideos) {
+            const mid = v.zoomMeetingId!;
+            if (!meetingMap.has(mid)) meetingMap.set(mid, []);
+            meetingMap.get(mid)!.push(v);
+        }
+
+        console.log(`[fixZoomVideoDates] ユニークミーティング数: ${meetingMap.size}`);
+
+        const updates: Array<{ videoId: Id<"videos">; createdAt: number }> = [];
+        let apiCalls = 0;
+
+        // First try: get recordings by meeting ID (past meetings endpoint for recurring)
+        for (const [meetingId, videos] of meetingMap) {
+            try {
+                // For recurring meetings, list past instances first
+                const instancesRes = await fetch(`https://api.zoom.us/v2/past_meetings/${meetingId}/instances`, {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                });
+                apiCalls++;
+
+                if (instancesRes.ok) {
+                    const instancesData = await instancesRes.json();
+                    const instances = instancesData.meetings || [];
+
+                    if (instances.length > 0) {
+                        // For each instance, get recordings
+                        for (const instance of instances) {
+                            const uuid = encodeURIComponent(encodeURIComponent(instance.uuid));
+                            const recRes = await fetch(`https://api.zoom.us/v2/meetings/${uuid}/recordings`, {
+                                headers: { Authorization: `Bearer ${accessToken}` },
+                            });
+                            apiCalls++;
+
+                            if (recRes.ok) {
+                                const recData = await recRes.json();
+                                const startTime = recData.start_time;
+                                if (!startTime) continue;
+
+                                const recordingDate = new Date(startTime).getTime();
+                                const recordingFiles = recData.recording_files || [];
+
+                                for (const video of videos) {
+                                    // Match by recording file ID
+                                    const matched = recordingFiles.some(
+                                        (f: { id: string }) => f.id === video.zoomRecordingId,
+                                    );
+                                    if (matched) {
+                                        console.log(
+                                            `[fixZoomVideoDates] マッチ: ${video.title.substring(0, 30)} → ${startTime}`,
+                                        );
+                                        updates.push({
+                                            videoId: video._id as Id<"videos">,
+                                            createdAt: recordingDate,
+                                        });
+                                    }
+                                }
+                            }
+
+                            // Rate limit
+                            await new Promise((r) => setTimeout(r, 200));
+                        }
+                        continue;
+                    }
+                }
+
+                // Fallback: direct meeting recordings endpoint
+                const recRes = await fetch(`https://api.zoom.us/v2/meetings/${meetingId}/recordings`, {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                });
+                apiCalls++;
+
+                if (recRes.ok) {
+                    const recData = await recRes.json();
+                    const startTime = recData.start_time;
+                    if (startTime) {
+                        const recordingDate = new Date(startTime).getTime();
+                        const recordingFiles = recData.recording_files || [];
+
+                        for (const video of videos) {
+                            const matched = recordingFiles.some((f: { id: string }) => f.id === video.zoomRecordingId);
+                            if (matched) {
+                                console.log(
+                                    `[fixZoomVideoDates] マッチ(直接): ${video.title.substring(0, 30)} → ${startTime}`,
+                                );
+                                updates.push({
+                                    videoId: video._id as Id<"videos">,
+                                    createdAt: recordingDate,
+                                });
+                            }
+                        }
+                    }
+                } else {
+                    console.warn(`[fixZoomVideoDates] 録画取得失敗: meeting=${meetingId} status=${recRes.status}`);
+                }
+
+                // Rate limit
+                await new Promise((r) => setTimeout(r, 200));
+            } catch (err) {
+                console.error(`[fixZoomVideoDates] エラー: meeting=${meetingId}`, err);
+            }
+        }
+
+        console.log(`[fixZoomVideoDates] API呼び出し数: ${apiCalls}, マッチ数: ${updates.length}/${zoomVideos.length}`);
+
+        // If not all matched, try bulk approach: list all recordings from users
+        if (updates.length < zoomVideos.length) {
+            console.log("[fixZoomVideoDates] 未マッチ動画あり。ユーザー録画一覧から検索...");
+
+            const matchedIds = new Set(updates.map((u) => u.videoId));
+            const unmatchedVideos = zoomVideos.filter((v: { _id: string }) => !matchedIds.has(v._id as Id<"videos">));
+            const unmatchedRecIds = new Map(
+                unmatchedVideos.map((v: { _id: string; zoomRecordingId?: string }) => [v.zoomRecordingId, v._id]),
+            );
+
+            // Get users
+            const usersRes = await fetch("https://api.zoom.us/v2/users?page_size=30&status=active", {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            apiCalls++;
+
+            if (usersRes.ok) {
+                const usersData = await usersRes.json();
+                const userIds = (usersData.users || []).map((u: { id: string }) => u.id);
+
+                for (const userId of userIds) {
+                    // Fetch recordings for the past 6 months in 30-day chunks
+                    const now = new Date();
+                    for (let monthsBack = 0; monthsBack < 6; monthsBack++) {
+                        const to = new Date(now);
+                        to.setMonth(to.getMonth() - monthsBack);
+                        const from = new Date(to);
+                        from.setMonth(from.getMonth() - 1);
+
+                        const fromStr = from.toISOString().split("T")[0];
+                        const toStr = to.toISOString().split("T")[0];
+
+                        const listRes = await fetch(
+                            `https://api.zoom.us/v2/users/${userId}/recordings?from=${fromStr}&to=${toStr}&page_size=300`,
+                            { headers: { Authorization: `Bearer ${accessToken}` } },
+                        );
+                        apiCalls++;
+
+                        if (listRes.ok) {
+                            const listData = await listRes.json();
+                            const meetings = listData.meetings || [];
+
+                            for (const meeting of meetings) {
+                                const startTime = meeting.start_time;
+                                if (!startTime) continue;
+                                const recordingDate = new Date(startTime).getTime();
+
+                                for (const file of meeting.recording_files || []) {
+                                    const videoIdStr = unmatchedRecIds.get(file.id);
+                                    if (videoIdStr) {
+                                        console.log(
+                                            `[fixZoomVideoDates] ユーザー録画マッチ: ${file.id} → ${startTime}`,
+                                        );
+                                        updates.push({
+                                            videoId: videoIdStr as Id<"videos">,
+                                            createdAt: recordingDate,
+                                        });
+                                        unmatchedRecIds.delete(file.id);
+                                    }
+                                }
+                            }
+                        }
+
+                        await new Promise((r) => setTimeout(r, 200));
+
+                        if (unmatchedRecIds.size === 0) break;
+                    }
+                    if (unmatchedRecIds.size === 0) break;
+                }
+            }
+        }
+
+        console.log(`[fixZoomVideoDates] 最終マッチ数: ${updates.length}/${zoomVideos.length}`);
+
+        // Apply updates in batches
+        if (updates.length > 0) {
+            const batchSize = 20;
+            for (let i = 0; i < updates.length; i += batchSize) {
+                await ctx.runMutation(internal.videos.batchUpdateCreatedAt, {
+                    updates: updates.slice(i, i + batchSize),
+                });
+            }
+            console.log(`[fixZoomVideoDates] ${updates.length}本の動画日付を更新完了`);
+        }
+
+        return {
+            total: zoomVideos.length,
+            updated: updates.length,
+            apiCalls,
+        };
     },
 });
