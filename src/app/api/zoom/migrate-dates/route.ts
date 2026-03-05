@@ -33,7 +33,9 @@ export async function POST() {
         }
 
         // 1. recordedAt未設定のZoom動画を取得
-        const videos = await convex.query(api.videos.getZoomVideosWithoutRecordedAt, {});
+        const videos = await convex.query(api.videos.getZoomVideosForMigration, {
+            secret: getConvexInternalSecret(),
+        });
         if (videos.length === 0) {
             return NextResponse.json({ message: "全てのZoom動画にrecordedAtが設定済みです", updated: 0 });
         }

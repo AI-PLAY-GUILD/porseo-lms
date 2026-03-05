@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import { validateInternalSecret } from "./lib/requireSecret";
 
 // Input length limits
 const MAX_TITLE_LENGTH = 200;
@@ -398,6 +399,93 @@ export const getAllVideoDateInfo = internalQuery({
             zoomMeetingId: v.zoomMeetingId,
             zoomRecordingId: v.zoomRecordingId,
         }));
+    },
+});
+
+// Zoom動画一覧を取得（secret認証対応・スクリプトからも呼び出し可）
+// includeAll=true で recordedAt設定済みも含めて全件返す
+export const getZoomVideosForMigration = query({
+    args: {
+        secret: v.string(),
+        includeAll: v.optional(v.boolean()),
+    },
+    handler: async (ctx, args) => {
+        validateInternalSecret(args.secret);
+
+        const videos = await ctx.db
+            .query("videos")
+            .filter((q) => q.eq(q.field("source"), "zoom"))
+            .collect();
+
+        const filtered = args.includeAll ? videos : videos.filter((v) => !v.recordedAt);
+
+        return filtered.map((v) => ({
+            _id: v._id,
+            title: v.title,
+            zoomMeetingId: v.zoomMeetingId,
+            zoomRecordingId: v.zoomRecordingId,
+            recordedAt: v.recordedAt,
+            createdAt: v.createdAt,
+        }));
+    },
+});
+
+// recordedAtを一括設定（既存Zoom動画マイグレーション用・secret認証対応）
+export const batchSetRecordedAt = mutation({
+    args: {
+        updates: v.array(
+            v.object({
+                videoId: v.id("videos"),
+                recordedAt: v.number(),
+            }),
+        ),
+        secret: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        if (args.secret) {
+            validateInternalSecret(args.secret);
+        } else {
+            const identity = await ctx.auth.getUserIdentity();
+            if (!identity) throw new Error("Unauthorized");
+            const user = await ctx.db
+                .query("users")
+                .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+                .first();
+            if (!user?.isAdmin) throw new Error("Admin access required");
+        }
+
+        let count = 0;
+        for (const update of args.updates) {
+            await ctx.db.patch(update.videoId, {
+                recordedAt: update.recordedAt,
+                updatedAt: Date.now(),
+            });
+            count++;
+        }
+        return { updated: count };
+    },
+});
+
+// recordedAtを一括設定（内部用・スクリプトから呼び出し）
+export const internalBatchSetRecordedAt = internalMutation({
+    args: {
+        updates: v.array(
+            v.object({
+                videoId: v.id("videos"),
+                recordedAt: v.number(),
+            }),
+        ),
+    },
+    handler: async (ctx, args) => {
+        let count = 0;
+        for (const update of args.updates) {
+            await ctx.db.patch(update.videoId, {
+                recordedAt: update.recordedAt,
+                updatedAt: Date.now(),
+            });
+            count++;
+        }
+        return { updated: count };
     },
 });
 
