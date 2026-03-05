@@ -37,6 +37,8 @@ export default function EditVideoPage() {
     const [_isSubmitting, setIsSubmitting] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isIndexing, setIsIndexing] = useState(false);
+    const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+    const generateDescription = useAction(api.ai.generateVideoDescription);
 
     useEffect(() => {
         console.log("[EditVideoPage] マウント/初期化 videoId:", videoId, "isAdmin:", userData?.isAdmin);
@@ -282,7 +284,45 @@ export default function EditVideoPage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium mb-1">説明</label>
+                    <div className="flex items-center justify-between mb-1">
+                        <label className="block text-sm font-medium">説明</label>
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                if (!transcription || transcription.trim().length === 0) {
+                                    alert("文字起こしデータが必要です");
+                                    return;
+                                }
+                                if (!confirm("AIで説明文を生成しますか？（現在の説明文は上書きされます）")) return;
+                                setIsGeneratingDescription(true);
+                                try {
+                                    const result = await generateDescription({ videoId });
+                                    if (result?.description) {
+                                        setDescription(result.description);
+                                    }
+                                    alert("説明文を生成しました！");
+                                } catch (error) {
+                                    alert(`エラー: ${error instanceof Error ? error.message : String(error)}`);
+                                } finally {
+                                    setIsGeneratingDescription(false);
+                                }
+                            }}
+                            disabled={isGeneratingDescription}
+                            className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
+                                isGeneratingDescription
+                                    ? "bg-gray-400 cursor-not-allowed text-gray-200"
+                                    : "bg-purple-600 text-white hover:bg-purple-700"
+                            }`}
+                        >
+                            {isGeneratingDescription ? (
+                                <span className="flex items-center gap-1">
+                                    <span className="animate-spin">↻</span> 生成中...
+                                </span>
+                            ) : (
+                                "AIで説明文を生成"
+                            )}
+                        </button>
+                    </div>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}

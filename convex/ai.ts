@@ -3,7 +3,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-import { action } from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 // Muxは使っていないため削除
 
 export const generateVideoMetadata = action({
@@ -166,5 +166,158 @@ ${subtitleText}
                 error: `AI分析中にエラーが発生しました: ${error instanceof Error ? error.message : "Unknown error"}`,
             };
         }
+    },
+});
+
+export const generateVideoDescription = action({
+    args: {
+        videoId: v.id("videos"),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized: Authentication required");
+
+        const user = await ctx.runQuery(api.users.getUserByClerkIdQuery, {
+            clerkId: identity.subject,
+        });
+        if (!user || !user.isAdmin) throw new Error("Unauthorized: Admin access required");
+
+        const video = await ctx.runQuery(api.videos.getById, { videoId: args.videoId });
+        if (!video) throw new Error("Video not found");
+
+        const subtitleText = video.transcription;
+        if (!subtitleText || subtitleText.trim().length === 0) {
+            throw new Error("文字起こしテキストがありません。");
+        }
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+
+        const client = new GoogleGenAI({ apiKey });
+
+        const prompt = `
+あなたは教育動画のプロフェッショナルな編集者です。
+以下の動画の文字起こしテキストを分析し、「動画について」セクションに表示する説明文を作成してください。
+
+# ルール
+- 動画の内容を簡潔に紹介する説明文を2〜4文で作成
+- 学習者が「この動画を見るべきか」判断できる内容にする
+- 動画で扱っている主要なトピックやテーマを含める
+- 固い表現は避け、分かりやすい日本語で書く
+- 「この動画では〜」で始めてください
+
+# 動画タイトル
+${video.title}
+
+# 文字起こしデータ
+${subtitleText.slice(0, 15000)}
+`;
+
+        const response = await client.models.generateContent({
+            model: "gemini-1.5-flash",
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+        });
+
+        let description = "";
+        const textOrFunc = (response as unknown as Record<string, unknown>).text;
+        if (typeof textOrFunc === "function") {
+            description = textOrFunc();
+        } else if (textOrFunc) {
+            description = textOrFunc as string;
+        } else if (response.candidates && response.candidates.length > 0) {
+            const candidate = response.candidates[0];
+            if (candidate.content?.parts && candidate.content.parts.length > 0) {
+                description = candidate.content.parts[0].text || "";
+            }
+        }
+
+        if (!description) throw new Error("AIからの応答が空でした。");
+
+        description = description.trim();
+
+        await ctx.runMutation(internal.videos.updateVideoDescription, {
+            videoId: args.videoId,
+            description,
+        });
+
+        return { description };
+    },
+});
+
+export const batchGenerateDescriptions = internalAction({
+    args: {},
+    handler: async (ctx) => {
+        const videos = await ctx.runQuery(internal.videos.getAllVideosInternal);
+
+        let updated = 0;
+        let skipped = 0;
+        let failed = 0;
+
+        for (const video of videos) {
+            if (!video.transcription || video.transcription.trim().length === 0) {
+                skipped++;
+                continue;
+            }
+
+            try {
+                const apiKey = process.env.GEMINI_API_KEY;
+                if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+
+                const client = new GoogleGenAI({ apiKey });
+
+                const prompt = `
+あなたは教育動画のプロフェッショナルな編集者です。
+以下の動画の文字起こしテキストを分析し、「動画について」セクションに表示する説明文を作成してください。
+
+# ルール
+- 動画の内容を簡潔に紹介する説明文を2〜4文で作成
+- 学習者が「この動画を見るべきか」判断できる内容にする
+- 動画で扱っている主要なトピックやテーマを含める
+- 固い表現は避け、分かりやすい日本語で書く
+- 「この動画では〜」で始めてください
+
+# 動画タイトル
+${video.title}
+
+# 文字起こしデータ
+${video.transcription.slice(0, 15000)}
+`;
+
+                const response = await client.models.generateContent({
+                    model: "gemini-1.5-flash",
+                    contents: [{ role: "user", parts: [{ text: prompt }] }],
+                });
+
+                let description = "";
+                const textOrFunc = (response as unknown as Record<string, unknown>).text;
+                if (typeof textOrFunc === "function") {
+                    description = textOrFunc();
+                } else if (textOrFunc) {
+                    description = textOrFunc as string;
+                } else if (response.candidates && response.candidates.length > 0) {
+                    const candidate = response.candidates[0];
+                    if (candidate.content?.parts && candidate.content.parts.length > 0) {
+                        description = candidate.content.parts[0].text || "";
+                    }
+                }
+
+                if (description) {
+                    await ctx.runMutation(internal.videos.updateVideoDescription, {
+                        videoId: video._id,
+                        description: description.trim(),
+                    });
+                    updated++;
+                    console.log(`[batchGenerateDescriptions] Updated: ${video.title}`);
+                } else {
+                    failed++;
+                }
+            } catch (error) {
+                console.error(`[batchGenerateDescriptions] Failed for ${video.title}:`, error);
+                failed++;
+            }
+        }
+
+        console.log(`[batchGenerateDescriptions] Done: updated=${updated}, skipped=${skipped}, failed=${failed}`);
+        return { updated, skipped, failed };
     },
 });
