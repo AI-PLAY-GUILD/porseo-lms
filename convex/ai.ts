@@ -323,14 +323,31 @@ ${video.transcription.slice(0, 15000)}
     },
 });
 
-// Internal version (callable from CLI: npx convex run ai:scanTranscriptionSecurityInternal)
+// Internal version (callable from CLI via Convex Dashboard)
 export const scanTranscriptionSecurityInternal = internalAction({
     args: {},
-    handler: async (ctx) => {
+    handler: async (
+        ctx,
+    ): Promise<{
+        totalScanned: number;
+        videosWithIssues: number;
+        results: {
+            videoId: string;
+            title: string;
+            findings: {
+                severity: string;
+                type: string;
+                description: string;
+                detectedText?: string;
+                location: string;
+            }[];
+        }[];
+    }> => {
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
         const client = new GoogleGenAI({ apiKey });
-        const allVideos = await ctx.runQuery(internal.videos.getAllVideosInternal);
+        const allVideos: { _id: Id<"videos">; title: string; transcription?: string; zoomChatMessages?: string }[] =
+            await ctx.runQuery(internal.videos.getAllVideosInternal);
         return await doSecurityScan(ctx, client, allVideos);
     },
 });
