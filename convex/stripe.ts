@@ -220,10 +220,38 @@ export const linkStripeCustomerByEmail = action({
             limit: 1,
         });
 
-        await ctx.runMutation(internal.internal.setStripeCustomerId, {
+        let subscriptionName: string | undefined;
+        if (subscriptions.data.length > 0) {
+            const sub = subscriptions.data[0];
+            subscriptionName =
+                sub.items.data[0]?.price?.nickname || sub.items.data[0]?.plan?.nickname || "Premium Membership";
+        }
+
+        // Link Stripe customer and set subscription as active
+        // (both subscription holders and legacy one-time payment users get active status)
+        await ctx.runMutation(internal.internal.setStripeCustomerWithSubscription, {
             userId: user._id,
             stripeCustomerId: customerId,
+            subscriptionStatus: "active",
+            subscriptionName: subscriptionName,
         });
+
+        // Assign Discord role
+        try {
+            const discordBotToken = process.env.DISCORD_BOT_TOKEN;
+            const discordGuildId = process.env.DISCORD_GUILD_ID;
+            const discordRoleId = process.env.DISCORD_ROLE_ID;
+
+            if (discordBotToken && discordGuildId && discordRoleId && user.discordId) {
+                const { REST } = await import("@discordjs/rest");
+                const { Routes } = await import("discord-api-types/v10");
+                const rest = new REST({ version: "10", timeout: 10_000 }).setToken(discordBotToken);
+                await rest.put(Routes.guildMemberRole(discordGuildId, user.discordId, discordRoleId));
+                console.log("[stripe:linkStripeCustomerByEmail] Discordロール付与成功", { discordId: user.discordId });
+            }
+        } catch (discordError) {
+            console.error("[stripe:linkStripeCustomerByEmail] Discordロール付与失敗:", discordError);
+        }
 
         if (subscriptions.data.length > 0) {
             console.log("[stripe:linkStripeCustomerByEmail] 完了 (アクティブなサブスクリプションあり)", { customerId });
@@ -233,10 +261,10 @@ export const linkStripeCustomerByEmail = action({
             };
         }
 
-        console.log("[stripe:linkStripeCustomerByEmail] 完了 (サブスクリプションなし)", { customerId });
+        console.log("[stripe:linkStripeCustomerByEmail] 完了 (旧単発決済ユーザー → active化)", { customerId });
         return {
             success: true,
-            message: "Stripeアカウントと連携しました（アクティブなサブスクリプションはありません）",
+            message: "Stripeアカウントと連携しました！ご利用いただけます。",
         };
     },
 });

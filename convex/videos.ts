@@ -364,6 +364,18 @@ export const updateVideoAiMetadata = internalMutation({
     },
 });
 
+export const unpublishVideo = internalMutation({
+    args: {
+        videoId: v.id("videos"),
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.videoId, {
+            isPublished: false,
+            updatedAt: Date.now(),
+        });
+    },
+});
+
 export const updateVideoDescription = internalMutation({
     args: {
         videoId: v.id("videos"),
