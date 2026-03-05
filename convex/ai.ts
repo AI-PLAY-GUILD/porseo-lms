@@ -3,6 +3,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 // Muxは使っていないため削除
 
@@ -319,5 +320,160 @@ ${video.transcription.slice(0, 15000)}
 
         console.log(`[batchGenerateDescriptions] Done: updated=${updated}, skipped=${skipped}, failed=${failed}`);
         return { updated, skipped, failed };
+    },
+});
+
+export const scanTranscriptionSecurity = action({
+    args: {
+        videoId: v.optional(v.id("videos")),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized: Authentication required");
+
+        const user = await ctx.runQuery(api.users.getUserByClerkIdQuery, {
+            clerkId: identity.subject,
+        });
+        if (!user || !user.isAdmin) throw new Error("Unauthorized: Admin access required");
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+
+        const client = new GoogleGenAI({ apiKey });
+
+        // Get videos to scan
+        let videos: { _id: Id<"videos">; title: string; transcription?: string; zoomChatMessages?: string }[];
+        if (args.videoId) {
+            const video = await ctx.runQuery(api.videos.getById, { videoId: args.videoId });
+            if (!video) throw new Error("Video not found");
+            videos = [video];
+        } else {
+            const allVideos = await ctx.runQuery(internal.videos.getAllVideosInternal);
+            videos = allVideos;
+        }
+
+        const results: {
+            videoId: string;
+            title: string;
+            findings: {
+                severity: string;
+                type: string;
+                description: string;
+                detectedText?: string;
+                location: string;
+            }[];
+        }[] = [];
+
+        for (const video of videos) {
+            const textToScan = [video.transcription || "", video.zoomChatMessages || ""].join("\n---CHAT---\n");
+
+            if (textToScan.trim().length === 0) continue;
+
+            try {
+                const prompt = `
+あなたはセキュリティ監査の専門家です。
+以下の動画の文字起こしテキストとチャットログを分析し、セキュリティ上の問題がないか確認してください。
+
+# 検出対象
+1. **個人情報 (PII)**: 住所、電話番号、メールアドレス、マイナンバー、クレジットカード番号、生年月日
+2. **認証情報**: パスワード、APIキー、環境変数（.envの内容）、シークレットキー、トークン、接続文字列
+3. **企業機密**: 社内URL、社内システムのログイン情報、NDA関連、未公開の事業計画、顧客リスト、売上データ
+4. **インフラ情報**: サーバーIP、データベース名・接続情報、AWSアカウントID、内部ドメイン名
+5. **その他**: 本名の言及（特に生徒・参加者のフルネーム）、スクリーンに映った機密情報への言及
+
+# 重要: JSON形式のみを出力してください
+{
+  "findings": [
+    {
+      "severity": "critical|high|medium|low",
+      "type": "pii|credential|company_secret|infrastructure|other",
+      "description": "何が検出されたかの説明（日本語）",
+      "detectedText": "検出された実際のテキスト（短く引用）",
+      "location": "transcription または chat"
+    }
+  ]
+}
+
+問題が見つからない場合は {"findings": []} を返してください。
+
+# 動画タイトル
+${video.title}
+
+# テキストデータ
+${textToScan.slice(0, 20000)}
+`;
+
+                const response = await client.models.generateContent({
+                    model: "gemini-1.5-flash",
+                    contents: [{ role: "user", parts: [{ text: prompt }] }],
+                    config: { responseMimeType: "application/json" },
+                });
+
+                let responseText = "";
+                const textOrFunc = (response as unknown as Record<string, unknown>).text;
+                if (typeof textOrFunc === "function") {
+                    responseText = textOrFunc();
+                } else if (textOrFunc) {
+                    responseText = textOrFunc as string;
+                } else if (response.candidates && response.candidates.length > 0) {
+                    const candidate = response.candidates[0];
+                    if (candidate.content?.parts && candidate.content.parts.length > 0) {
+                        responseText = candidate.content.parts[0].text || "";
+                    }
+                }
+
+                if (responseText) {
+                    responseText = responseText.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+                    const parsed = JSON.parse(responseText);
+
+                    if (parsed.findings && parsed.findings.length > 0) {
+                        results.push({
+                            videoId: video._id,
+                            title: video.title,
+                            findings: parsed.findings,
+                        });
+
+                        // Update security status in DB
+                        const dbFindings = parsed.findings.map(
+                            (f: { severity: string; type: string; description: string; detectedText?: string }) => ({
+                                timestamp: 0,
+                                severity: f.severity,
+                                type: f.type,
+                                description: f.description,
+                                detectedText: f.detectedText,
+                            }),
+                        );
+                        await ctx.runMutation(internal.videoSecurityDb.updateSecurityFindings, {
+                            videoId: video._id,
+                            status: "warning",
+                            findings: dbFindings,
+                        });
+
+                        console.log(
+                            `[scanTranscriptionSecurity] WARNING: ${video.title} - ${parsed.findings.length} findings`,
+                        );
+                    } else {
+                        await ctx.runMutation(internal.videoSecurityDb.updateSecurityScanStatus, {
+                            videoId: video._id,
+                            status: "clean",
+                        });
+                        console.log(`[scanTranscriptionSecurity] CLEAN: ${video.title}`);
+                    }
+                }
+            } catch (error) {
+                console.error(`[scanTranscriptionSecurity] Error scanning ${video.title}:`, error);
+                await ctx.runMutation(internal.videoSecurityDb.updateSecurityScanStatus, {
+                    videoId: video._id,
+                    status: "error",
+                });
+            }
+        }
+
+        console.log(`[scanTranscriptionSecurity] Scan complete. ${results.length} videos with findings.`);
+        return {
+            totalScanned: videos.filter((v) => (v.transcription || v.zoomChatMessages || "").trim().length > 0).length,
+            videosWithIssues: results.length,
+            results,
+        };
     },
 });

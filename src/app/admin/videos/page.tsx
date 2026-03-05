@@ -1,8 +1,8 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BatchIndexButton } from "@/components/admin/BatchIndexButton";
 import { Badge } from "@/components/ui/badge";
 import { useVideoSearch } from "@/components/videos/useVideoSearch";
@@ -72,6 +72,24 @@ function VideoList() {
         totalCount,
     } = useVideoSearch(videos, { isAdmin: true });
 
+    const scanSecurity = useAction(api.ai.scanTranscriptionSecurity);
+    const [isScanning, setIsScanning] = useState(false);
+    const [scanResult, setScanResult] = useState<{
+        totalScanned: number;
+        videosWithIssues: number;
+        results: {
+            videoId: string;
+            title: string;
+            findings: {
+                severity: string;
+                type: string;
+                description: string;
+                detectedText?: string;
+                location: string;
+            }[];
+        }[];
+    } | null>(null);
+
     if (videos === undefined) {
         return <VideoListSkeleton />;
     }
@@ -82,7 +100,102 @@ function VideoList() {
 
     return (
         <div className="space-y-4">
-            <BatchIndexButton />
+            <div className="flex flex-wrap gap-2">
+                <BatchIndexButton />
+                <button
+                    onClick={async () => {
+                        if (
+                            !confirm(
+                                "全動画の文字起こし・チャットログをセキュリティスキャンしますか？（数分かかる場合があります）",
+                            )
+                        )
+                            return;
+                        setIsScanning(true);
+                        setScanResult(null);
+                        try {
+                            const result = await scanSecurity({});
+                            setScanResult(result);
+                            if (result.videosWithIssues === 0) {
+                                alert(
+                                    `スキャン完了: ${result.totalScanned}本の動画を確認しました。問題は見つかりませんでした。`,
+                                );
+                            } else {
+                                alert(
+                                    `スキャン完了: ${result.totalScanned}本中 ${result.videosWithIssues}本で問題が検出されました。詳細は下に表示されます。`,
+                                );
+                            }
+                        } catch (error) {
+                            alert(`エラー: ${error instanceof Error ? error.message : String(error)}`);
+                        } finally {
+                            setIsScanning(false);
+                        }
+                    }}
+                    disabled={isScanning}
+                    className={`px-4 py-2 rounded-md text-sm font-bold transition-colors ${
+                        isScanning
+                            ? "bg-gray-400 cursor-not-allowed text-gray-200"
+                            : "bg-red-600 text-white hover:bg-red-700"
+                    }`}
+                >
+                    {isScanning ? (
+                        <span className="flex items-center gap-1">
+                            <span className="animate-spin">↻</span> セキュリティスキャン中...
+                        </span>
+                    ) : (
+                        "全動画セキュリティスキャン"
+                    )}
+                </button>
+            </div>
+
+            {/* Security Scan Results */}
+            {scanResult && scanResult.videosWithIssues > 0 && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-lg p-4 space-y-4">
+                    <h3 className="font-bold text-red-900 dark:text-red-300 text-lg">
+                        セキュリティスキャン結果: {scanResult.videosWithIssues}本で問題を検出
+                    </h3>
+                    {scanResult.results.map((video) => (
+                        <div
+                            key={video.videoId}
+                            className="bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-900 p-3"
+                        >
+                            <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-bold text-sm">{video.title}</h4>
+                                <a
+                                    href={`/admin/videos/${video.videoId}/edit`}
+                                    className="text-xs text-blue-600 hover:underline"
+                                >
+                                    編集
+                                </a>
+                            </div>
+                            <div className="space-y-1">
+                                {video.findings.map((finding, idx) => (
+                                    <div key={idx} className="flex items-start gap-2 text-sm">
+                                        <span
+                                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold text-white ${
+                                                finding.severity === "critical"
+                                                    ? "bg-red-600"
+                                                    : finding.severity === "high"
+                                                      ? "bg-orange-500"
+                                                      : finding.severity === "medium"
+                                                        ? "bg-yellow-500"
+                                                        : "bg-blue-500"
+                                            }`}
+                                        >
+                                            {finding.severity}
+                                        </span>
+                                        <span className="text-muted-foreground">{finding.description}</span>
+                                        {finding.detectedText && (
+                                            <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                                                {finding.detectedText}
+                                            </code>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
             <VideoSearchSort
                 query={searchQuery}
                 onQueryChange={setSearchQuery}
