@@ -71,6 +71,9 @@ export default function EditVideoPage() {
         }
     }, [video]);
 
+    const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
+    const [aiThumbnailPreview, setAiThumbnailPreview] = useState<{ base64: string; mimeType: string } | null>(null);
+    const [thumbnailStyle, setThumbnailStyle] = useState("modern");
     const [isDragging, setIsDragging] = useState(false);
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -376,6 +379,118 @@ export default function EditVideoPage() {
                             file:bg-blue-50 file:text-blue-700
                             hover:file:bg-blue-100"
                     />
+
+                    {/* AI サムネイル生成 */}
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                        <h4 className="text-sm font-bold mb-2 flex items-center gap-2">
+                            <span>✨</span> AIサムネイル生成
+                        </h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                            動画のタイトルと要約からAIでサムネイル画像を自動生成します。
+                        </p>
+                        <div className="flex gap-2 mb-3">
+                            <select
+                                value={thumbnailStyle}
+                                onChange={(e) => setThumbnailStyle(e.target.value)}
+                                className="p-2 border rounded text-sm bg-white dark:bg-gray-900"
+                            >
+                                <option value="modern">モダン</option>
+                                <option value="tech">テック</option>
+                                <option value="minimal">ミニマル</option>
+                            </select>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    if (!title) {
+                                        alert("タイトルを入力してください");
+                                        return;
+                                    }
+                                    setIsGeneratingThumbnail(true);
+                                    setAiThumbnailPreview(null);
+                                    try {
+                                        const res = await fetch("/api/mux/thumbnail", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ title, summary, style: thumbnailStyle }),
+                                        });
+                                        if (!res.ok) {
+                                            const data = await res.json();
+                                            throw new Error(data.error || "生成に失敗しました");
+                                        }
+                                        const data = await res.json();
+                                        setAiThumbnailPreview({ base64: data.imageBase64, mimeType: data.mimeType });
+                                    } catch (err) {
+                                        alert(`エラー: ${err instanceof Error ? err.message : "Unknown error"}`);
+                                    } finally {
+                                        setIsGeneratingThumbnail(false);
+                                    }
+                                }}
+                                disabled={isGeneratingThumbnail}
+                                className={`px-4 py-2 rounded text-sm font-bold transition-colors ${
+                                    isGeneratingThumbnail
+                                        ? "bg-gray-400 cursor-not-allowed text-gray-200"
+                                        : "bg-purple-600 text-white hover:bg-purple-700"
+                                }`}
+                            >
+                                {isGeneratingThumbnail ? (
+                                    <span className="flex items-center gap-1">
+                                        <span className="animate-spin">↻</span> 生成中...
+                                    </span>
+                                ) : (
+                                    "AIで生成"
+                                )}
+                            </button>
+                        </div>
+
+                        {/* AIプレビュー */}
+                        {aiThumbnailPreview && (
+                            <div className="mt-3">
+                                <p className="text-xs text-gray-500 mb-1">AI生成プレビュー:</p>
+                                <img
+                                    src={`data:${aiThumbnailPreview.mimeType};base64,${aiThumbnailPreview.base64}`}
+                                    alt="AI Generated Thumbnail"
+                                    className="w-64 h-auto rounded border mb-2"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        try {
+                                            const byteChars = atob(aiThumbnailPreview.base64);
+                                            const byteNumbers = new Array(byteChars.length);
+                                            for (let i = 0; i < byteChars.length; i++) {
+                                                byteNumbers[i] = byteChars.charCodeAt(i);
+                                            }
+                                            const byteArray = new Uint8Array(byteNumbers);
+                                            const blob = new Blob([byteArray], { type: aiThumbnailPreview.mimeType });
+
+                                            const postUrl = await generateUploadUrl();
+                                            const result = await fetch(postUrl, {
+                                                method: "POST",
+                                                headers: { "Content-Type": aiThumbnailPreview.mimeType },
+                                                body: blob,
+                                            });
+                                            const { storageId } = await result.json();
+                                            setCustomThumbnailStorageId(storageId);
+                                            setCustomThumbnailUrl(
+                                                `data:${aiThumbnailPreview.mimeType};base64,${aiThumbnailPreview.base64}`,
+                                            );
+                                            setAiThumbnailPreview(null);
+                                            alert(
+                                                "AI生成画像をサムネイルに設定しました（保存ボタンを押すと反映されます）",
+                                            );
+                                        } catch (err) {
+                                            alert(
+                                                `アップロードに失敗しました: ${err instanceof Error ? err.message : "Unknown error"}`,
+                                            );
+                                        }
+                                    }}
+                                    className="px-3 py-1 bg-green-600 text-white rounded text-sm font-bold hover:bg-green-700"
+                                >
+                                    この画像を使用
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">

@@ -152,6 +152,20 @@ export function AdminSidebar({
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname === "/admin/videos/studio"}
+                                    className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto"
+                                >
+                                    <Link href="/admin/videos/studio" className="flex items-center gap-3 font-bold">
+                                        <div className="flex w-6 items-center justify-center">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-current" />
+                                        </div>
+                                        <span>動画スタジオ</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarMenuItem>
                 </SidebarMenu>

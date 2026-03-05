@@ -3,7 +3,7 @@ import Mux from "@mux/mux-node";
 import { type NextRequest, NextResponse } from "next/server";
 import { convex } from "@/lib/convex";
 import { getConvexInternalSecret } from "@/lib/env";
-import { api } from "../../../../../../convex/_generated/api";
+import { api } from "../../../../../convex/_generated/api";
 
 const mux = new Mux({
     tokenId: process.env.MUX_TOKEN_ID,
@@ -58,14 +58,14 @@ export async function POST(req: NextRequest) {
             }
 
             const asset = await mux.video.assets.create({
-                input: [
+                inputs: [
                     {
                         url: `mux://${body.assetId}`,
                         start_time: body.startTime,
                         end_time: body.endTime,
                     },
                 ],
-                playback_policy: ["public"],
+                playback_policy: ["public" as const],
             });
 
             const playbackId = asset.playback_ids?.[0]?.id || "";
@@ -109,8 +109,8 @@ export async function POST(req: NextRequest) {
             });
 
             const asset = await mux.video.assets.create({
-                input,
-                playback_policy: ["public"],
+                inputs: input,
+                playback_policy: ["public" as const],
             });
 
             const playbackId = asset.playback_ids?.[0]?.id || "";
