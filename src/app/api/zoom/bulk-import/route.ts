@@ -303,6 +303,7 @@ export async function POST(req: Request) {
                     chatMessages: chatText || undefined,
                     recordingFileId,
                     duration: durationSeconds,
+                    recordingStart: mp4.recording_start || undefined,
                     secret: getConvexInternalSecret(),
                 });
 

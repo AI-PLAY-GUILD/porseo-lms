@@ -206,6 +206,7 @@ export default function VideoUploadPage() {
                     vttDownloadUrl: zoomRecordings.recordings.vtt?.download_url || "",
                     chatDownloadUrl: zoomRecordings.recordings.chat?.download_url || "",
                     duration: zoomRecordings.duration,
+                    recordingStart: zoomRecordings.recordings.mp4?.recording_start || undefined,
                 }),
             });
             const data = await res.json();

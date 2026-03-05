@@ -186,7 +186,9 @@ export default function VideoPage() {
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
                         <Calendar className="w-4 h-4" />
                         <span>
-                            {new Date(video.createdAt).toLocaleDateString()}
+                            {new Date(
+                                video.source === "zoom" && video.recordedAt ? video.recordedAt : video.createdAt,
+                            ).toLocaleDateString()}
                             {video.source === "zoom" ? " に撮影" : video.isPublished ? " に公開" : " に登録"}
                         </span>
                     </div>

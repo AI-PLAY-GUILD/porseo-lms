@@ -34,7 +34,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { meetingId, topic, mp4DownloadUrl, vttDownloadUrl, chatDownloadUrl, duration } = body;
+        const { meetingId, topic, mp4DownloadUrl, vttDownloadUrl, chatDownloadUrl, duration, recordingStart } = body;
 
         if (!meetingId || !mp4DownloadUrl) {
             return NextResponse.json({ error: "meetingIdとmp4DownloadUrlは必須です" }, { status: 400 });
@@ -76,6 +76,7 @@ export async function POST(req: Request) {
             vttDownloadUrl: vttUrlWithToken,
             chatMessages: chatText || undefined,
             duration: Number(duration) || 0,
+            recordingStart: recordingStart || undefined,
             secret: getConvexInternalSecret(),
         });
 

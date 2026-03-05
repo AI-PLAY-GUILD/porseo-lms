@@ -185,6 +185,7 @@ export async function POST(req: Request) {
             chatDownloadUrl: chatUrl,
             recordingFileId: mp4File.id || `${meetingId}_${eventTs}`,
             duration,
+            recordingStart: mp4File.recording_start || undefined,
             eventId,
             secret: getConvexInternalSecret(),
         });

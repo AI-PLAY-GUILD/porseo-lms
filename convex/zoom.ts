@@ -58,6 +58,7 @@ export const createZoomDraftVideo = mutation({
         chatDownloadUrl: v.optional(v.string()), // empty string if no chat available
         recordingFileId: v.string(),
         duration: v.number(),
+        recordingStart: v.optional(v.string()),
         eventId: v.string(),
         secret: v.string(),
     },
@@ -107,6 +108,8 @@ export const createZoomDraftVideo = mutation({
         // Truncate topic for safety
         const title = args.meetingTopic.slice(0, 200);
 
+        const recordedAt = args.recordingStart ? new Date(args.recordingStart).getTime() : undefined;
+
         const videoId = await ctx.db.insert("videos", {
             title,
             description: `Zoom ミーティング (ID: ${args.meetingId}) のクラウドレコーディング`,
@@ -116,7 +119,8 @@ export const createZoomDraftVideo = mutation({
             zoomRecordingId: args.recordingFileId,
             source: "zoom",
             tags: unpublishedTag ? [unpublishedTag._id] : [],
-            createdAt: Date.now(),
+            ...(recordedAt && !Number.isNaN(recordedAt) ? { recordedAt } : {}),
+            createdAt: recordedAt && !Number.isNaN(recordedAt) ? recordedAt : Date.now(),
             updatedAt: Date.now(),
         });
 
@@ -185,6 +189,7 @@ export const createZoomManualImportVideo = mutation({
         chatMessages: v.optional(v.string()),
         recordingFileId: v.optional(v.string()),
         duration: v.number(),
+        recordingStart: v.optional(v.string()),
         secret: v.string(),
     },
     handler: async (ctx, args) => {
@@ -218,6 +223,8 @@ export const createZoomManualImportVideo = mutation({
             unpublishedTag = await ctx.db.get(tagId);
         }
 
+        const recordedAt = args.recordingStart ? new Date(args.recordingStart).getTime() : undefined;
+
         const videoId = await ctx.db.insert("videos", {
             title,
             description: `Zoom ミーティング (ID: ${args.meetingId}) の手動取り込み録画`,
@@ -228,7 +235,8 @@ export const createZoomManualImportVideo = mutation({
             zoomChatMessages: args.chatMessages || undefined,
             source: "zoom",
             tags: unpublishedTag ? [unpublishedTag._id] : [],
-            createdAt: Date.now(),
+            ...(recordedAt && !Number.isNaN(recordedAt) ? { recordedAt } : {}),
+            createdAt: recordedAt && !Number.isNaN(recordedAt) ? recordedAt : Date.now(),
             updatedAt: Date.now(),
         });
 

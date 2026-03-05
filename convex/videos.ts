@@ -363,6 +363,19 @@ export const updateVideoAiMetadata = internalMutation({
     },
 });
 
+export const updateVideoDescription = internalMutation({
+    args: {
+        videoId: v.id("videos"),
+        description: v.string(),
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.videoId, {
+            description: args.description,
+            updatedAt: Date.now(),
+        });
+    },
+});
+
 // Security: internalQuery - only callable from server-side Convex functions
 export const getAllVideosInternal = internalQuery({
     handler: async (ctx) => {
@@ -379,6 +392,7 @@ export const getAllVideoDateInfo = internalQuery({
             _id: v._id,
             title: v.title,
             createdAt: v.createdAt,
+            recordedAt: v.recordedAt,
             _creationTime: v._creationTime,
             source: v.source,
             zoomMeetingId: v.zoomMeetingId,
