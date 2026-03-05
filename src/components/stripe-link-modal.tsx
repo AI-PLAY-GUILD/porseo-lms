@@ -53,6 +53,7 @@ export function StripeLinkModal({ triggerClassName, triggerLabel }: StripeLinkMo
             if (result.success) {
                 toast.success(result.message);
                 handleClose();
+                router.push("/dashboard");
             } else if (result.needsVerification) {
                 setStep("name");
                 toast.info(result.message);
