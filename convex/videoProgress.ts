@@ -70,22 +70,6 @@ export const getProgress = query({
     },
 });
 
-export const getUserProgress = query({
-    handler: async (ctx) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return [];
-
-        const user = await ctx.db
-            .query("users")
-            .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-            .first();
-
-        if (!user) return [];
-
-        return await ctx.db.query("videoProgress").withIndex("by_user_id", (q) => q.eq("userId", user._id));
-    },
-});
-
 export const logLearningTime = mutation({
     args: {
         minutesWatched: v.number(),

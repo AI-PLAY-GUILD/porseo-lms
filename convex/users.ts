@@ -623,28 +623,3 @@ export const markStripeEventProcessed = mutation({
         console.log("[users:markStripeEventProcessed] 完了", { eventId: args.eventId });
     },
 });
-
-// Security: Admin-only to prevent user enumeration attacks
-export const checkUserByEmail = query({
-    args: { email: v.string() },
-    handler: async (ctx, args) => {
-        console.log("[users:checkUserByEmail] 開始", { email: args.email });
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) {
-            console.log("[users:checkUserByEmail] 未認証ユーザー");
-            throw new Error("Unauthorized");
-        }
-        const currentUser = await getUserByClerkId(ctx, identity.subject);
-        if (!currentUser?.isAdmin) {
-            console.log("[users:checkUserByEmail] 管理者権限なし");
-            throw new Error("Admin access required");
-        }
-
-        const user = await ctx.db
-            .query("users")
-            .filter((q) => q.eq(q.field("email"), args.email))
-            .first();
-        console.log("[users:checkUserByEmail] 完了", { email: args.email, found: !!user });
-        return !!user;
-    },
-});

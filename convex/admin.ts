@@ -256,28 +256,3 @@ export const getUserBehaviorAnalytics = query({
         };
     },
 });
-
-export const getAuditLogs = query({
-    args: {
-        limit: v.optional(v.number()),
-    },
-    handler: async (ctx, args) => {
-        console.log("[admin:getAuditLogs] 開始", { limit: args.limit });
-        await checkAdmin(ctx);
-
-        const logs = await ctx.db
-            .query("auditLogs")
-            .order("desc")
-            .take(args.limit ?? 50);
-
-        const users = await ctx.db.query("users").collect();
-        const userMap = new Map(users.map((u) => [u._id, u]));
-
-        const result = logs.map((log) => ({
-            ...log,
-            userName: log.userId ? (userMap.get(log.userId)?.name ?? "Unknown") : "System",
-        }));
-        console.log("[admin:getAuditLogs] 完了", { logsCount: result.length });
-        return result;
-    },
-});
