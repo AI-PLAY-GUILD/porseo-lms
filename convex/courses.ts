@@ -136,6 +136,7 @@ export const createCourse = mutation({
         description: v.optional(v.string()),
         videoIds: v.array(v.id("videos")),
         isPublished: v.boolean(),
+        requiredRoles: v.optional(v.array(v.string())),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -158,7 +159,7 @@ export const createCourse = mutation({
             description: args.description,
             videoIds: args.videoIds,
             isPublished: args.isPublished,
-            requiredRoles: [],
+            requiredRoles: args.requiredRoles ?? [],
             createdAt: Date.now(),
             updatedAt: Date.now(),
         });
@@ -184,6 +185,7 @@ export const updateCourse = mutation({
         description: v.optional(v.string()),
         videoIds: v.optional(v.array(v.id("videos"))),
         isPublished: v.optional(v.boolean()),
+        requiredRoles: v.optional(v.array(v.string())),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();

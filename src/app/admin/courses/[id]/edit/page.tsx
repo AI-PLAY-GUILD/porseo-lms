@@ -23,6 +23,7 @@ export default function EditCoursePage() {
     const [description, setDescription] = useState("");
     const [isPublished, setIsPublished] = useState(false);
     const [selectedVideoIds, setSelectedVideoIds] = useState<Id<"videos">[]>([]);
+    const [requiredRolesInput, setRequiredRolesInput] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [initialized, setInitialized] = useState(false);
 
@@ -38,6 +39,7 @@ export default function EditCoursePage() {
             setDescription(course.description || "");
             setIsPublished(course.isPublished);
             setSelectedVideoIds(course.videoIds);
+            setRequiredRolesInput((course.requiredRoles ?? []).join(", "));
             setInitialized(true);
         }
     }, [course, initialized]);
@@ -61,12 +63,17 @@ export default function EditCoursePage() {
         }
         setIsSubmitting(true);
         try {
+            const requiredRoles = requiredRolesInput
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean);
             await updateCourse({
                 courseId,
                 title,
                 description: description || undefined,
                 videoIds: selectedVideoIds,
                 isPublished,
+                requiredRoles,
             });
             alert("更新しました！");
             router.push("/admin/courses");
@@ -123,6 +130,20 @@ export default function EditCoursePage() {
                         onChange={(e) => setDescription(e.target.value)}
                         className="w-full p-2 border rounded h-32 bg-white dark:bg-gray-900"
                     />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium mb-1">ロール制限（Discord Role ID）</label>
+                    <input
+                        type="text"
+                        value={requiredRolesInput}
+                        onChange={(e) => setRequiredRolesInput(e.target.value)}
+                        className="w-full p-2 border rounded bg-white dark:bg-gray-900"
+                        placeholder="例: 1234567890123456789, 9876543210987654321"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                        カンマ区切りでDiscord Role IDを入力。空欄の場合は全員がアクセス可能。
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-2">

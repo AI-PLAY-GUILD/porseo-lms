@@ -19,6 +19,7 @@ export default function NewCoursePage() {
     const [description, setDescription] = useState("");
     const [isPublished, setIsPublished] = useState(false);
     const [selectedVideoIds, setSelectedVideoIds] = useState<Id<"videos">[]>([]);
+    const [requiredRolesInput, setRequiredRolesInput] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -45,11 +46,16 @@ export default function NewCoursePage() {
         }
         setIsSubmitting(true);
         try {
+            const requiredRoles = requiredRolesInput
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean);
             await createCourse({
                 title,
                 description: description || undefined,
                 videoIds: selectedVideoIds,
                 isPublished,
+                requiredRoles,
             });
             alert("コースを作成しました！");
             router.push("/admin/courses");
@@ -108,6 +114,20 @@ export default function NewCoursePage() {
                         className="w-full p-2 border rounded h-32 bg-white dark:bg-gray-900"
                         placeholder="コースの説明を入力..."
                     />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium mb-1">ロール制限（Discord Role ID）</label>
+                    <input
+                        type="text"
+                        value={requiredRolesInput}
+                        onChange={(e) => setRequiredRolesInput(e.target.value)}
+                        className="w-full p-2 border rounded bg-white dark:bg-gray-900"
+                        placeholder="例: 1234567890123456789, 9876543210987654321"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                        カンマ区切りでDiscord Role IDを入力。空欄の場合は全員がアクセス可能。
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-2">
