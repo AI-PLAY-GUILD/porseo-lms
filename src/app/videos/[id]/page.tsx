@@ -87,6 +87,7 @@ export default function VideoPage() {
     const videoId = params.id as Id<"videos">;
 
     const video = useQuery(api.videos.getById, { videoId });
+    const user = useQuery(api.users.getUser);
     const access = useQuery(api.users.checkAccess, { videoId });
     const progress = useQuery(api.videoProgress.getProgress, { videoId });
     const updateProgress = useMutation(api.videoProgress.updateProgress);
@@ -203,7 +204,7 @@ export default function VideoPage() {
                         metadata={{
                             video_id: video._id,
                             video_title: video.title,
-                            viewer_user_id: "user_id_placeholder",
+                            viewer_user_id: user?._id || "anonymous",
                         }}
                         className="w-full h-full"
                         accentColor="#2563eb"

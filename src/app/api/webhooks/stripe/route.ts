@@ -67,6 +67,11 @@ export async function POST(req: Request) {
                 await handleInvoicePaymentFailed(invoice);
                 break;
             }
+            case "invoice.paid": {
+                const invoice = event.data.object as Stripe.Invoice;
+                await handleInvoicePaid(invoice);
+                break;
+            }
             case "customer.subscription.deleted": {
                 const subscription = event.data.object as Stripe.Subscription;
                 await handleSubscriptionDeleted(subscription);
@@ -176,12 +181,21 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
         secret: getConvexInternalSecret(),
     });
 
-    // Issue #58: Send Discord DM to notify user about payment failure
+    // Discord ロール一時削除（支払い失敗中はアクセスを制限）
     try {
         const user = await convex.query(api.users.getUserByStripeCustomerId, {
             stripeCustomerId: customerId,
             secret: getConvexInternalSecret(),
         });
+
+        if (user?.discordId && isValidDiscordId(user.discordId) && discordToken && guildId && roleId) {
+            try {
+                await rest.delete(Routes.guildMemberRole(guildId, user.discordId, roleId));
+                console.log("[webhooks/stripe] 支払い失敗: Discordロール一時削除", { discordId: user.discordId });
+            } catch (roleError) {
+                console.error("[webhooks/stripe] Discordロール削除失敗:", roleError);
+            }
+        }
 
         if (user?.discordId && discordToken) {
             // Create DM channel
@@ -205,6 +219,47 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
         }
     } catch (e) {
         console.error("[Stripe Webhook] Failed to send payment failure DM:", e);
+    }
+}
+
+async function handleInvoicePaid(invoice: Stripe.Invoice) {
+    console.log("[webhooks/stripe] handleInvoicePaid 開始", { invoiceId: invoice.id });
+    const customerId = invoice.customer as string;
+    if (!customerId) {
+        console.log("[webhooks/stripe] customerIdが不足、スキップ");
+        return;
+    }
+
+    // past_due/unpaid から active に復帰させる
+    const user = await convex.query(api.users.getUserByStripeCustomerId, {
+        stripeCustomerId: customerId,
+        secret: getConvexInternalSecret(),
+    });
+
+    if (!user) {
+        console.log("[webhooks/stripe] ユーザーが見つかりません", { customerId });
+        return;
+    }
+
+    // past_due または unpaid 状態の場合のみ復帰処理
+    if (user.subscriptionStatus === "past_due" || user.subscriptionStatus === "unpaid") {
+        await convex.mutation(api.users.updateSubscriptionStatusByCustomerId, {
+            stripeCustomerId: customerId,
+            subscriptionStatus: "active",
+            secret: getConvexInternalSecret(),
+        });
+
+        // Discord ロール再付与
+        if (user.discordId && isValidDiscordId(user.discordId) && discordToken && guildId && roleId) {
+            try {
+                await rest.put(Routes.guildMemberRole(guildId, user.discordId, roleId));
+                console.log("[webhooks/stripe] 支払い復帰: Discordロール再付与成功", { discordId: user.discordId });
+            } catch (error) {
+                console.error("[webhooks/stripe] 支払い復帰: Discordロール再付与失敗:", error);
+            }
+        }
+
+        console.log("[webhooks/stripe] handleInvoicePaid: past_due → active に復帰", { customerId });
     }
 }
 

@@ -63,6 +63,8 @@ export default function VideoUploadPage() {
     const [muxAssetId, setMuxAssetId] = useState("");
     const [muxPlaybackId, setMuxPlaybackId] = useState("");
     const [uploadUrl, setUploadUrl] = useState<string | null>(null);
+    const [muxUploadId, setMuxUploadId] = useState<string | null>(null);
+    const [fetchingAssetInfo, setFetchingAssetInfo] = useState(false);
 
     // Zoom state
     const [zoomInput, setZoomInput] = useState("");
@@ -117,14 +119,40 @@ export default function VideoUploadPage() {
             }
             const data = await response.json();
             setUploadUrl(data.url);
+            setMuxUploadId(data.id);
         } catch (err) {
             setError(err instanceof Error ? err.message : "アップロードの準備に失敗しました");
         }
     };
 
+    const pollMuxAssetInfo = async (uploadId: string) => {
+        setFetchingAssetInfo(true);
+        const maxAttempts = 30;
+        for (let i = 0; i < maxAttempts; i++) {
+            try {
+                const res = await fetch(`/api/mux/upload-status?uploadId=${uploadId}`);
+                if (!res.ok) break;
+                const data = await res.json();
+                if (data.muxAssetId && data.muxPlaybackId) {
+                    setMuxAssetId(data.muxAssetId);
+                    setMuxPlaybackId(data.muxPlaybackId);
+                    setFetchingAssetInfo(false);
+                    return;
+                }
+            } catch {
+                // retry
+            }
+            await new Promise((r) => setTimeout(r, 3000));
+        }
+        setFetchingAssetInfo(false);
+    };
+
     const handleUploadSuccess = (_event: unknown) => {
         setUploadSuccess(true);
         setIsUploading(false);
+        if (muxUploadId) {
+            pollMuxAssetInfo(muxUploadId);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -148,6 +176,8 @@ export default function VideoUploadPage() {
             setMuxAssetId("");
             setMuxPlaybackId("");
             setUploadUrl(null);
+            setMuxUploadId(null);
+            setFetchingAssetInfo(false);
             setError(null);
         } catch {
             alert("動画の登録に失敗しました。");
@@ -324,11 +354,14 @@ export default function VideoUploadPage() {
                             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                                 <div className="p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-md mb-4">
                                     アップロードが完了しました！動画情報を入力してください。
-                                    <br />
-                                    <span className="text-sm text-red-500">
-                                        ※注意: 現在の実装ではMuxのアセットIDを自動取得できないため、
-                                        MuxダッシュボードからIDをコピーして貼り付ける必要があります。
-                                    </span>
+                                    {fetchingAssetInfo && (
+                                        <>
+                                            <br />
+                                            <span className="text-sm text-blue-600 font-medium animate-pulse">
+                                                Mux Asset IDを自動取得中... しばらくお待ちください。
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1">タイトル</label>
