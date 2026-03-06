@@ -31,7 +31,7 @@ export const getCourses = query({
     },
 });
 
-// 公開コースのみ取得
+// 公開コースのみ取得（ロール制限適用）
 export const getPublishedCourses = query({
     handler: async (ctx) => {
         const courses = await ctx.db
@@ -40,14 +40,34 @@ export const getPublishedCourses = query({
             .order("desc")
             .collect();
 
+        // ユーザー情報を取得（ロールチェック用）
+        const identity = await ctx.auth.getUserIdentity();
+        let user = null;
+        if (identity) {
+            user = await ctx.db
+                .query("users")
+                .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+                .first();
+        }
+        const isAdmin = user?.isAdmin ?? false;
+
         return await Promise.all(
             courses.map(async (course) => {
                 const videos = await Promise.all(course.videoIds.map((id) => ctx.db.get(id)));
                 const publishedVideos = videos.filter((v): v is NonNullable<typeof v> => v !== null && v.isPublished);
+
+                // ロール制限チェック
+                const hasRequiredRole =
+                    !course.requiredRoles ||
+                    course.requiredRoles.length === 0 ||
+                    (user?.discordRoles ?? []).some((role) => course.requiredRoles.includes(role));
+                const hasAccess = isAdmin || hasRequiredRole;
+
                 return {
                     ...course,
                     videoCount: publishedVideos.length,
                     totalDuration: publishedVideos.reduce((sum, v) => sum + (v.duration ?? 0), 0),
+                    isLocked: !hasAccess,
                 };
             }),
         );
@@ -61,10 +81,11 @@ export const getCourseById = query({
         const course = await ctx.db.get(args.courseId);
         if (!course) return null;
 
-        // 非公開コースは管理者のみ
+        // ユーザー情報取得
         const identity = await ctx.auth.getUserIdentity();
         let isAdmin = false;
         let userId = null;
+        let userRoles: string[] = [];
 
         if (identity) {
             const user = await ctx.db
@@ -72,10 +93,20 @@ export const getCourseById = query({
                 .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
                 .first();
             if (user?.isAdmin) isAdmin = true;
-            if (user) userId = user._id;
+            if (user) {
+                userId = user._id;
+                userRoles = user.discordRoles ?? [];
+            }
         }
 
+        // 非公開コースは管理者のみ
         if (!course.isPublished && !isAdmin) return null;
+
+        // ロール制限チェック
+        if (!isAdmin && course.requiredRoles && course.requiredRoles.length > 0) {
+            const hasRequiredRole = userRoles.some((role) => course.requiredRoles.includes(role));
+            if (!hasRequiredRole) return null;
+        }
 
         // 動画情報を解決
         const videos = await Promise.all(course.videoIds.map((id) => ctx.db.get(id)));

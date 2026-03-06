@@ -72,6 +72,11 @@ export async function POST(req: Request) {
                 await handleInvoicePaid(invoice);
                 break;
             }
+            case "customer.subscription.updated": {
+                const subscription = event.data.object as Stripe.Subscription;
+                await handleSubscriptionUpdated(subscription);
+                break;
+            }
             case "customer.subscription.deleted": {
                 const subscription = event.data.object as Stripe.Subscription;
                 await handleSubscriptionDeleted(subscription);
@@ -261,6 +266,60 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
         console.log("[webhooks/stripe] handleInvoicePaid: past_due → active に復帰", { customerId });
     }
+}
+
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+    console.log("[webhooks/stripe] handleSubscriptionUpdated 開始", {
+        subscriptionId: subscription.id,
+        status: subscription.status,
+    });
+    const customerId = subscription.customer as string;
+    if (!customerId) {
+        console.log("[webhooks/stripe] customerIdが不足、スキップ");
+        return;
+    }
+
+    // Stripeのステータスをアプリ内ステータスにマッピング
+    const statusMap: Record<string, string> = {
+        active: "active",
+        past_due: "past_due",
+        unpaid: "unpaid",
+        canceled: "canceled",
+        incomplete: "inactive",
+        incomplete_expired: "inactive",
+        trialing: "trialing",
+        paused: "inactive",
+    };
+
+    const appStatus = statusMap[subscription.status] || "inactive";
+
+    await convex.mutation(api.users.updateSubscriptionStatusByCustomerId, {
+        stripeCustomerId: customerId,
+        subscriptionStatus: appStatus,
+        secret: getConvexInternalSecret(),
+    });
+
+    // active に変わった場合はDiscordロール付与、それ以外は削除
+    const user = await convex.query(api.users.getUserByStripeCustomerId, {
+        stripeCustomerId: customerId,
+        secret: getConvexInternalSecret(),
+    });
+
+    if (user?.discordId && isValidDiscordId(user.discordId) && discordToken && guildId && roleId) {
+        try {
+            if (appStatus === "active") {
+                await rest.put(Routes.guildMemberRole(guildId, user.discordId, roleId));
+                console.log("[webhooks/stripe] サブスク更新: Discordロール付与", { discordId: user.discordId });
+            } else if (appStatus === "canceled" || appStatus === "inactive") {
+                await rest.delete(Routes.guildMemberRole(guildId, user.discordId, roleId));
+                console.log("[webhooks/stripe] サブスク更新: Discordロール削除", { discordId: user.discordId });
+            }
+        } catch (error) {
+            console.error("[webhooks/stripe] サブスク更新: Discordロール変更失敗:", error);
+        }
+    }
+
+    console.log("[webhooks/stripe] handleSubscriptionUpdated 完了", { customerId, appStatus });
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {

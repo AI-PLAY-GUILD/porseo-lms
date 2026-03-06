@@ -2,7 +2,7 @@
 
 import { SignOutButton, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
-import { BookOpen, Clock, LogOut, Search, Video, X } from "lucide-react";
+import { BookOpen, Clock, Lock, LogOut, Search, Video, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -172,7 +172,16 @@ function CourseListSection({
                             <Card className="h-full overflow-hidden hover:shadow-none transition-all duration-300 hover:translate-x-1 hover:translate-y-1 border-4 border-black bg-white brutal-shadow rounded-xl">
                                 <div className="aspect-video bg-gradient-to-br from-pop-purple to-pop-red relative overflow-hidden border-b-4 border-black flex items-center justify-center">
                                     <BookOpen className="w-16 h-16 text-white/80 group-hover:scale-110 transition-transform duration-500" />
-                                    <div className="absolute top-2 right-2 z-10">
+                                    <div className="absolute top-2 right-2 z-10 flex gap-1">
+                                        {course.isLocked && (
+                                            <Badge
+                                                variant="secondary"
+                                                className="bg-gray-900 text-white border-2 border-white/20 backdrop-blur-sm shadow-sm gap-1 font-bold"
+                                            >
+                                                <Lock className="w-3 h-3" />
+                                                限定公開
+                                            </Badge>
+                                        )}
                                         <Badge className="bg-pop-yellow text-black border-2 border-black shadow-sm font-bold rounded-md">
                                             <Video className="w-3 h-3 mr-1" />
                                             {course.videoCount}本
