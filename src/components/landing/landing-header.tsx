@@ -64,7 +64,7 @@ export function LandingHeader({ isSignedIn, isMember }: LandingHeaderProps) {
                         <Button
                             asChild
                             variant="outline"
-                            className="border-white/20 hover:bg-white/10 hover:text-white"
+                            className="bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white"
                         >
                             <Link href="/dashboard">Dashboard</Link>
                         </Button>
@@ -106,7 +106,11 @@ export function LandingHeader({ isSignedIn, isMember }: LandingHeaderProps) {
                                     </Button>
                                 ) : (
                                     <div className="flex flex-col gap-3">
-                                        <Button asChild variant="outline" className="w-full border-white/20">
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            className="w-full bg-transparent border-white/20 text-white"
+                                        >
                                             <Link href="/sign-in">Login</Link>
                                         </Button>
                                         <Button asChild className="w-full bg-white text-black">
