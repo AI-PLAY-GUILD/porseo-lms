@@ -82,6 +82,12 @@ export default function DashboardPage() {
             const status = stats.subscriptionStatus;
             console.log("[DashboardPage] ゲートキーパー確認 subscriptionStatus:", status);
             if (status !== "active" && status !== "past_due") {
+                // Don't redirect if stripe_link=1 is present (account linking in progress)
+                const params = new URLSearchParams(window.location.search);
+                if (params.get("stripe_link") === "1") {
+                    console.log("[DashboardPage] stripe_link=1 検出 → リダイレクトスキップ（連携中）");
+                    return;
+                }
                 console.log("[DashboardPage] アクティブでないため /join へリダイレクト");
                 router.push("/join");
             }

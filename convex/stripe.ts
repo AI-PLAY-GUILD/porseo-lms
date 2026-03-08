@@ -47,6 +47,34 @@ export const createCustomer = action({
                         const clerkData = await clerkResponse.json();
                         if (clerkData.length > 0 && clerkData[0].token) {
                             const accessToken = clerkData[0].token;
+
+                            // Get Discord user ID and save to DB (Issue #16 fix: set server-side)
+                            if (!user.discordId) {
+                                const meController = new AbortController();
+                                const meTimeout = setTimeout(() => meController.abort(), 10000);
+                                try {
+                                    const meResponse = await fetch("https://discord.com/api/users/@me", {
+                                        headers: { Authorization: `Bearer ${accessToken}` },
+                                        signal: meController.signal,
+                                    });
+                                    if (meResponse.ok) {
+                                        const meData = await meResponse.json();
+                                        if (meData.id) {
+                                            await ctx.runMutation(internal.internal.setDiscordId, {
+                                                userId: user._id,
+                                                discordId: meData.id,
+                                            });
+                                            console.log("[stripe:createCustomer] Discord ID保存成功", {
+                                                discordId: meData.id,
+                                            });
+                                        }
+                                    }
+                                } finally {
+                                    clearTimeout(meTimeout);
+                                }
+                            }
+
+                            // Get Discord guild roles
                             const discordController = new AbortController();
                             const discordTimeout = setTimeout(() => discordController.abort(), 10000);
                             try {
