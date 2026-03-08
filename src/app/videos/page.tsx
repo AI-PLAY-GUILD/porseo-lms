@@ -175,8 +175,11 @@ export default function AllVideosPage() {
     );
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: dynamic Convex query return type
-function VideoListSection({ videos }: { videos: Array<Record<string, any>> }) {
+function VideoListSection({
+    videos,
+}: {
+    videos: NonNullable<ReturnType<typeof useQuery<typeof api.videos.getPublishedVideos>>>;
+}) {
     const {
         query: searchQuery,
         setQuery: setSearchQuery,
