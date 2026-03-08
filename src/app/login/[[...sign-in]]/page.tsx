@@ -1,14 +1,24 @@
 "use client";
 
-import { useSignIn } from "@clerk/nextjs";
+import { useAuth, useSignIn } from "@clerk/nextjs";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
 
 function LoginContent() {
     const { signIn, isLoaded } = useSignIn();
+    const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
     const searchParams = useSearchParams();
+    const router = useRouter();
     const isStripeLink = searchParams.get("stripe_link") === "1";
+
+    // Already signed in → redirect instead of showing broken login form
+    useEffect(() => {
+        if (isAuthLoaded && isSignedIn) {
+            const dest = isStripeLink ? "/join?stripe_link=1" : "/dashboard";
+            router.replace(dest);
+        }
+    }, [isAuthLoaded, isSignedIn, isStripeLink, router]);
 
     const handleDiscordLogin = async () => {
         if (!isLoaded) return;
