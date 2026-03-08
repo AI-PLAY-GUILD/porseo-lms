@@ -182,7 +182,7 @@ export default function StripeLinkAutoTrigger() {
                     <Button
                         onClick={handleClose}
                         variant="outline"
-                        className="border-white/20 text-white hover:bg-white/10"
+                        className="bg-transparent border-white/20 text-white hover:bg-white/10"
                     >
                         キャンセル
                     </Button>
