@@ -539,10 +539,11 @@ export const searchTranscriptions = action({
                 const chunk = await ctx.runQuery(api.ragDb.getChunk, { id: result._id });
                 if (!chunk) return null;
                 const video = await ctx.runQuery(api.videos.getById, { videoId: chunk.videoId });
+                if (!video || !video.isPublished) return null;
                 return {
                     videoId: chunk.videoId,
-                    videoTitle: video?.title || "Unknown",
-                    muxPlaybackId: video?.muxPlaybackId || null,
+                    videoTitle: video.title || "Unknown",
+                    muxPlaybackId: video.muxPlaybackId || null,
                     text: chunk.text,
                     startTime: chunk.startTime,
                     endTime: chunk.endTime,
