@@ -6,8 +6,8 @@ import { Activity, BookOpen, Clock, LogOut, PlayCircle, Trophy } from "lucide-re
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import { toast } from "sonner";
 import { AppSidebar } from "@/components/app-sidebar";
 import { PaymentFailureDialog } from "@/components/payment-failure-dialog";
 import {
@@ -106,7 +106,6 @@ function DashboardContent() {
         };
         checkDiscordRole();
     }, [isMounted, isUserLoaded, user, searchParams, router]);
-
 
     // Gatekeeper: Redirect if not active and not past_due
     useEffect(() => {

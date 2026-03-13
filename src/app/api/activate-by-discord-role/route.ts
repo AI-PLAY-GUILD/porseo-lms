@@ -122,7 +122,6 @@ export async function POST(_req: Request) {
 
         console.log("[activate-by-discord-role] アクティベーション完了", { discordUserId });
         return NextResponse.json({ status: "active" });
-
     } catch (error: unknown) {
         if (error instanceof DOMException && error.name === "AbortError") {
             console.error("[activate-by-discord-role] Discord APIタイムアウト");

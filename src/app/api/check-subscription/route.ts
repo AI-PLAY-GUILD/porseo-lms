@@ -56,7 +56,9 @@ export async function POST(_req: Request) {
         // If already active AND linked to Stripe, return early (Stripe manages lifecycle via webhooks)
         // If active but NO Stripe (Discord-role-only user), always re-verify the role below
         if (user.subscriptionStatus === "active" && user.stripeCustomerId) {
-            console.log("[check-subscription] 成功: Stripe管理ユーザー、サブスクリプションは既にアクティブ", { userId });
+            console.log("[check-subscription] 成功: Stripe管理ユーザー、サブスクリプションは既にアクティブ", {
+                userId,
+            });
             return NextResponse.json({ status: "active" });
         }
 
@@ -81,7 +83,10 @@ export async function POST(_req: Request) {
             console.log("[check-subscription] キャッシュからロール取得", { discordId: user.discordId });
             roles = cachedRoles;
         } else {
-            console.log("[check-subscription] Discord APIからロール取得", { discordId: user.discordId, isRoleRecheckForActiveUser });
+            console.log("[check-subscription] Discord APIからロール取得", {
+                discordId: user.discordId,
+                isRoleRecheckForActiveUser,
+            });
             // Issue #56: Add timeout to Discord API call
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -109,7 +114,9 @@ export async function POST(_req: Request) {
                             subscriptionStatus: "inactive",
                             secret: getConvexInternalSecret(),
                         });
-                        console.log("[check-subscription] Discordサーバー未参加: アクセス取消", { discordId: user.discordId });
+                        console.log("[check-subscription] Discordサーバー未参加: アクセス取消", {
+                            discordId: user.discordId,
+                        });
                         return NextResponse.json({ status: "inactive", revoked: true });
                     }
                     return NextResponse.json({ error: "User not in Discord server" }, { status: 404 });

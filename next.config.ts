@@ -19,6 +19,14 @@ const nextConfig: NextConfig = {
                 protocol: "https",
                 hostname: "media.licdn.com",
             },
+            {
+                protocol: "https",
+                hostname: "cdn.simpleicons.org",
+            },
+            {
+                protocol: "https",
+                hostname: "uxwing.com",
+            },
         ],
         formats: ["image/avif", "image/webp"],
         deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
@@ -41,7 +49,7 @@ const nextConfig: NextConfig = {
                             "default-src 'self'",
                             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.aiplayguild.com https://challenges.cloudflare.com https://js.stripe.com https://*.mux.com https://stream.mux.com",
                             "style-src 'self' 'unsafe-inline'",
-                            "img-src 'self' data: blob: https://image.mux.com https://*.mux.com https://*.convex.cloud https://img.clerk.com https://*.clerk.com https://pbs.twimg.com https://media.licdn.com",
+                            "img-src 'self' data: blob: https://image.mux.com https://*.mux.com https://*.convex.cloud https://img.clerk.com https://*.clerk.com https://pbs.twimg.com https://media.licdn.com https://cdn.simpleicons.org https://uxwing.com",
                             "font-src 'self' data:",
                             "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.clerk.accounts.dev https://*.clerk.com https://clerk.aiplayguild.com https://api.stripe.com https://*.mux.com https://stream.mux.com https://*.litix.io https://generativelanguage.googleapis.com",
                             "frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.aiplayguild.com https://challenges.cloudflare.com https://js.stripe.com https://stream.mux.com",

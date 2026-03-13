@@ -9,11 +9,11 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // 開発環境でも認証必須
-    const { userId } = await auth();
-    if (!userId) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // 開発環境では未ログイン状態でアカウントを作成するため認証チェックはスキップする
+    // const { userId } = await auth();
+    // if (!userId) {
+    //     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // }
 
     try {
         const body = await req.json();

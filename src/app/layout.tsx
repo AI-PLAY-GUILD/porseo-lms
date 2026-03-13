@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
     metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://porseo-lms.vercel.app"),
     title: {
-        default: "AI PLAY GUILD - プロフェッショナル学習管理システム",
+        default: "AI PLAY GUILD",
         template: "%s | AI PLAY GUILD",
     },
     description:
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
         locale: "ja_JP",
         url: "/",
         siteName: "AI PLAY GUILD",
-        title: "AI PLAY GUILD - プロフェッショナル学習管理システム",
+        title: "AI PLAY GUILD",
         description: "動画学習、Discord連携、AIによる学習サポートを提供するプロフェッショナル向け学習管理システム",
         images: [
             {
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: "summary_large_image",
-        title: "AI PLAY GUILD - プロフェッショナル学習管理システム",
+        title: "AI PLAY GUILD",
         description: "動画学習、Discord連携、AIによる学習サポートを提供するプロフェッショナル向け学習管理システム",
         images: ["/og-image.png"],
         creator: "@aiplayguild",
