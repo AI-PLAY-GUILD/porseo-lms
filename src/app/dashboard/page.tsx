@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { AppSidebar } from "@/components/app-sidebar";
 import { PaymentFailureDialog } from "@/components/payment-failure-dialog";
@@ -148,6 +149,24 @@ function DashboardContent() {
         );
     }
 
+    const discordAccount = user?.externalAccounts.find(
+        (acc) => (acc.provider as string) === "oauth_discord" || (acc.provider as string) === "discord",
+    );
+    const hasDiscord = !!discordAccount;
+
+    const handleConnectDiscord = async () => {
+        if (!user) return;
+        try {
+            await user.createExternalAccount({
+                strategy: "oauth_discord",
+                redirectUrl: "/sso-callback",
+            });
+        } catch (error) {
+            console.error("Failed to connect Discord:", error);
+            toast.error("Discordへの連携に失敗しました。");
+        }
+    };
+
     return (
         <SidebarProvider>
             {stats && <PaymentFailureDialog subscriptionStatus={stats.subscriptionStatus} />}
@@ -191,6 +210,24 @@ function DashboardContent() {
                     </div>
                 </header>
                 <div className="flex flex-1 flex-col gap-6 p-6 pt-6">
+                    {!hasDiscord && (
+                        <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-900 p-4 mb-4 rounded-md shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <AlertCircle className="h-6 w-6 text-amber-500 flex-shrink-0" />
+                                <div>
+                                    <h3 className="font-bold text-lg">Discord連携が必要です</h3>
+                                    <p className="text-sm">コミュニティへの参加や、メンバー限定コンテンツの視聴にはDiscordアカウントの連携が必要です。</p>
+                                </div>
+                            </div>
+                            <Button 
+                                onClick={handleConnectDiscord}
+                                className="bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold whitespace-nowrap"
+                            >
+                                Discordと連携する
+                            </Button>
+                        </div>
+                    )}
+
                     <div className="flex items-center justify-between space-y-2">
                         <h2 className="text-4xl font-black tracking-tight text-black">ダッシュボード</h2>
                         <div className="flex items-center space-x-2">
