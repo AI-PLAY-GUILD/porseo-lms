@@ -47,37 +47,3 @@ users_to_migrate.json
 # database snapshots
 snapshot_full.zip
 *.jsonl
-
-# AI coding tools
-.adal/
-.agent/
-.agents/
-.augment/
-.claude/skills/
-.codebuddy/
-.commandcode/
-.continue/
-.cortex/
-.crush/
-.factory/
-.goose/
-.iflow/
-.junie/
-.kilocode/
-.kiro/
-.kode/
-.mcpjam/
-.mux/
-.neovate/
-.openhands/
-.pi/
-.pochi/
-.qoder/
-.qwen/
-.roo/
-.trae/
-.vibe/
-.windsurf/
-.zencoder/
-skills/
-skills-lock.json
