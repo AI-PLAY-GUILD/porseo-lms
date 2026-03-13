@@ -425,6 +425,40 @@ export const storeUser = mutation({
     },
 });
 
+// Discord IDをClerk IDで保存 (サーバーサイドAPI用、CONVEX_INTERNAL_SECRETで認証)
+export const setDiscordIdByClerkId = mutation({
+    args: {
+        clerkId: v.string(),
+        discordId: v.string(),
+        secret: v.string(),
+    },
+    handler: async (ctx, args) => {
+        console.log("[users:setDiscordIdByClerkId] 開始", { clerkId: args.clerkId });
+        validateInternalSecret(args.secret);
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+            .first();
+
+        if (!user) {
+            console.log("[users:setDiscordIdByClerkId] ユーザー未検出", { clerkId: args.clerkId });
+            throw new Error("User not found");
+        }
+
+        if (!user.discordId) {
+            await ctx.db.patch(user._id, {
+                discordId: args.discordId,
+                updatedAt: Date.now(),
+            });
+            await writeAuditLog(ctx, user._id, "user.discord_id_set", "user", user._id, `discordId=${args.discordId}`);
+            console.log("[users:setDiscordIdByClerkId] 完了", { userId: user._id });
+        } else {
+            console.log("[users:setDiscordIdByClerkId] 既にDiscord ID設定済みのためスキップ", { userId: user._id });
+        }
+    },
+});
+
 // 新規登録時の同意情報を記録する
 export const recordConsent = mutation({
     args: {

@@ -18,11 +18,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
     metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://porseo-lms.vercel.app"),
     title: {
-        default: "PORSEO LMS - プロフェッショナル学習管理システム",
-        template: "%s | PORSEO LMS",
+        default: "AI PLAY GUILD - プロフェッショナル学習管理システム",
+        template: "%s | AI PLAY GUILD",
     },
     description:
-        "PORSEO LMSは、動画学習、Discord連携、AIによる学習サポートを提供するプロフェッショナル向け学習管理システムです。最先端の技術を駆使して、効率的な学習体験を提供します。",
+        "AI PLAY GUILDは、動画学習、Discord連携、AIによる学習サポートを提供するプロフェッショナル向け学習管理システムです。最先端の技術を駆使して、効率的な学習体験を提供します。",
     keywords: [
         "LMS",
         "学習管理システム",
@@ -31,13 +31,13 @@ export const metadata: Metadata = {
         "Discord",
         "AI学習",
         "プログラミング学習",
-        "PORSEO",
+        "AI PLAY GUILD",
         "eラーニング",
         "オンライン教育",
     ],
-    authors: [{ name: "PORSEO" }],
-    creator: "PORSEO",
-    publisher: "PORSEO",
+    authors: [{ name: "AI PLAY GUILD" }],
+    creator: "AI PLAY GUILD",
+    publisher: "AI PLAY GUILD",
     formatDetection: {
         email: false,
         address: false,
@@ -47,24 +47,24 @@ export const metadata: Metadata = {
         type: "website",
         locale: "ja_JP",
         url: "/",
-        siteName: "PORSEO LMS",
-        title: "PORSEO LMS - プロフェッショナル学習管理システム",
+        siteName: "AI PLAY GUILD",
+        title: "AI PLAY GUILD - プロフェッショナル学習管理システム",
         description: "動画学習、Discord連携、AIによる学習サポートを提供するプロフェッショナル向け学習管理システム",
         images: [
             {
                 url: "/og-image.png",
                 width: 1200,
                 height: 630,
-                alt: "PORSEO LMS",
+                alt: "AI PLAY GUILD",
             },
         ],
     },
     twitter: {
         card: "summary_large_image",
-        title: "PORSEO LMS - プロフェッショナル学習管理システム",
+        title: "AI PLAY GUILD - プロフェッショナル学習管理システム",
         description: "動画学習、Discord連携、AIによる学習サポートを提供するプロフェッショナル向け学習管理システム",
         images: ["/og-image.png"],
-        creator: "@porseo",
+        creator: "@aiplayguild",
     },
     robots: {
         index: true,

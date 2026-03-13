@@ -2,30 +2,30 @@ export function StructuredData() {
     const structuredData = {
         "@context": "https://schema.org",
         "@type": "EducationalOrganization",
-        name: "PORSEO LMS",
+        name: "AI PLAY GUILD",
         description:
-            "PORSEO LMSは、動画学習、Discord連携、AIによる学習サポートを提供するプロフェッショナル向け学習管理システムです。最先端の技術を駆使して、効率的な学習体験を提供します。",
+            "AI PLAY GUILDは、動画学習、Discord連携、AIによる学習サポートを提供するプロフェッショナル向け学習管理システムです。最先端の技術を駆使して、効率的な学習体験を提供します。",
         url: process.env.NEXT_PUBLIC_APP_URL || "https://porseo-lms.vercel.app",
         logo: `${process.env.NEXT_PUBLIC_APP_URL || "https://porseo-lms.vercel.app"}/logo.png`,
-        sameAs: ["https://twitter.com/porseo"],
+        sameAs: ["https://twitter.com/aiplayguild"],
         contactPoint: {
             "@type": "ContactPoint",
             contactType: "customer support",
-            email: "support@porseo.com",
+            email: "support@aiplayguild.com",
         },
         offers: {
             "@type": "Offer",
             category: "Educational Service",
             availability: "https://schema.org/InStock",
             priceCurrency: "JPY",
-            name: "PORSEOメンバーシップ",
+            name: "AI PLAY GUILDメンバーシップ",
         },
     };
 
     const websiteStructuredData = {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        name: "PORSEO LMS",
+        name: "AI PLAY GUILD",
         url: process.env.NEXT_PUBLIC_APP_URL || "https://porseo-lms.vercel.app",
         description: "プロフェッショナル向け学習管理システム",
         inLanguage: "ja-JP",
@@ -34,11 +34,11 @@ export function StructuredData() {
     const courseStructuredData = {
         "@context": "https://schema.org",
         "@type": "Course",
-        name: "PORSEOオンライン学習プログラム",
+        name: "AI PLAY GUILDオンライン学習プログラム",
         description: "動画学習とDiscord連携による実践的なオンライン学習プログラム",
         provider: {
             "@type": "Organization",
-            name: "PORSEO",
+            name: "AI PLAY GUILD",
             sameAs: process.env.NEXT_PUBLIC_APP_URL || "https://porseo-lms.vercel.app",
         },
         educationalLevel: "Professional",

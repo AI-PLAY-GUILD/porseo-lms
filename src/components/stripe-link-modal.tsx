@@ -110,7 +110,7 @@ export function StripeLinkModal({ triggerClassName, triggerLabel }: StripeLinkMo
                             ? step === "email"
                                 ? "以前「AIで遊ぼう」コミュニティでご利用いただいていた方は、登録時のメールアドレスを入力してください。既存のサブスクリプションを引き継ぎます。"
                                 : "ログイン中のメールアドレスと異なるため、本人確認が必要です。Stripeに登録されているお名前を入力してください。"
-                            : "以前「AIで遊ぼう」コミュニティでご利用いただいていた方は、まずDiscordでログインしてください。ログイン後にメールアドレスを入力して連携を行います。"}
+                            : "以前「AIで遊ぼう」コミュニティでご利用いただいていた方は、まずDiscordでログインしてください。ログイン後にDiscordロールを自動確認してLMSを開放します。"}
                     </DialogDescription>
                 </DialogHeader>
 

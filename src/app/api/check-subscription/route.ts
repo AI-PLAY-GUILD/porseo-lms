@@ -53,9 +53,10 @@ export async function POST(_req: Request) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        // If already active, return success
-        if (user.subscriptionStatus === "active") {
-            console.log("[check-subscription] 成功: サブスクリプションは既にアクティブ", { userId });
+        // If already active AND linked to Stripe, return early (Stripe manages lifecycle via webhooks)
+        // If active but NO Stripe (Discord-role-only user), always re-verify the role below
+        if (user.subscriptionStatus === "active" && user.stripeCustomerId) {
+            console.log("[check-subscription] 成功: Stripe管理ユーザー、サブスクリプションは既にアクティブ", { userId });
             return NextResponse.json({ status: "active" });
         }
 
@@ -71,14 +72,16 @@ export async function POST(_req: Request) {
         }
 
         // Issue #62: Check cache first before calling Discord API
+        // For role-revocation check, bypass cache when user is already active (ensure fresh data)
+        const isRoleRecheckForActiveUser = user.subscriptionStatus === "active" && !user.stripeCustomerId;
         let roles: string[];
-        const cachedRoles = getCachedRoles(user.discordId);
+        const cachedRoles = isRoleRecheckForActiveUser ? null : getCachedRoles(user.discordId);
 
         if (cachedRoles) {
             console.log("[check-subscription] キャッシュからロール取得", { discordId: user.discordId });
             roles = cachedRoles;
         } else {
-            console.log("[check-subscription] Discord APIからロール取得", { discordId: user.discordId });
+            console.log("[check-subscription] Discord APIからロール取得", { discordId: user.discordId, isRoleRecheckForActiveUser });
             // Issue #56: Add timeout to Discord API call
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -99,6 +102,16 @@ export async function POST(_req: Request) {
                 const errorText = await discordRes.text();
                 console.error("Discord API Error:", errorText);
                 if (discordRes.status === 404) {
+                    // User left the server — revoke access if they were a discord-role-only active user
+                    if (isRoleRecheckForActiveUser) {
+                        await convex.mutation(api.users.updateSubscriptionStatus, {
+                            discordId: user.discordId,
+                            subscriptionStatus: "inactive",
+                            secret: getConvexInternalSecret(),
+                        });
+                        console.log("[check-subscription] Discordサーバー未参加: アクセス取消", { discordId: user.discordId });
+                        return NextResponse.json({ status: "inactive", revoked: true });
+                    }
                     return NextResponse.json({ error: "User not in Discord server" }, { status: 404 });
                 }
                 // Issue #57: Sanitize error response — don't expose Discord status code
@@ -111,7 +124,7 @@ export async function POST(_req: Request) {
         }
 
         if (roles.includes(roleId)) {
-            // 3. Update Subscription Status
+            // 3. Update Subscription Status to active
             await convex.mutation(api.users.updateSubscriptionStatus, {
                 discordId: user.discordId,
                 subscriptionStatus: "active",
@@ -123,6 +136,16 @@ export async function POST(_req: Request) {
             });
             return NextResponse.json({ status: "active", updated: true });
         } else {
+            // Role was removed — revoke access for discord-role-only active users
+            if (isRoleRecheckForActiveUser) {
+                await convex.mutation(api.users.updateSubscriptionStatus, {
+                    discordId: user.discordId,
+                    subscriptionStatus: "inactive",
+                    secret: getConvexInternalSecret(),
+                });
+                console.log("[check-subscription] Discordロール削除: アクセス取消", { discordId: user.discordId });
+                return NextResponse.json({ status: "inactive", revoked: true });
+            }
             console.log("[check-subscription] 成功: サブスクリプションは非アクティブ", { discordId: user.discordId });
             return NextResponse.json({ status: "inactive" });
         }

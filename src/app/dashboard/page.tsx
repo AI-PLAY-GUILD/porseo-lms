@@ -4,8 +4,9 @@ import { SignOutButton, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { Activity, BookOpen, Clock, LogOut, PlayCircle, Trophy } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { AppSidebar } from "@/components/app-sidebar";
 import { PaymentFailureDialog } from "@/components/payment-failure-dialog";
@@ -27,8 +28,9 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "../../../convex/_generated/api";
 
-export default function DashboardPage() {
+function DashboardContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const videos = useQuery(api.videos.getPublishedVideos);
     const stats = useQuery(api.dashboard.getStats);
 
@@ -36,6 +38,7 @@ export default function DashboardPage() {
     const syncUser = useMutation(api.users.syncCurrentUser);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+    const discordCheckRan = useRef(false);
 
     const chartConfig = {
         hours: {
@@ -76,20 +79,48 @@ export default function DashboardPage() {
         sync();
     }, [stats, isUserLoaded, user, isSyncing, syncUser]);
 
+    // Discord role-based activation: runs once when arriving via stripe_link=1
+    useEffect(() => {
+        if (!isMounted || !isUserLoaded || !user || discordCheckRan.current) return;
+        if (searchParams.get("stripe_link") !== "1") return;
+
+        discordCheckRan.current = true;
+        const checkDiscordRole = async () => {
+            console.log("[DashboardPage] 既存アカウント連携: Discordロールチェック開始");
+            try {
+                const res = await fetch("/api/activate-by-discord-role", { method: "POST" });
+                const data = await res.json();
+                if (data.status === "active") {
+                    toast.success("✅ Discordロールを確認しました。LMSへようこそ！");
+                    router.replace("/dashboard");
+                } else if (data.status === "no_role") {
+                    toast.error("❌ 対象のDiscordロールが確認できませんでした。");
+                } else if (data.status === "not_in_server") {
+                    toast.error("❌ 対象のDiscordサーバーに参加していません。");
+                } else {
+                    console.log("[DashboardPage] 既存アカウント連携: アクティベーション失敗", data);
+                }
+            } catch (e) {
+                console.error("[DashboardPage] 既存アカウント連携: Discordロールチェック失敗", e);
+            }
+        };
+        checkDiscordRole();
+    }, [isMounted, isUserLoaded, user, searchParams, router]);
+
+
     // Gatekeeper: Redirect if not active and not past_due
     useEffect(() => {
         if (isMounted && stats) {
             const status = stats.subscriptionStatus;
             console.log("[DashboardPage] ゲートキーパー確認 subscriptionStatus:", status);
-            if (status !== "active" && status !== "past_due") {
-                // Preserve stripe_link param when redirecting (account linking flow)
-                const params = new URLSearchParams(window.location.search);
-                const stripeLinkParam = params.get("stripe_link") === "1" ? "?stripe_link=1" : "";
+            // If stripe_link=1 is present, skip redirect for a moment (let Discord check run first)
+            const isLinkFlow = searchParams.get("stripe_link") === "1";
+            if (status !== "active" && status !== "past_due" && !isLinkFlow) {
                 console.log("[DashboardPage] アクティブでないため /join へリダイレクト");
-                router.push(`/join${stripeLinkParam}`);
+                router.push("/join");
             }
         }
-    }, [isMounted, stats, router]);
+    }, [isMounted, stats, router, searchParams]);
 
     if (!isMounted) {
         return (
@@ -398,5 +429,13 @@ export default function DashboardPage() {
                 </div>
             </SidebarInset>
         </SidebarProvider>
+    );
+}
+
+export default function DashboardPage() {
+    return (
+        <Suspense>
+            <DashboardContent />
+        </Suspense>
     );
 }
