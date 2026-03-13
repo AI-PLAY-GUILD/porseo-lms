@@ -48,8 +48,8 @@ export async function POST(_req: Request) {
                 },
             ],
             mode: "subscription",
-            success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/?payment=success`,
-            cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+            success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=success`,
+            cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/join`,
             metadata: {
                 ...(discordId ? { discordId } : {}),
                 userId: userId || "",
