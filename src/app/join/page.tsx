@@ -137,7 +137,14 @@ export default function JoinPage() {
 
     // Auto-checkout after sign-in if not yet a member
     useEffect(() => {
-        if (isLoaded && isSignedIn && userData !== undefined && !isMember && !checkoutLoading && !autoCheckoutTriggered.current) {
+        if (
+            isLoaded &&
+            isSignedIn &&
+            userData !== undefined &&
+            !isMember &&
+            !checkoutLoading &&
+            !autoCheckoutTriggered.current
+        ) {
             // Only trigger if terms are potentially agreed (simple check or always trigger if we want maximum conversion)
             // If they just signed up via Clerk modal, we assume they are ready for checkout.
             autoCheckoutTriggered.current = true;
@@ -351,6 +358,28 @@ export default function JoinPage() {
                                             </a>
                                             に同意します
                                         </span>
+                                    </div>
+                                </div>
+
+                                {/* Discord Verification Notice */}
+                                <div className="join-discord-alert">
+                                    <div className="join-discord-alert-header">
+                                        <Sparkles className="w-4 h-4" />
+                                        <span>重要：Discordの事前準備について</span>
+                                    </div>
+                                    <div className="join-discord-alert-body">
+                                        コミュニティへの参加には、<strong>Discordの新規登録と電話番号認証</strong>
+                                        が必須となります。
+                                        スムーズな登録のため、あらかじめ認証を済ませてから「今すぐ参加する」へお進みください。
+                                        <br />
+                                        <a
+                                            href="https://discord.com/register"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="underline font-bold hover:text-sky-600 transition-colors"
+                                        >
+                                            👉 Discordへの登録/認証はこちら
+                                        </a>
                                     </div>
                                 </div>
 
