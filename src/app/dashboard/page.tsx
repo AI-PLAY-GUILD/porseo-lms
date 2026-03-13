@@ -2,7 +2,7 @@
 
 import { SignOutButton, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
-import { Activity, BookOpen, Clock, LogOut, PlayCircle, Trophy } from "lucide-react";
+import { Activity, AlertCircle, BookOpen, Clock, LogOut, PlayCircle, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -112,9 +112,26 @@ function DashboardContent() {
         if (isMounted && stats) {
             const status = stats.subscriptionStatus;
             console.log("[DashboardPage] ゲートキーパー確認 subscriptionStatus:", status);
-            // If stripe_link=1 is present, skip redirect for a moment (let Discord check run first)
+
             const isLinkFlow = searchParams.get("stripe_link") === "1";
-            if (status !== "active" && status !== "past_due" && !isLinkFlow) {
+            const isPaymentSuccess = searchParams.get("payment") === "success";
+
+            // If payment just succeeded, show a toast and wait a bit for the webhook if status isn't active yet
+            if (isPaymentSuccess && status !== "active") {
+                toast.info("決済を確認中です... 少々お待ちください。", { id: "payment-processing" });
+                // We don't redirect to /join immediately if payment=success is present
+                return;
+            }
+
+            if (isPaymentSuccess && status === "active") {
+                toast.success("✅ 決済が完了しました！メンバーシップへようこそ。", { id: "payment-success" });
+                // Remove the query param to clean up the URL
+                router.replace("/dashboard");
+                return;
+            }
+
+            // If stripe_link=1 is present, skip redirect for a moment (let Discord check run first)
+            if (status !== "active" && status !== "past_due" && !isLinkFlow && !isPaymentSuccess) {
                 console.log("[DashboardPage] アクティブでないため /join へリダイレクト");
                 router.push("/join");
             }
@@ -146,6 +163,24 @@ function DashboardContent() {
             </div>
         );
     }
+
+    const discordAccount = user?.externalAccounts.find(
+        (acc) => (acc.provider as string) === "oauth_discord" || (acc.provider as string) === "discord",
+    );
+    const hasDiscord = !!discordAccount;
+
+    const handleConnectDiscord = async () => {
+        if (!user) return;
+        try {
+            await user.createExternalAccount({
+                strategy: "oauth_discord",
+                redirectUrl: "/sso-callback",
+            });
+        } catch (error) {
+            console.error("Failed to connect Discord:", error);
+            toast.error("Discordへの連携に失敗しました。");
+        }
+    };
 
     return (
         <SidebarProvider>
@@ -190,6 +225,26 @@ function DashboardContent() {
                     </div>
                 </header>
                 <div className="flex flex-1 flex-col gap-6 p-6 pt-6">
+                    {!hasDiscord && (
+                        <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-900 p-4 mb-4 rounded-md shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <AlertCircle className="h-6 w-6 text-amber-500 flex-shrink-0" />
+                                <div>
+                                    <h3 className="font-bold text-lg">Discord連携が必要です</h3>
+                                    <p className="text-sm">
+                                        コミュニティへの参加や、メンバー限定コンテンツの視聴にはDiscordアカウントの連携が必要です。
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                onClick={handleConnectDiscord}
+                                className="bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold whitespace-nowrap"
+                            >
+                                Discordと連携する
+                            </Button>
+                        </div>
+                    )}
+
                     <div className="flex items-center justify-between space-y-2">
                         <h2 className="text-4xl font-black tracking-tight text-black">ダッシュボード</h2>
                         <div className="flex items-center space-x-2">

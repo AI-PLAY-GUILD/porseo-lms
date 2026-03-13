@@ -4,10 +4,10 @@ import { SignInButton, SignOutButton, SignUpButton, useUser } from "@clerk/nextj
 import { useGSAP } from "@gsap/react";
 import { useMutation, useQuery } from "convex/react";
 import gsap from "gsap";
-import { AlertTriangle, ArrowRight, Check, CreditCard, LayoutDashboard, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Check, CreditCard, LayoutDashboard, ShieldCheck, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StripeLinkModal } from "@/components/stripe-link-modal";
 import { Button } from "@/components/ui/button";
 import { api } from "../../../convex/_generated/api";
@@ -86,7 +86,10 @@ export default function JoinPage() {
         sync();
     }, [isLoaded, isSignedIn, user, isSynced, storeUser]);
 
-    const handleCheckout = async () => {
+    const autoCheckoutTriggered = useRef(false);
+
+    const handleCheckout = useCallback(async () => {
+        if (checkoutLoading) return;
         console.log("[JoinPage] チェックアウト開始");
         setCheckoutLoading(true);
         try {
@@ -95,11 +98,7 @@ export default function JoinPage() {
             );
             const discordId = discordAccount?.providerUserId;
             console.log("[JoinPage] discordId取得:", !!discordId);
-            if (!discordId) {
-                console.error("[JoinPage] エラー: Discord ID not found");
-                alert("Discord IDが見つかりません。もう一度ログインしてください。");
-                return;
-            }
+
             // 同意情報をConvexのユーザーレコードへ記録する
             try {
                 if (user?.id) {
@@ -112,7 +111,6 @@ export default function JoinPage() {
                 }
             } catch (consentError) {
                 console.error("Failed to record consent:", consentError);
-                // 記録に失敗しても決済プロセス自体は止めない仕様とするか、止めるか。今回は止めずにエラーログのみ。
             }
 
             const res = await fetch("/api/create-checkout-session", {
@@ -133,9 +131,19 @@ export default function JoinPage() {
         } finally {
             setCheckoutLoading(false);
         }
-    };
+    }, [user, termsChecked, privacyChecked, guidelinesChecked, recordConsent, checkoutLoading]);
 
     const isMember = userData?.subscriptionStatus === "active";
+
+    // Auto-checkout after sign-in if not yet a member
+    useEffect(() => {
+        if (isLoaded && isSignedIn && userData !== undefined && !isMember && !checkoutLoading && !autoCheckoutTriggered.current) {
+            // Only trigger if terms are potentially agreed (simple check or always trigger if we want maximum conversion)
+            // If they just signed up via Clerk modal, we assume they are ready for checkout.
+            autoCheckoutTriggered.current = true;
+            handleCheckout();
+        }
+    }, [isLoaded, isSignedIn, userData, isMember, checkoutLoading, handleCheckout]);
 
     return (
         <div ref={containerRef} className="join-root">
@@ -247,17 +255,7 @@ export default function JoinPage() {
 
                                 <div className="w-full h-px bg-sky-100" />
 
-                                {/* ⚠️ Discord-ONLY emphatic warning */}
-                                <div className="join-discord-alert">
-                                    <div className="join-discord-alert-header">
-                                        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                                        <span className="font-bold">重要なお知らせ</span>
-                                    </div>
-                                    <p className="join-discord-alert-body">
-                                        このコミュニティは<strong>Discordアカウントのみ</strong>
-                                        利用可能です。メール・Google等のアカウントではサービスをご利用いただけません。
-                                    </p>
-                                </div>
+                                {/* Removed Discord-ONLY emphatic warning */}
 
                                 {/* ── Checkboxes (fixed: no label/input conflict) ── */}
                                 <div className="join-consent-wrap">

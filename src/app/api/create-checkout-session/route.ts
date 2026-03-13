@@ -38,14 +38,7 @@ export async function POST(_req: Request) {
             return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
         }
 
-        if (!discordId) {
-            console.log("[create-checkout-session] Discord未連携", { userId });
-            return NextResponse.json(
-                { error: "Discord account not linked. Please link your account first." },
-                { status: 400 },
-            );
-        }
-
+        // Removed discordId requirement to allow email checkouts
         const sessionParams: Stripe.Checkout.SessionCreateParams = {
             payment_method_types: ["card"],
             line_items: [
@@ -55,10 +48,10 @@ export async function POST(_req: Request) {
                 },
             ],
             mode: "subscription",
-            success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/?payment=success`,
-            cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+            success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=success`,
+            cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/join`,
             metadata: {
-                discordId: discordId, // Use trusted Discord ID from DB
+                ...(discordId ? { discordId } : {}),
                 userId: userId || "",
             },
             ...(stripeCustomerId ? { customer: stripeCustomerId } : {}),
