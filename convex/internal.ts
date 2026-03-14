@@ -27,7 +27,7 @@ export const setStripeCustomerId = internalMutation({
     },
     handler: async (ctx, args) => {
         const user = await ctx.db.get(args.userId);
-        // Don't overwrite if already linked (prevent race condition with linkStripeCustomerByEmail)
+        // Don't overwrite if already linked
         if (user?.stripeCustomerId) {
             console.log("[internal:setStripeCustomerId] 既にStripe顧客IDがあるためスキップ", {
                 userId: args.userId,
@@ -39,25 +39,5 @@ export const setStripeCustomerId = internalMutation({
             stripeCustomerId: args.stripeCustomerId,
             updatedAt: Date.now(),
         });
-    },
-});
-
-export const setStripeCustomerWithSubscription = internalMutation({
-    args: {
-        userId: v.id("users"),
-        stripeCustomerId: v.string(),
-        subscriptionStatus: v.string(),
-        subscriptionName: v.optional(v.string()),
-    },
-    handler: async (ctx, args) => {
-        const patch: Record<string, unknown> = {
-            stripeCustomerId: args.stripeCustomerId,
-            subscriptionStatus: args.subscriptionStatus,
-            updatedAt: Date.now(),
-        };
-        if (args.subscriptionName !== undefined) {
-            patch.subscriptionName = args.subscriptionName;
-        }
-        await ctx.db.patch(args.userId, patch);
     },
 });

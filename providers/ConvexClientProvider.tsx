@@ -4,8 +4,7 @@ import { jaJP } from "@clerk/localizations";
 import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { type ReactNode, Suspense } from "react";
-import StripeLinkAutoTrigger from "../src/components/auth/StripeLinkAutoTrigger";
+import { type ReactNode } from "react";
 import UserSync from "../src/components/auth/UserSync";
 
 const customJaJP = {
@@ -39,9 +38,6 @@ export default function ConvexClientProvider({ children }: { children: ReactNode
         >
             <ConvexProviderWithClerk useAuth={useAuth} client={convex}>
                 <UserSync />
-                <Suspense>
-                    <StripeLinkAutoTrigger />
-                </Suspense>
                 {children}
             </ConvexProviderWithClerk>
         </ClerkProvider>

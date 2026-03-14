@@ -8,7 +8,6 @@ import { ArrowRight, Check, CreditCard, LayoutDashboard, ShieldCheck, Sparkles }
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { StripeLinkModal } from "@/components/stripe-link-modal";
 import { Button } from "@/components/ui/button";
 import { api } from "../../../convex/_generated/api";
 
@@ -201,9 +200,6 @@ export default function JoinPage() {
                                                 </span>
                                             )}
                                         </Button>
-                                        <div className="flex justify-center">
-                                            <StripeLinkModal />
-                                        </div>
                                     </>
                                 )}
                                 {userData?.isAdmin && (
