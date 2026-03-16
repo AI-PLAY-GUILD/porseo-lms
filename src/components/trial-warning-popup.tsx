@@ -6,11 +6,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 
-// biome-ignore lint/suspicious/noExplicitAny: Convex codegen not available without `npx convex dev`
-const getTrialStatusRef = (api as any).notePromo?.getTrialStatus ?? "skip";
-
 export function TrialWarningPopup() {
-    const trialStatus = useQuery(getTrialStatusRef === "skip" ? "skip" : getTrialStatusRef);
+    const trialStatus = useQuery(api.notePromo.getTrialStatus);
     const [dismissed, setDismissed] = useState(true); // Start dismissed to prevent flash
 
     useEffect(() => {

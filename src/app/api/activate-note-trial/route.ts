@@ -25,8 +25,7 @@ export async function POST(req: Request) {
         const ipHash = createHash("sha256").update(ip).digest("hex");
 
         // Check IP already used
-        // biome-ignore lint/suspicious/noExplicitAny: Convex codegen not available without `npx convex dev`
-        const ipUsed = await convex.query((api as any).notePromo.checkIpUsed, {
+        const ipUsed = await convex.query(api.notePromo.checkIpUsed, {
             ipHash,
             secret: getConvexInternalSecret(),
         });
@@ -61,8 +60,7 @@ export async function POST(req: Request) {
         }
 
         // Activate trial in Convex
-        // biome-ignore lint/suspicious/noExplicitAny: Convex codegen not available without `npx convex dev`
-        const result = await convex.mutation((api as any).notePromo.activateNoteTrial, {
+        const result = await convex.mutation(api.notePromo.activateNoteTrial, {
             clerkId: userId,
             promoCode,
             ipAddress: ip,
