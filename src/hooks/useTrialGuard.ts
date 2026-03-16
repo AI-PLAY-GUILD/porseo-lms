@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { api } from "../../convex/_generated/api";
 
+// biome-ignore lint/suspicious/noExplicitAny: Convex codegen not available without `npx convex dev`
+const getTrialStatusRef = (api as any).notePromo?.getTrialStatus ?? "skip";
+
 export function useTrialGuard() {
     const router = useRouter();
-    // biome-ignore lint/suspicious/noExplicitAny: Convex codegen not available without `npx convex dev`
-    const trialStatus = useQuery((api as any).notePromo.getTrialStatus);
+    const trialStatus = useQuery(getTrialStatusRef === "skip" ? "skip" : getTrialStatusRef);
     const user = useQuery(api.users.getUser);
 
     useEffect(() => {

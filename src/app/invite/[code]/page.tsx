@@ -13,7 +13,8 @@ function InviteContent() {
     const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
     const router = useRouter();
     // biome-ignore lint/suspicious/noExplicitAny: notePromo module not yet in generated API types
-    const validation = useQuery((api as any).notePromo.validatePromoCode, { code: code ?? "" });
+    const validateRef = (api as any).notePromo?.validatePromoCode;
+    const validation = useQuery(validateRef ?? "skip", validateRef ? { code: code ?? "" } : "skip");
 
     // Already signed in → go to activate page
     useEffect(() => {
