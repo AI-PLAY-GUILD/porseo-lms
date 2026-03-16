@@ -7,7 +7,8 @@ import { api } from "../../convex/_generated/api";
 
 export function useTrialGuard() {
     const router = useRouter();
-    const trialStatus = useQuery(api.notePromo.getTrialStatus);
+    // biome-ignore lint/suspicious/noExplicitAny: Convex codegen not available without `npx convex dev`
+    const trialStatus = useQuery((api as any).notePromo.getTrialStatus);
     const user = useQuery(api.users.getUser);
 
     useEffect(() => {

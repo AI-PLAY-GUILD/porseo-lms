@@ -137,7 +137,8 @@ export default function NotePromoAdminPage() {
                         <p className="text-gray-400 font-bold">プロモリンクがありません</p>
                     ) : (
                         <div className="space-y-3">
-                            {promoLinks.map((link) => (
+                            {/* biome-ignore lint/suspicious/noExplicitAny: Convex codegen types unavailable */}
+                            {promoLinks.map((link: any) => (
                                 <div
                                     key={link._id}
                                     className={`flex items-center justify-between p-4 rounded-lg border-2 ${
@@ -228,7 +229,8 @@ export default function NotePromoAdminPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {trialUsers.map((trial) => (
+                                    {/* biome-ignore lint/suspicious/noExplicitAny: Convex codegen types unavailable */}
+                                    {trialUsers.map((trial: any) => (
                                         <tr key={trial._id} className="border-b border-gray-200">
                                             <td className="py-2 font-bold">{trial.userName}</td>
                                             <td className="py-2">
