@@ -33,10 +33,10 @@ const USER_RATE_LIMIT_MAX = 10; // 10 requests per minute per user
 
 const DISCORD_API_PATHS = ["/api/check-subscription", "/api/join-server", "/api/sync-role"];
 
-// Invite path rate limiter (5 req/min per IP)
+// Invite path rate limiter (20 req/min per IP)
 const inviteRateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const INVITE_RATE_LIMIT_WINDOW_MS = 60 * 1000;
-const INVITE_RATE_LIMIT_MAX = 5;
+const INVITE_RATE_LIMIT_MAX = 20;
 
 function checkInviteRateLimit(ip: string): boolean {
     const now = Date.now();
