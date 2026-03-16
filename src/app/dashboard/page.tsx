@@ -114,7 +114,6 @@ function DashboardContent() {
         if (isMounted && stats) {
             const status = stats.subscriptionStatus;
             console.log("[DashboardPage] ゲートキーパー確認 subscriptionStatus:", status);
-<<<<<<< HEAD
 
             const isLinkFlow = searchParams.get("stripe_link") === "1";
             const isPaymentSuccess = searchParams.get("payment") === "success";
@@ -127,20 +126,20 @@ function DashboardContent() {
             }
 
             if (isPaymentSuccess && status === "active") {
-                toast.success("✅ 決済が完了しました！メンバーシップへようこそ。", { id: "payment-success" });
+                toast.success("決済が完了しました！メンバーシップへようこそ。", { id: "payment-success" });
                 // Remove the query param to clean up the URL
                 router.replace("/dashboard");
                 return;
             }
 
             // If stripe_link=1 is present, skip redirect for a moment (let Discord check run first)
-            if (status !== "active" && status !== "past_due" && !isLinkFlow && !isPaymentSuccess) {
-=======
-            if (status !== "active" && status !== "past_due" && status !== "note_trial") {
-                // Preserve stripe_link param when redirecting (account linking flow)
-                const params = new URLSearchParams(window.location.search);
-                const stripeLinkParam = params.get("stripe_link") === "1" ? "?stripe_link=1" : "";
->>>>>>> 5c6a1c7 (feat: noteマガジンプロモ用APIルートとフロントエンドページを追加)
+            if (
+                status !== "active" &&
+                status !== "past_due" &&
+                status !== "note_trial" &&
+                !isLinkFlow &&
+                !isPaymentSuccess
+            ) {
                 console.log("[DashboardPage] アクティブでないため /join へリダイレクト");
                 router.push("/join");
             }

@@ -9,12 +9,18 @@ import { Input } from "@/components/ui/input";
 import { api } from "../../../../convex/_generated/api";
 
 export default function NotePromoAdminPage() {
-    const promoLinks = useQuery(api.notePromo.listPromoLinks);
-    const stats = useQuery(api.notePromo.getPromoLinkStats);
-    const trialUsers = useQuery(api.notePromo.getTrialUsers);
-    const createLink = useMutation(api.notePromo.createPromoLink);
-    const rotateLink = useMutation(api.notePromo.rotatePromoLink);
-    const deactivateLink = useMutation(api.notePromo.deactivatePromoLink);
+    // biome-ignore lint/suspicious/noExplicitAny: Convex codegen types not available without `npx convex dev`
+    const promoLinks = useQuery((api as any).notePromo.listPromoLinks);
+    // biome-ignore lint/suspicious/noExplicitAny: Convex codegen types not available without `npx convex dev`
+    const stats = useQuery((api as any).notePromo.getPromoLinkStats);
+    // biome-ignore lint/suspicious/noExplicitAny: Convex codegen types not available without `npx convex dev`
+    const trialUsers = useQuery((api as any).notePromo.getTrialUsers);
+    // biome-ignore lint/suspicious/noExplicitAny: Convex codegen types not available without `npx convex dev`
+    const createLink = useMutation((api as any).notePromo.createPromoLink);
+    // biome-ignore lint/suspicious/noExplicitAny: Convex codegen types not available without `npx convex dev`
+    const rotateLink = useMutation((api as any).notePromo.rotatePromoLink);
+    // biome-ignore lint/suspicious/noExplicitAny: Convex codegen types not available without `npx convex dev`
+    const deactivateLink = useMutation((api as any).notePromo.deactivatePromoLink);
 
     const [maxRedemptions, setMaxRedemptions] = useState(100);
     const [isCreating, setIsCreating] = useState(false);

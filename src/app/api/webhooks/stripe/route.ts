@@ -172,12 +172,14 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
     // If this user was a note trial user, mark their trial as converted
     try {
-        const noteTrialUser = await convex.query(api.notePromoServer.checkUserHasTrial, {
+        // biome-ignore lint/suspicious/noExplicitAny: Convex codegen not available without `npx convex dev`
+        const noteTrialUser = await convex.query((api as any).notePromoServer.checkUserHasTrial, {
             clerkId: clerkUserId,
             secret: getConvexInternalSecret(),
         });
         if (noteTrialUser) {
-            await convex.mutation(api.notePromoServer.markTrialConvertedServer, {
+            // biome-ignore lint/suspicious/noExplicitAny: Convex codegen not available without `npx convex dev`
+            await convex.mutation((api as any).notePromoServer.markTrialConvertedServer, {
                 clerkId: clerkUserId,
                 secret: getConvexInternalSecret(),
             });
