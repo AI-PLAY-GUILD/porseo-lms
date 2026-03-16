@@ -47,6 +47,19 @@ export async function POST(req: Request) {
 
         const discordId = discordAccount.externalId;
 
+        // Ensure user exists in Convex (invite flow skips normal /join sync)
+        try {
+            await convex.mutation(api.users.webhookSyncUser, {
+                clerkId: userId,
+                email: user.emailAddresses[0]?.emailAddress || "",
+                name: user.fullName || user.username || "Unknown",
+                imageUrl: user.imageUrl,
+                secret: getConvexInternalSecret(),
+            });
+        } catch (syncError) {
+            console.error("[activate-note-trial] ユーザー同期エラー:", syncError);
+        }
+
         // Activate trial in Convex
         // biome-ignore lint/suspicious/noExplicitAny: Convex codegen not available without `npx convex dev`
         const result = await convex.mutation((api as any).notePromo.activateNoteTrial, {
@@ -111,7 +124,7 @@ export async function POST(req: Request) {
         console.log("[activate-note-trial] 成功", { userId, discordId });
         return NextResponse.json({ success: true, trialExpiresAt: result.trialExpiresAt });
     } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Internal server error";
+        const message = error instanceof Error ? error.message : String(error);
         console.error("[activate-note-trial] エラー:", message);
 
         if (message.includes("already")) {
