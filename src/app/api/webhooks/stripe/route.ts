@@ -169,6 +169,23 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
             console.error("[webhooks/stripe] エラー: Discordロール付与失敗:", error);
         }
     }
+
+    // If this user was a note trial user, mark their trial as converted
+    try {
+        const noteTrialUser = await convex.query(api.notePromoServer.checkUserHasTrial, {
+            clerkId: clerkUserId,
+            secret: getConvexInternalSecret(),
+        });
+        if (noteTrialUser) {
+            await convex.mutation(api.notePromoServer.markTrialConvertedServer, {
+                clerkId: clerkUserId,
+                secret: getConvexInternalSecret(),
+            });
+            console.log("[webhooks/stripe] noteトライアル→有料転換完了", { clerkUserId });
+        }
+    } catch (e) {
+        console.error("[webhooks/stripe] noteトライアル転換チェック失敗:", e);
+    }
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {

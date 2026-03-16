@@ -33,6 +33,27 @@ const USER_RATE_LIMIT_MAX = 10; // 10 requests per minute per user
 
 const DISCORD_API_PATHS = ["/api/check-subscription", "/api/join-server", "/api/sync-role"];
 
+// Invite path rate limiter (5 req/min per IP)
+const inviteRateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const INVITE_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const INVITE_RATE_LIMIT_MAX = 5;
+
+function checkInviteRateLimit(ip: string): boolean {
+    const now = Date.now();
+    const entry = inviteRateLimitMap.get(ip);
+    if (inviteRateLimitMap.size > 10000) {
+        for (const [key, val] of inviteRateLimitMap) {
+            if (now > val.resetAt) inviteRateLimitMap.delete(key);
+        }
+    }
+    if (!entry || now > entry.resetAt) {
+        inviteRateLimitMap.set(ip, { count: 1, resetAt: now + INVITE_RATE_LIMIT_WINDOW_MS });
+        return true;
+    }
+    entry.count++;
+    return entry.count <= INVITE_RATE_LIMIT_MAX;
+}
+
 function checkUserRateLimit(userId: string): { allowed: boolean; retryAfter?: number } {
     const now = Date.now();
     const entry = userRateLimitMap.get(userId);
@@ -67,6 +88,17 @@ export default clerkMiddleware(async (_auth, request) => {
     if (pathname.startsWith("/dev-login") && process.env.NODE_ENV !== "development") {
         console.log(`[middleware] BLOCKED: dev-login in production`);
         return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // Rate limiting for /invite/* paths
+    if (pathname.startsWith("/invite")) {
+        const ip =
+            request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+            request.headers.get("x-real-ip") ||
+            "unknown";
+        if (!checkInviteRateLimit(ip)) {
+            return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+        }
     }
 
     // Rate limiting for API routes (exclude webhooks which have their own protection)

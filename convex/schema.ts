@@ -148,4 +148,37 @@ export default defineSchema({
             dimensions: 1536,
             filterFields: ["videoId"],
         }),
+
+    // notePromoLinks - ローテーション可能なプロモリンク
+    notePromoLinks: defineTable({
+        code: v.string(),
+        isActive: v.boolean(),
+        maxRedemptions: v.number(),
+        currentRedemptions: v.number(),
+        expiresAt: v.optional(v.number()),
+        createdBy: v.id("users"),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+    })
+        .index("by_code", ["code"])
+        .index("by_is_active", ["isActive"]),
+
+    // noteTrialUsers - トライアルユーザー追跡
+    noteTrialUsers: defineTable({
+        userId: v.id("users"),
+        promoLinkId: v.id("notePromoLinks"),
+        ipAddress: v.string(),
+        ipHash: v.string(),
+        status: v.string(),
+        trialStartedAt: v.number(),
+        trialExpiresAt: v.number(),
+        warningShownAt: v.optional(v.number()),
+        expiredAt: v.optional(v.number()),
+        convertedToSubscription: v.boolean(),
+        createdAt: v.number(),
+    })
+        .index("by_user_id", ["userId"])
+        .index("by_ip_hash", ["ipHash"])
+        .index("by_status", ["status"])
+        .index("by_trial_expires_at", ["trialExpiresAt"]),
 });

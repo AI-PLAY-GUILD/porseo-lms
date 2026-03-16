@@ -7,6 +7,7 @@ import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { type ReactNode, Suspense } from "react";
 import StripeLinkAutoTrigger from "../src/components/auth/StripeLinkAutoTrigger";
 import UserSync from "../src/components/auth/UserSync";
+import { TrialWarningPopup } from "../src/components/trial-warning-popup";
 
 const customJaJP = {
     ...jaJP,
@@ -42,6 +43,7 @@ export default function ConvexClientProvider({ children }: { children: ReactNode
                 <Suspense>
                     <StripeLinkAutoTrigger />
                 </Suspense>
+                <TrialWarningPopup />
                 {children}
             </ConvexProviderWithClerk>
         </ClerkProvider>

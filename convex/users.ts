@@ -245,7 +245,7 @@ export const updateSubscriptionStatus = mutation({
         });
         validateInternalSecret(args.secret);
 
-        const VALID_STATUSES = ["active", "canceled", "past_due", "trialing", "inactive", "unpaid"];
+        const VALID_STATUSES = ["active", "canceled", "past_due", "trialing", "inactive", "unpaid", "note_trial"];
         if (!VALID_STATUSES.includes(args.subscriptionStatus)) {
             throw new Error("Invalid subscription status");
         }
@@ -315,7 +315,7 @@ export const updateSubscriptionStatusByCustomerId = mutation({
         });
         validateInternalSecret(args.secret);
 
-        const VALID_STATUSES = ["active", "canceled", "past_due", "trialing", "inactive", "unpaid"];
+        const VALID_STATUSES = ["active", "canceled", "past_due", "trialing", "inactive", "unpaid", "note_trial"];
         if (!VALID_STATUSES.includes(args.subscriptionStatus)) {
             throw new Error("Invalid subscription status");
         }

@@ -26,6 +26,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTrialGuard } from "@/hooks/useTrialGuard";
 import { api } from "../../../convex/_generated/api";
 
 function DashboardContent() {
@@ -39,6 +40,7 @@ function DashboardContent() {
     const [isSyncing, setIsSyncing] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
     const discordCheckRan = useRef(false);
+    const { trialStatus } = useTrialGuard();
 
     const chartConfig = {
         hours: {
@@ -112,6 +114,7 @@ function DashboardContent() {
         if (isMounted && stats) {
             const status = stats.subscriptionStatus;
             console.log("[DashboardPage] ゲートキーパー確認 subscriptionStatus:", status);
+<<<<<<< HEAD
 
             const isLinkFlow = searchParams.get("stripe_link") === "1";
             const isPaymentSuccess = searchParams.get("payment") === "success";
@@ -132,6 +135,12 @@ function DashboardContent() {
 
             // If stripe_link=1 is present, skip redirect for a moment (let Discord check run first)
             if (status !== "active" && status !== "past_due" && !isLinkFlow && !isPaymentSuccess) {
+=======
+            if (status !== "active" && status !== "past_due" && status !== "note_trial") {
+                // Preserve stripe_link param when redirecting (account linking flow)
+                const params = new URLSearchParams(window.location.search);
+                const stripeLinkParam = params.get("stripe_link") === "1" ? "?stripe_link=1" : "";
+>>>>>>> 5c6a1c7 (feat: noteマガジンプロモ用APIルートとフロントエンドページを追加)
                 console.log("[DashboardPage] アクティブでないため /join へリダイレクト");
                 router.push("/join");
             }
