@@ -254,7 +254,15 @@ function DashboardContent() {
                     )}
 
                     <div className="flex items-center justify-between space-y-2">
-                        <h2 className="text-4xl font-black tracking-tight text-black">ダッシュボード</h2>
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-4xl font-black tracking-tight text-black">ダッシュボード</h2>
+                            {trialStatus && trialStatus.status !== "expired" && trialStatus.daysRemaining != null && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2.5 py-0.5 text-xs font-bold text-sky-700">
+                                    <Clock className="h-3 w-3" />
+                                    無料体験 あと{trialStatus.daysRemaining}日
+                                </span>
+                            )}
+                        </div>
                         <div className="flex items-center space-x-2">
                             <Button
                                 asChild

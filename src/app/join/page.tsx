@@ -7,6 +7,7 @@ import gsap from "gsap";
 import { ArrowRight, Check, CreditCard, LayoutDashboard, ShieldCheck, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StripeLinkModal } from "@/components/stripe-link-modal";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { api } from "../../../convex/_generated/api";
 
 export default function JoinPage() {
     const { isSignedIn, user, isLoaded } = useUser();
+    const router = useRouter();
     const userData = useQuery(api.users.getUser);
     const storeUser = useMutation(api.users.storeUser);
     const recordConsent = useMutation(api.users.recordConsent);
@@ -134,6 +136,14 @@ export default function JoinPage() {
     }, [user, termsChecked, privacyChecked, guidelinesChecked, recordConsent, checkoutLoading]);
 
     const isMember = userData?.subscriptionStatus === "active";
+    const isNoteTrial = userData?.subscriptionStatus === "note_trial";
+
+    // note_trial ユーザーはダッシュボードへリダイレクト
+    useEffect(() => {
+        if (isLoaded && isSignedIn && isNoteTrial) {
+            router.push("/dashboard");
+        }
+    }, [isLoaded, isSignedIn, isNoteTrial, router]);
 
     // Auto-checkout after sign-in if not yet a member
     useEffect(() => {
@@ -142,6 +152,7 @@ export default function JoinPage() {
             isSignedIn &&
             userData !== undefined &&
             !isMember &&
+            !isNoteTrial &&
             !checkoutLoading &&
             !autoCheckoutTriggered.current
         ) {
@@ -150,7 +161,7 @@ export default function JoinPage() {
             autoCheckoutTriggered.current = true;
             handleCheckout();
         }
-    }, [isLoaded, isSignedIn, userData, isMember, checkoutLoading, handleCheckout]);
+    }, [isLoaded, isSignedIn, userData, isMember, isNoteTrial, checkoutLoading, handleCheckout]);
 
     return (
         <div ref={containerRef} className="join-root">
