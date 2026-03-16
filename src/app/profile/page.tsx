@@ -176,7 +176,7 @@ export default function ProfilePage() {
                                     <p className="font-medium">現在のプラン</p>
                                     <p className="text-sm text-muted-foreground">
                                         {isPremium
-                                            ? `プレミアムプラン (月額 ¥${userData.subscriptionName?.includes("4,000") || userData.subscriptionName?.includes("4000") ? "4,000" : "4,000"})`
+                                            ? userData.subscriptionName || "プレミアムプラン"
                                             : isNoteTrial
                                               ? `noteマガジン無料トライアル${trialStatus ? ` (残り${trialStatus.daysRemaining}日)` : ""}`
                                               : "フリープラン"}
