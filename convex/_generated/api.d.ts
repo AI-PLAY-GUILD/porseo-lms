@@ -11,10 +11,13 @@
 import type * as admin from "../admin.js";
 import type * as ai from "../ai.js";
 import type * as courses from "../courses.js";
+import type * as crons from "../crons.js";
 import type * as dashboard from "../dashboard.js";
 import type * as internal_ from "../internal.js";
 import type * as lib_requireSecret from "../lib/requireSecret.js";
 import type * as lib_safeCompare from "../lib/safeCompare.js";
+import type * as notePromo from "../notePromo.js";
+import type * as notePromoServer from "../notePromoServer.js";
 import type * as rag from "../rag.js";
 import type * as ragDb from "../ragDb.js";
 import type * as stripe from "../stripe.js";
@@ -37,10 +40,13 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   ai: typeof ai;
   courses: typeof courses;
+  crons: typeof crons;
   dashboard: typeof dashboard;
   internal: typeof internal_;
   "lib/requireSecret": typeof lib_requireSecret;
   "lib/safeCompare": typeof lib_safeCompare;
+  notePromo: typeof notePromo;
+  notePromoServer: typeof notePromoServer;
   rag: typeof rag;
   ragDb: typeof ragDb;
   stripe: typeof stripe;
