@@ -2,7 +2,7 @@
 
 import { SignOutButton } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
-import { CreditCard, LogOut, Mail, Settings, Shield, User } from "lucide-react";
+import { Clock, CreditCard, LogOut, Mail, Settings, Shield, User } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -24,6 +24,7 @@ import { api } from "../../../convex/_generated/api";
 
 export default function ProfilePage() {
     const userData = useQuery(api.users.getUser);
+    const trialStatus = useQuery(api.notePromo.getTrialStatus);
     const [loading, setLoading] = useState(false);
 
     console.log(
@@ -73,6 +74,7 @@ export default function ProfilePage() {
     }
 
     const isPremium = userData.subscriptionStatus === "active";
+    const isNoteTrial = userData.subscriptionStatus === "note_trial";
 
     return (
         <SidebarProvider>
@@ -128,10 +130,16 @@ export default function ProfilePage() {
                                     </Badge>
                                 )}
                                 <Badge
-                                    variant={isPremium ? "default" : "outline"}
-                                    className={isPremium ? "bg-gradient-to-r from-blue-600 to-violet-600 border-0" : ""}
+                                    variant={isPremium || isNoteTrial ? "default" : "outline"}
+                                    className={
+                                        isPremium
+                                            ? "bg-gradient-to-r from-blue-600 to-violet-600 border-0"
+                                            : isNoteTrial
+                                              ? "bg-gradient-to-r from-sky-400 to-cyan-500 border-0"
+                                              : ""
+                                    }
                                 >
-                                    {isPremium ? "プレミアム会員" : "無料会員"}
+                                    {isPremium ? "プレミアム会員" : isNoteTrial ? "無料トライアル" : "無料会員"}
                                 </Badge>
                             </div>
                             {userData.isAdmin && (
@@ -163,21 +171,42 @@ export default function ProfilePage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            {(userData.stripeCustomerId || !isPremium) && (
-                                <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
-                                    <div>
-                                        <p className="font-medium">現在のプラン</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {isPremium ? "プレミアムプラン (月額 ¥980)" : "フリープラン"}
+                            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                                <div>
+                                    <p className="font-medium">現在のプラン</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {isPremium
+                                            ? `プレミアムプラン (月額 ¥${userData.subscriptionName?.includes("4,000") || userData.subscriptionName?.includes("4000") ? "4,000" : "4,000"})`
+                                            : isNoteTrial
+                                              ? `noteマガジン無料トライアル${trialStatus ? ` (残り${trialStatus.daysRemaining}日)` : ""}`
+                                              : "フリープラン"}
+                                    </p>
+                                </div>
+                                <Badge
+                                    variant={isPremium || isNoteTrial ? "default" : "secondary"}
+                                    className={isNoteTrial ? "bg-sky-500" : ""}
+                                >
+                                    {isPremium ? "有効" : isNoteTrial ? "トライアル中" : "未契約"}
+                                </Badge>
+                            </div>
+
+                            {isNoteTrial ? (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 text-sm text-sky-700 bg-sky-50 border border-sky-200 rounded-lg p-3">
+                                        <Clock className="w-4 h-4 flex-shrink-0" />
+                                        <p>
+                                            無料体験期間中です。
+                                            {trialStatus && (
+                                                <span className="font-bold">あと{trialStatus.daysRemaining}日</span>
+                                            )}
+                                            で終了します。
                                         </p>
                                     </div>
-                                    <Badge variant={isPremium ? "default" : "secondary"}>
-                                        {isPremium ? "有効" : "未契約"}
-                                    </Badge>
+                                    <Button asChild className="bg-gradient-to-r from-blue-600 to-violet-600">
+                                        <Link href="/join">有料メンバーになる</Link>
+                                    </Button>
                                 </div>
-                            )}
-
-                            {isPremium ? (
+                            ) : isPremium ? (
                                 userData.stripeCustomerId ? (
                                     <div className="space-y-4">
                                         <Button
