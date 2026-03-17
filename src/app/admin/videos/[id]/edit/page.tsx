@@ -2,7 +2,7 @@
 
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BrutalistLoader } from "@/components/ui/brutalist-loader";
 import { Card } from "@/components/ui/card";
 import { api } from "../../../../../../convex/_generated/api";
@@ -48,9 +48,11 @@ export default function EditVideoPage() {
         }
     }, [userData, router]);
 
+    const initializedVideoId = useRef<string | null>(null);
     useEffect(() => {
-        if (video) {
-            console.log("[EditVideoPage] 動画データ読み込み完了 title:", video.title);
+        if (video && initializedVideoId.current !== video._id) {
+            initializedVideoId.current = video._id;
+            console.log("[EditVideoPage] 動画データ初回読み込み title:", video.title);
             setTitle(video.title);
             setDescription(video.description || "");
             setIsPublished(video.isPublished);
