@@ -297,6 +297,22 @@ export const setThumbnailServer = mutation({
     },
 });
 
+// CLI/スクリプト用: secret認証で動画公開状態を変更
+export const publishVideoServer = mutation({
+    args: {
+        videoId: v.id("videos"),
+        isPublished: v.boolean(),
+        secret: v.string(),
+    },
+    handler: async (ctx, args) => {
+        validateInternalSecret(args.secret);
+        await ctx.db.patch(args.videoId, {
+            isPublished: args.isPublished,
+            updatedAt: Date.now(),
+        });
+    },
+});
+
 export const updateVideo = mutation({
     args: {
         videoId: v.id("videos"),
