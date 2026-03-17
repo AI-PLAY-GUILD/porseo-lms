@@ -272,6 +272,31 @@ export const generateUploadUrl = mutation({
     },
 });
 
+// CLI/スクリプト用: secret認証でアップロードURL生成
+export const generateUploadUrlServer = mutation({
+    args: { secret: v.string() },
+    handler: async (ctx, args) => {
+        validateInternalSecret(args.secret);
+        return await ctx.storage.generateUploadUrl();
+    },
+});
+
+// CLI/スクリプト用: secret認証でサムネイル設定
+export const setThumbnailServer = mutation({
+    args: {
+        videoId: v.id("videos"),
+        storageId: v.id("_storage"),
+        secret: v.string(),
+    },
+    handler: async (ctx, args) => {
+        validateInternalSecret(args.secret);
+        await ctx.db.patch(args.videoId, {
+            customThumbnailStorageId: args.storageId,
+            updatedAt: Date.now(),
+        });
+    },
+});
+
 export const updateVideo = mutation({
     args: {
         videoId: v.id("videos"),
