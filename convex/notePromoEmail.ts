@@ -70,13 +70,14 @@ export const sendTrialExpiredEmail = internalAction({
     </div>
 
     <div style="background: #f0f9ff; border-radius: 12px; padding: 20px; margin: 20px 0;">
-      <p style="font-weight: bold; margin-top: 0;">有料メンバーの特典：</p>
-      <ul style="padding-left: 20px;">
-        <li>超実践型ハンズオン（ライブ＆アーカイブ）</li>
-        <li>独自学習管理システム利用権</li>
-        <li>Discordコミュニティ参加権</li>
-        <li>ハッカソンへの参加・フィードバック</li>
-        <li>メンバー限定のソースコード共有</li>
+      <p style="font-weight: bold; margin-top: 0; font-size: 15px; color: #0c1a2e;">有料メンバーになると、こんなことができます：</p>
+      <ul style="padding-left: 20px; line-height: 1.8; color: #334155;">
+        <li><strong>週3回のライブハンズオン</strong> — リアルタイムで講師と一緒にAIツールを実践</li>
+        <li><strong>全講義アーカイブ見放題</strong> — プラットフォーム上からいつでも過去の講義を視聴</li>
+        <li><strong>独自学習管理システム</strong> — 進捗トラッキング・学習ランク・ストリーク機能</li>
+        <li><strong>Discordコミュニティ</strong> — メンバー同士の交流・質問・情報共有</li>
+        <li><strong>ハッカソン参加権</strong> — 定期開催のハッカソンでフィードバックを受けられる</li>
+        <li><strong>ソースコード共有</strong> — 講義で使用したコード・テンプレートをすべて公開</li>
       </ul>
     </div>
 
@@ -150,7 +151,19 @@ export const sendTrialFollowUpEmail = internalAction({
 
     <p>体験期間終了から1週間が経ちましたが、その後いかがでしょうか？</p>
 
-    <p>AI PLAY GUILDでは、最新のAI技術を実践的に学べるコンテンツを日々更新しています。メンバーシップに登録いただければ、すべてのコンテンツにすぐにアクセスできます。</p>
+    <p>AI PLAY GUILDでは、体験期間中にはなかった新しいコンテンツも続々と追加されています。今メンバーになれば、すべてにすぐアクセスできます。</p>
+
+    <div style="background: #f0f9ff; border-radius: 12px; padding: 20px; margin: 20px 0;">
+      <p style="font-weight: bold; margin-top: 0; font-size: 15px; color: #0c1a2e;">メンバーが今やっていること：</p>
+      <ul style="padding-left: 20px; line-height: 1.8; color: #334155;">
+        <li><strong>週3回のライブハンズオン</strong> — 最新AIツールをリアルタイムで実践</li>
+        <li><strong>全講義アーカイブ見放題</strong> — 過去の講義もいつでも視聴可能</li>
+        <li><strong>学習管理システム</strong> — あなたの進捗・ランクがそのまま引き継がれます</li>
+        <li><strong>Discordコミュニティ</strong> — メンバー同士で質問・交流・情報共有</li>
+        <li><strong>ハッカソン</strong> — 定期開催で実践力を磨く＆フィードバック</li>
+        <li><strong>ソースコード共有</strong> — 講義で使用した全コード・テンプレートにアクセス</li>
+      </ul>
+    </div>
 
     <div style="text-align: center; margin: 30px 0;">
       <a href="${JOIN_URL}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #38bdf8, #06b6d4); color: white; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 16px;">
