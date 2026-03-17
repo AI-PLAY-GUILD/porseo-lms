@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
-import { internalMutation, mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { validateInternalSecret } from "./lib/requireSecret";
 import { getUserByClerkId } from "./users";
 
@@ -328,14 +328,12 @@ export const activateNoteTrial = mutation({
         });
 
         // 9. Schedule warning at 23 days
-        // biome-ignore lint/suspicious/noExplicitAny: Convex codegen not available without `npx convex dev`
-        await ctx.scheduler.runAt(now + TWENTY_THREE_DAYS, (internal as any).notePromo.markTrialExpiringSoon, {
+        await ctx.scheduler.runAt(now + TWENTY_THREE_DAYS, internal.notePromo.markTrialExpiringSoon, {
             trialId,
         });
 
         // 10. Schedule expiration at 30 days
-        // biome-ignore lint/suspicious/noExplicitAny: Convex codegen not available without `npx convex dev`
-        await ctx.scheduler.runAt(trialExpiresAt, (internal as any).notePromo.expireNoteTrial, {
+        await ctx.scheduler.runAt(trialExpiresAt, internal.notePromo.expireNoteTrial, {
             trialId,
         });
 
@@ -439,6 +437,11 @@ export const expireNoteTrial = internalMutation({
             createdAt: now,
         });
 
+        // Schedule expiration email
+        await ctx.scheduler.runAfter(0, internal.notePromoEmail.sendTrialExpiredEmail, {
+            trialId: args.trialId,
+        });
+
         console.log("[notePromo:expireNoteTrial] 完了", { trialId: args.trialId, userId: trial.userId });
     },
 });
@@ -474,6 +477,27 @@ export const markTrialConverted = internalMutation({
         });
 
         console.log("[notePromo:markTrialConverted] 完了", { trialId: trial._id });
+    },
+});
+
+// Internal query: トライアルとユーザー情報を取得 (nodeアクションから呼び出し用)
+export const getTrialWithUser = internalQuery({
+    args: { trialId: v.id("noteTrialUsers") },
+    handler: async (ctx, args) => {
+        const trial = await ctx.db.get(args.trialId);
+        if (!trial) return null;
+
+        const user = await ctx.db.get(trial.userId);
+        if (!user) return null;
+
+        return {
+            trialId: trial._id,
+            userId: trial.userId,
+            status: trial.status,
+            convertedToSubscription: trial.convertedToSubscription,
+            userName: user.name,
+            userEmail: user.email,
+        };
     },
 });
 

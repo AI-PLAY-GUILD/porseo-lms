@@ -17,6 +17,7 @@ import type * as internal_ from "../internal.js";
 import type * as lib_requireSecret from "../lib/requireSecret.js";
 import type * as lib_safeCompare from "../lib/safeCompare.js";
 import type * as notePromo from "../notePromo.js";
+import type * as notePromoEmail from "../notePromoEmail.js";
 import type * as notePromoServer from "../notePromoServer.js";
 import type * as rag from "../rag.js";
 import type * as ragDb from "../ragDb.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   "lib/requireSecret": typeof lib_requireSecret;
   "lib/safeCompare": typeof lib_safeCompare;
   notePromo: typeof notePromo;
+  notePromoEmail: typeof notePromoEmail;
   notePromoServer: typeof notePromoServer;
   rag: typeof rag;
   ragDb: typeof ragDb;
