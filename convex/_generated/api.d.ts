@@ -13,6 +13,7 @@ import type * as ai from "../ai.js";
 import type * as courses from "../courses.js";
 import type * as crons from "../crons.js";
 import type * as dashboard from "../dashboard.js";
+import type * as discordNotify from "../discordNotify.js";
 import type * as internal_ from "../internal.js";
 import type * as lib_requireSecret from "../lib/requireSecret.js";
 import type * as lib_safeCompare from "../lib/safeCompare.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   courses: typeof courses;
   crons: typeof crons;
   dashboard: typeof dashboard;
+  discordNotify: typeof discordNotify;
   internal: typeof internal_;
   "lib/requireSecret": typeof lib_requireSecret;
   "lib/safeCompare": typeof lib_safeCompare;

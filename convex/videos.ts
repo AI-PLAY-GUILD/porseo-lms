@@ -306,10 +306,24 @@ export const publishVideoServer = mutation({
     },
     handler: async (ctx, args) => {
         validateInternalSecret(args.secret);
+
+        const existingVideo = await ctx.db.get(args.videoId);
+        const isNewlyPublished = args.isPublished === true && existingVideo && !existingVideo.isPublished;
+
         await ctx.db.patch(args.videoId, {
             isPublished: args.isPublished,
             updatedAt: Date.now(),
         });
+
+        // 新規公開時にDiscordフォーラムへ自動投稿
+        if (isNewlyPublished && existingVideo) {
+            await ctx.scheduler.runAfter(0, internal.discordNotify.postVideoToForum, {
+                videoId: args.videoId,
+                title: existingVideo.title,
+                description: existingVideo.description,
+                summary: existingVideo.summary,
+            });
+        }
     },
 });
 
@@ -359,6 +373,11 @@ export const updateVideo = mutation({
         if (!user?.isAdmin) throw new Error("Admin access required");
 
         const { videoId, ...updates } = args;
+
+        // Check if this is a publish action (was unpublished, now publishing)
+        const existingVideo = await ctx.db.get(videoId);
+        const isNewlyPublished = args.isPublished === true && existingVideo && !existingVideo.isPublished;
+
         await ctx.db.patch(videoId, {
             ...updates,
             updatedAt: Date.now(),
@@ -368,6 +387,16 @@ export const updateVideo = mutation({
         if (args.transcription !== undefined) {
             await ctx.scheduler.runAfter(0, internal.rag.autoIndexVideoTranscription, {
                 videoId,
+            });
+        }
+
+        // 新規公開時にDiscordフォーラムへ自動投稿
+        if (isNewlyPublished && existingVideo) {
+            await ctx.scheduler.runAfter(0, internal.discordNotify.postVideoToForum, {
+                videoId,
+                title: args.title ?? existingVideo.title,
+                description: args.description ?? existingVideo.description,
+                summary: args.summary ?? existingVideo.summary,
             });
         }
 
