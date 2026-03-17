@@ -115,14 +115,6 @@ export default function VideoPage() {
         return parseChatMessages(video.zoomChatMessages);
     }, [video?.zoomChatMessages]);
 
-    if (video === undefined || access === undefined) {
-        return (
-            <div className="flex items-center justify-center min-h-[50vh]">
-                <BrutalistLoader />
-            </div>
-        );
-    }
-
     // 未ログイン・権限不足・動画なしの場合はLPへリダイレクト
     useEffect(() => {
         if (user === undefined || video === undefined || access === undefined) return;
@@ -130,6 +122,14 @@ export default function VideoPage() {
             router.replace("/");
         }
     }, [user, video, access, router]);
+
+    if (video === undefined || access === undefined) {
+        return (
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <BrutalistLoader />
+            </div>
+        );
+    }
 
     if (video === null || user === null) {
         return null;
