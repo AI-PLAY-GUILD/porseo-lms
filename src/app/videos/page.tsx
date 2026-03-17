@@ -39,9 +39,12 @@ export default function AllVideosPage() {
     useEffect(() => {
         if (isMounted && stats) {
             const status = stats.subscriptionStatus;
-            if (status !== "active" && status !== "past_due") {
-                router.push("/join");
+            if (status !== "active" && status !== "past_due" && status !== "note_trial") {
+                router.push("/");
             }
+        }
+        if (isMounted && stats === null) {
+            router.push("/");
         }
     }, [isMounted, stats, router]);
 

@@ -5,8 +5,8 @@ import MuxPlayer from "@mux/mux-player-react";
 import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft, Calendar, Check, Copy, FileText, LogOut, MessageSquare, Mic } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { BrutalistLoader } from "@/components/ui/brutalist-loader";
 import { Button } from "@/components/ui/button";
@@ -84,6 +84,7 @@ function formatSecondsToTime(seconds: number): string {
 
 export default function VideoPage() {
     const params = useParams();
+    const router = useRouter();
     const videoId = params.id as Id<"videos">;
 
     const video = useQuery(api.videos.getById, { videoId });
@@ -122,30 +123,20 @@ export default function VideoPage() {
         );
     }
 
-    if (video === null) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-                <h2 className="text-2xl font-bold">動画が見つかりません</h2>
-                <Button asChild variant="outline">
-                    <Link href="/videos">動画一覧に戻る</Link>
-                </Button>
-            </div>
-        );
+    // 未ログイン・権限不足・動画なしの場合はLPへリダイレクト
+    useEffect(() => {
+        if (user === undefined || video === undefined || access === undefined) return;
+        if (user === null || video === null || !access.hasAccess) {
+            router.replace("/");
+        }
+    }, [user, video, access, router]);
+
+    if (video === null || user === null) {
+        return null;
     }
 
-    if (!access.hasAccess) {
-        return (
-            <div className="p-8 max-w-4xl mx-auto text-center">
-                <Card className="bg-destructive/10 border-destructive/20">
-                    <CardHeader>
-                        <CardTitle className="text-destructive">アクセス権限がありません</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground">この動画を視聴するには、特定のDiscordロールが必要です。</p>
-                    </CardContent>
-                </Card>
-            </div>
-        );
+    if (!access?.hasAccess) {
+        return null;
     }
 
     const handleSeek = (time: number) => {
