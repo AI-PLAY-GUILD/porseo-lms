@@ -297,6 +297,34 @@ export const setThumbnailServer = mutation({
     },
 });
 
+// CLI/スクリプト用: secret認証でタイトル・説明・サマリーを更新
+export const updateVideoMetadataServer = mutation({
+    args: {
+        videoId: v.id("videos"),
+        title: v.optional(v.string()),
+        description: v.optional(v.string()),
+        summary: v.optional(v.string()),
+        secret: v.string(),
+    },
+    handler: async (ctx, args) => {
+        validateInternalSecret(args.secret);
+
+        if (args.title && args.title.length > MAX_TITLE_LENGTH)
+            throw new Error(`Title must be ${MAX_TITLE_LENGTH} characters or less`);
+        if (args.description && args.description.length > MAX_DESCRIPTION_LENGTH)
+            throw new Error(`Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`);
+        if (args.summary && args.summary.length > MAX_SUMMARY_LENGTH)
+            throw new Error(`Summary must be ${MAX_SUMMARY_LENGTH} characters or less`);
+
+        const updates: Record<string, unknown> = { updatedAt: Date.now() };
+        if (args.title !== undefined) updates.title = args.title;
+        if (args.description !== undefined) updates.description = args.description;
+        if (args.summary !== undefined) updates.summary = args.summary;
+
+        await ctx.db.patch(args.videoId, updates);
+    },
+});
+
 // CLI/スクリプト用: secret認証で動画公開状態を変更
 export const publishVideoServer = mutation({
     args: {
