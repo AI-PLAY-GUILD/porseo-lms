@@ -98,6 +98,9 @@ export default function VideoPage() {
     const lastLoggedTimeRef = useRef<number>(0);
     const accumulatedTimeRef = useRef<number>(0);
 
+    // Preserve playback rate across seeks
+    const playbackRateRef = useRef<number>(1);
+
     // Transcription & Chat toggle
     const [showTranscription, setShowTranscription] = useState(false);
     const [showChat, setShowChat] = useState(false);
@@ -141,11 +144,18 @@ export default function VideoPage() {
 
     const handleSeek = (time: number) => {
         const videoEl = document.querySelector("mux-player") as
-            | (HTMLElement & { currentTime: number; play: () => void })
+            | (HTMLElement & { currentTime: number; playbackRate: number; play: () => void })
             | null;
         if (videoEl) {
+            const savedRate = playbackRateRef.current;
             videoEl.currentTime = time;
             videoEl.play();
+            // Restore playback rate after seek
+            requestAnimationFrame(() => {
+                if (videoEl.playbackRate !== savedRate) {
+                    videoEl.playbackRate = savedRate;
+                }
+            });
             window.scrollTo({ top: 0, behavior: "smooth" });
         }
     };
@@ -243,6 +253,16 @@ export default function VideoPage() {
                                 accumulatedTimeRef.current = 0;
                             }
                             lastLoggedTimeRef.current = 0;
+                        }}
+                        onRateChange={(e) => {
+                            const target = e.target as HTMLVideoElement;
+                            playbackRateRef.current = target.playbackRate;
+                        }}
+                        onSeeked={(e) => {
+                            const target = e.target as HTMLVideoElement;
+                            if (target.playbackRate !== playbackRateRef.current) {
+                                target.playbackRate = playbackRateRef.current;
+                            }
                         }}
                         onEnded={() => {
                             updateProgress({
