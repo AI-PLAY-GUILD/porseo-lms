@@ -26,6 +26,7 @@ export default function ProfilePage() {
     const userData = useQuery(api.users.getUser);
     const trialStatus = useQuery(api.notePromo.getTrialStatus);
     const [loading, setLoading] = useState(false);
+    const [noActiveSubscription, setNoActiveSubscription] = useState(false);
 
     console.log(
         "[ProfilePage] レンダリング userData:",
@@ -35,13 +36,18 @@ export default function ProfilePage() {
     const handleManageSubscription = async () => {
         console.log("[ProfilePage] サブスクリプション管理開始");
         setLoading(true);
+        setNoActiveSubscription(false);
         try {
             const res = await fetch("/api/create-portal-session", {
                 method: "POST",
             });
             const data = await res.json();
             if (!res.ok) {
-                const message = data?.error || `HTTP ${res.status}`;
+                if (data?.error === "NO_ACTIVE_SUBSCRIPTION") {
+                    setNoActiveSubscription(true);
+                    return;
+                }
+                const message = data?.message || data?.error || `HTTP ${res.status}`;
                 alert(`カスタマーポータルのURL取得に失敗しました。\n${message}`);
                 return;
             }
@@ -208,18 +214,40 @@ export default function ProfilePage() {
                                 </div>
                             ) : isPremium ? (
                                 userData.stripeCustomerId ? (
-                                    <div className="space-y-4">
-                                        <Button
-                                            onClick={handleManageSubscription}
-                                            disabled={loading}
-                                            className="w-full sm:w-auto"
-                                        >
-                                            {loading ? "読み込み中..." : "契約内容の確認・変更・解約"}
-                                        </Button>
-                                        <p className="text-xs text-muted-foreground">
-                                            ※ Stripeの安全な管理画面へ移動します。
-                                        </p>
-                                    </div>
+                                    noActiveSubscription ? (
+                                        <div className="space-y-4">
+                                            <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-md text-sm text-yellow-800">
+                                                <p className="font-bold mb-2">
+                                                    Stripeにアクティブなサブスクリプションが見つかりませんでした
+                                                </p>
+                                                <p className="mb-2">
+                                                    このアカウントはStripe以外の方法でプレミアム権限が付与されているか、サブスクリプションがすでに解約されています。解約や変更をご希望の場合は、お手数ですが運営までお問い合わせください。
+                                                </p>
+                                                <p>
+                                                    お問い合わせ先:{" "}
+                                                    <a
+                                                        href="mailto:taiyo.kimura.3w@stu.hosei.ac.jp"
+                                                        className="underline text-blue-600 hover:text-blue-800"
+                                                    >
+                                                        taiyo.kimura.3w@stu.hosei.ac.jp
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <Button
+                                                onClick={handleManageSubscription}
+                                                disabled={loading}
+                                                className="w-full sm:w-auto"
+                                            >
+                                                {loading ? "読み込み中..." : "契約内容の確認・変更・解約"}
+                                            </Button>
+                                            <p className="text-xs text-muted-foreground">
+                                                ※ Stripeの安全な管理画面へ移動します。
+                                            </p>
+                                        </div>
+                                    )
                                 ) : (
                                     <div className="space-y-4">
                                         <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-md text-sm text-yellow-800">

@@ -38,34 +38,41 @@ export async function POST(req: Request) {
             ["active", "trialing", "past_due", "unpaid"].includes(sub.status),
         );
 
+        if (!targetSubscription) {
+            console.log("[create-portal-session] アクティブなサブスクリプションが見つかりません", {
+                customerId: user.stripeCustomerId,
+            });
+            return NextResponse.json(
+                {
+                    error: "NO_ACTIVE_SUBSCRIPTION",
+                    message:
+                        "Stripe上にアクティブなサブスクリプションが見つかりませんでした。解約や変更は運営までお問い合わせください。",
+                },
+                { status: 404 },
+            );
+        }
+
         let session;
-        if (targetSubscription) {
-            try {
-                session = await stripe.billingPortal.sessions.create({
-                    customer: user.stripeCustomerId,
-                    return_url: returnUrl,
-                    flow_data: {
-                        type: "subscription_update",
-                        subscription_update: {
-                            subscription: targetSubscription.id,
-                        },
+        try {
+            session = await stripe.billingPortal.sessions.create({
+                customer: user.stripeCustomerId,
+                return_url: returnUrl,
+                flow_data: {
+                    type: "subscription_cancel",
+                    subscription_cancel: {
+                        subscription: targetSubscription.id,
                     },
-                });
-            } catch (flowError) {
-                console.warn(
-                    "[create-portal-session] subscription_update フローの作成に失敗。通常ポータルへフォールバック",
-                    {
-                        customerId: user.stripeCustomerId,
-                        subscriptionId: targetSubscription.id,
-                        flowError,
-                    },
-                );
-                session = await stripe.billingPortal.sessions.create({
-                    customer: user.stripeCustomerId,
-                    return_url: returnUrl,
-                });
-            }
-        } else {
+                },
+            });
+        } catch (flowError) {
+            console.warn(
+                "[create-portal-session] subscription_cancel フローの作成に失敗。通常ポータルへフォールバック",
+                {
+                    customerId: user.stripeCustomerId,
+                    subscriptionId: targetSubscription.id,
+                    flowError,
+                },
+            );
             session = await stripe.billingPortal.sessions.create({
                 customer: user.stripeCustomerId,
                 return_url: returnUrl,
