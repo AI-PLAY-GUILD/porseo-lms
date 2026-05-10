@@ -106,7 +106,7 @@ export function BrutalistWhy() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-0 max-w-6xl mx-auto mb-16 md:mb-32">
                     <StatItem end={130} label="過去参加人数累計" prefix="+" />
                     <StatItem end={40} label="アーカイブ講座数" prefix="+" hasBorder={true} />
-                    <StatItem end={100000} label="運営陣の総フォロワー数" prefix="+" />
+                    <StatItem end={2} label="運営陣の総フォロワー数" suffix="万人" />
                 </div>
 
                 {/* Live Hands-on Section (New) */}

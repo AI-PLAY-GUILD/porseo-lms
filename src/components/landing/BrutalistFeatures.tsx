@@ -16,7 +16,7 @@ const features = [
     {
         icon: Megaphone,
         title: "世界へ発信",
-        description: "運営者のXフォロワーは総計10万人以上。あなたの作ったものを社会へ公開。",
+        description: "運営者のXフォロワーは総計2万人以上。あなたの作ったものを社会へ公開。",
         color: "bg-pop-green",
     },
     {

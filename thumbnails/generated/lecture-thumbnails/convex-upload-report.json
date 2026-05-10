@@ -1,0 +1,103 @@
+{
+  "uploadedAt": "2026-05-10T04:03:40.234Z",
+  "convexDeployment": "prod:agile-egret-492",
+  "count": 12,
+  "results": [
+    {
+      "no": "01",
+      "title": "【AIエージェント活用】HTMLからPowerPointへのスライド生成API開発",
+      "videoId": "k5725s3zf4mca9m1cv6dayj62d86c2at",
+      "muxPlaybackId": "khyQQukWztP8dZcgcNb02IX6WcA8IYFqwftZRWdswVgE",
+      "thumbnailPath": "thumbnails/generated/lecture-thumbnails/01_k5725s3zf4mca9m1cv6dayj62d86c2at__claude-code-jissen-html-to-powerpoint.png",
+      "storageId": "kg2ba0h72vn021bsjdma5v175x86f4v8"
+    },
+    {
+      "no": "02",
+      "title": "【Claude Code流出】人柱がコードを読み解く会",
+      "videoId": "k57cq7ajzm8nk2g2gc6ehfw8wx86dvxf",
+      "muxPlaybackId": "eoLHQ01zbSOdighs15SP2uCrc2aURJBiqzWBL3WANIF4",
+      "thumbnailPath": "thumbnails/generated/lecture-thumbnails/02_k57cq7ajzm8nk2g2gc6ehfw8wx86dvxf__claude-code-leaked-code-reading.png",
+      "storageId": "kg2c9pbhs3q8akqbr00rgacsa986edgw"
+    },
+    {
+      "no": "03",
+      "title": "【自作スキルの公開】",
+      "videoId": "k57fnkvakeqp4qhkg0dsxe0smd86dems",
+      "muxPlaybackId": "JVotD6G5LVL00g5i02297nW4LQf7GPcODTVlH00uAMPqHs",
+      "thumbnailPath": "thumbnails/generated/lecture-thumbnails/03_k57fnkvakeqp4qhkg0dsxe0smd86dems__custom-skills-publishing.png",
+      "storageId": "kg22yc7ckd9acefdxyagmtz5wd86e73e"
+    },
+    {
+      "no": "04",
+      "title": "【Type-Free】Xで話題の便利ツール紹介",
+      "videoId": "k572r4vq5zb0ye224be1ktg2xh86dm7f",
+      "muxPlaybackId": "8rYfK9VJwWUtpFJagLqhbjXTNsVPfDre01y1IHu9jQUg",
+      "thumbnailPath": "thumbnails/generated/lecture-thumbnails/04_k572r4vq5zb0ye224be1ktg2xh86dm7f__type-free-multi-sns-automation.png",
+      "storageId": "kg2egq2read0z5ezg2vv7x1p1d86f89q"
+    },
+    {
+      "no": "05",
+      "title": "【スレッズアカウントの伸ばし方】爆伸びした経験を共有！",
+      "videoId": "k57fqej6fmkj50xktvq1ecqfcn86dx8d",
+      "muxPlaybackId": "qZ00oopGNmhY2A91pBtA2ok9oU4cMIZBq71douYrJ01i4",
+      "thumbnailPath": "thumbnails/generated/lecture-thumbnails/05_k57fqej6fmkj50xktvq1ecqfcn86dx8d__threads-growth-strategy.png",
+      "storageId": "kg2a0w9ahntyrtv1mm9qg0kc9986ed53"
+    },
+    {
+      "no": "06",
+      "title": "【ノート記事生成スキルズ】最終形態の使い方",
+      "videoId": "k573jd4502kger36hd95frv5xx86cvnz",
+      "muxPlaybackId": "DRevh1o4BmFfqIOJ9y3ZzjjXdpYU2D7fZM01GxLQtVIg",
+      "thumbnailPath": "thumbnails/generated/lecture-thumbnails/06_k573jd4502kger36hd95frv5xx86cvnz__note-article-generation-final.png",
+      "storageId": "kg26p943nhk1cagc5dmgtj3t3186egpw"
+    },
+    {
+      "no": "07",
+      "title": "【ClaudeとBlender連携】新コネクターとアドインツールの活用",
+      "videoId": "k578re9a6d0tjjbqv47hed0q2h86dhwz",
+      "muxPlaybackId": "ln6wbMO1OuXPOVpeAMF97DChMkhtXZhEA01nCu6II9lc",
+      "thumbnailPath": "thumbnails/generated/lecture-thumbnails/07_k578re9a6d0tjjbqv47hed0q2h86dhwz__claude-blender-3d-connector.png",
+      "storageId": "kg22qr75xazyzpqf61jpasw9j586e8rt"
+    },
+    {
+      "no": "08",
+      "title": "【Vercel SDK】Slack常駐AIエージェント構築",
+      "videoId": "k57ev38hpmbgvsxe7czdw0a34h86cn9a",
+      "muxPlaybackId": "zfG5PbpmwOo2zQIDHCQKO00vIv0200iv0100SBkF9BF6J02rQ",
+      "thumbnailPath": "thumbnails/generated/lecture-thumbnails/08_k57ev38hpmbgvsxe7czdw0a34h86cn9a__vercel-ai-sdk-slack-agent.png",
+      "storageId": "kg26068mrxcsnyr5m0s5db9c8s86fsfq"
+    },
+    {
+      "no": "09",
+      "title": "【AIエージェント】Gen Sparkで学ぶガチコンサルプラットフォーム開発",
+      "videoId": "k572ar60vske4qky5e0q00tm5n86d159",
+      "muxPlaybackId": "snl3rVPhkT4U02JmzkURBPBBPmOnK8xnyNUkkS00ZZxQI",
+      "thumbnailPath": "thumbnails/generated/lecture-thumbnails/09_k572ar60vske4qky5e0q00tm5n86d159__gen-spark-ai-consulting-platform.png",
+      "storageId": "kg2bkvz0x2beg2mxztvs2gw6sd86fhq4"
+    },
+    {
+      "no": "10",
+      "title": "【コーデックスApp Server活用】音声入力AIアシスタントアプリ開発",
+      "videoId": "k5769ccnd02gzwnsh4wvpbkx4586ddtf",
+      "muxPlaybackId": "k0157Wda2Duk1zkj1XpB61wE00IAEt8VPWEIqvR5isjEg",
+      "thumbnailPath": "thumbnails/generated/lecture-thumbnails/10_k5769ccnd02gzwnsh4wvpbkx4586ddtf__codex-app-server-voice-ai-assistant.png",
+      "storageId": "kg27gc183hypjt7h80jj45gh1d86eexs"
+    },
+    {
+      "no": "11",
+      "title": "【新機能】コーデックスApp Server徹底解説",
+      "videoId": "k576brhpw329g94q9cf3ch554s86dfrf",
+      "muxPlaybackId": "iIUXrwiD4GCV018myR2YdZVevWgniwH00U5QhnL2M7Gic",
+      "thumbnailPath": "thumbnails/generated/lecture-thumbnails/11_k576brhpw329g94q9cf3ch554s86dfrf__codex-app-server-deep-dive.png",
+      "storageId": "kg2d5yw5gsdnnzm7kmn3dfd29d86e435"
+    },
+    {
+      "no": "12",
+      "title": "【Claude活用】Google Workspace/Notion連携とスキル検証",
+      "videoId": "k577mxryyzf3xerm8pmnzsmzj186dw3x",
+      "muxPlaybackId": "fbIYiUwtF6ugq73C6GC2D49rdpgHYR1CU3aUFKGbbWo",
+      "thumbnailPath": "thumbnails/generated/lecture-thumbnails/12_k577mxryyzf3xerm8pmnzsmzj186dw3x__claude-notion-google-workspace-api.png",
+      "storageId": "kg27cg6fzeqe3h1c0dgzavwhd986e6d5"
+    }
+  ]
+}
