@@ -15,16 +15,6 @@ const team = [
         twitterUrl: "https://x.com/taiyo_ai_gakuse?s=20",
     },
     {
-        name: "SUGURU",
-        role: "CONTENTS OWNER",
-        description:
-            "株式会社Uravation代表。GPTs国内トップクラスの実績を持ち、大手企業のAI導入も支援。「作ったものをどう社会に届けるか」という出口戦略をサポートし、個人の遊びを、市場価値のある「成果」へと導きます！",
-        color: "bg-pop-green",
-        image: "🤖",
-        imageUrl: "https://pbs.twimg.com/profile_images/1765706549824221184/N0yR_7Sj_400x400.jpg", // Add image URL here
-        twitterUrl: "https://x.com/SuguruKun_ai?s=20",
-    },
-    {
         name: "SHUN",
         role: "CX OFFICER",
         description:
@@ -49,7 +39,7 @@ export function BrutalistTeam() {
                     </h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                     {team.map((member, index) => (
                         <div key={index} className="group relative">
                             {/* Card */}

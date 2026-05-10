@@ -147,7 +147,7 @@ export function BrutalistHero({ isSignedIn, handleCheckout, checkoutLoading }: B
                                         className="text-2xl sm:text-4xl font-normal text-black mb-1"
                                         style={{ fontFamily: "var(--font-jp)" }}
                                     >
-                                        10万+
+                                        2万人
                                     </div>
                                     <div className="text-xs sm:text-sm text-slate-600">総フォロワー</div>
                                 </div>
