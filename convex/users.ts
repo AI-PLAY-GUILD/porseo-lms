@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { DatabaseReader, MutationCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { getEffectiveDiscordRoles, getMembershipSummary, hasRequiredRoleAccess } from "./lib/membership";
 import { validateInternalSecret } from "./lib/requireSecret";
 
 // Issue #59: Audit log helper — records user mutations for compliance
@@ -110,10 +111,16 @@ export const getUser = query({
         }
 
         console.log("[users:getUser] 完了", { clerkId: identity.subject });
-        return await ctx.db
+        const user = await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
             .first();
+        if (!user) return null;
+
+        return {
+            ...user,
+            ...(await getMembershipSummary(ctx, user)),
+        };
     },
 });
 
@@ -176,7 +183,8 @@ export const checkAccess = query({
         // 動画にロール制限がない場合はアクセス可能とする（要件によるが、今回は制限あり前提）
         if (!video.requiredRoles || video.requiredRoles.length === 0) return { hasAccess: true };
 
-        const hasRequiredRole = video.requiredRoles.some((role) => user.discordRoles.includes(role));
+        const effectiveRoles = await getEffectiveDiscordRoles(ctx, user);
+        const hasRequiredRole = hasRequiredRoleAccess(video.requiredRoles, effectiveRoles);
 
         console.log("[users:checkAccess] 完了", { userId: user._id, hasAccess: hasRequiredRole });
         return { hasAccess: hasRequiredRole };
@@ -205,7 +213,11 @@ export const getUserByClerkIdServer = query({
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
             .first();
         console.log("[users:getUserByClerkIdServer] 完了", { found: !!result });
-        return result;
+        if (!result) return null;
+        return {
+            ...result,
+            ...(await getMembershipSummary(ctx, result)),
+        };
     },
 });
 
@@ -551,7 +563,13 @@ export const getAllUsers = query({
             throw new Error("Unauthorized");
         }
 
-        const result = await ctx.db.query("users").order("desc").collect();
+        const users = await ctx.db.query("users").order("desc").collect();
+        const result = await Promise.all(
+            users.map(async (targetUser) => ({
+                ...targetUser,
+                ...(await getMembershipSummary(ctx, targetUser)),
+            })),
+        );
         console.log("[users:getAllUsers] 完了", { userCount: result.length });
         return result;
     },

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import { getEffectiveDiscordRoles, hasRequiredRoleAccess } from "./lib/membership";
 import { validateInternalSecret } from "./lib/requireSecret";
 
 // Input length limits
@@ -168,6 +169,8 @@ export const getPublishedVideos = query({
             );
         }
 
+        const effectiveRoles = await getEffectiveDiscordRoles(ctx, user);
+
         // 3. Get user's progress for all videos
         const progressRecords = await ctx.db
             .query("videoProgress")
@@ -183,10 +186,7 @@ export const getPublishedVideos = query({
 
                 // Admin can see everything
                 const isAdmin = user.isAdmin;
-                const hasRequiredRole =
-                    !video.requiredRoles ||
-                    video.requiredRoles.length === 0 ||
-                    video.requiredRoles.some((role: string) => user.discordRoles?.includes(role));
+                const hasRequiredRole = hasRequiredRoleAccess(video.requiredRoles, effectiveRoles);
                 const hasAccess = isAdmin || hasRequiredRole;
 
                 return {
@@ -217,6 +217,7 @@ export const getById = query({
             if (user?.isAdmin) {
                 isAdmin = true;
             }
+            const effectiveRoles = user ? await getEffectiveDiscordRoles(ctx, user) : [];
 
             // Check roles for non-admin users
             if (!isAdmin) {
@@ -228,7 +229,7 @@ export const getById = query({
                 // 2. Role check
                 if (video.requiredRoles && video.requiredRoles.length > 0) {
                     if (!user) return null; // Logged in but no user record?!
-                    const hasRequiredRole = video.requiredRoles.some((role) => user.discordRoles?.includes(role));
+                    const hasRequiredRole = hasRequiredRoleAccess(video.requiredRoles, effectiveRoles);
                     if (!hasRequiredRole) {
                         return null; // Hide the video completely or return metadata only if needed (for now, safe default is null)
                     }

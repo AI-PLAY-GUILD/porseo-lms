@@ -1,7 +1,7 @@
 "use client";
 
 import { SignOutButton } from "@clerk/nextjs";
-import { LayoutDashboard, LogOut, Settings, User } from "lucide-react";
+import { LayoutDashboard, Link2, LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type * as React from "react";
@@ -85,6 +85,20 @@ export function AdminSidebar({
                                             <div className="h-1.5 w-1.5 rounded-full bg-current" />
                                         </div>
                                         <span>行動分析</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname === "/admin/note-membership"}
+                                    className="text-black hover:bg-pop-purple/20 hover:text-black hover:translate-x-1 transition-all duration-200 data-[active=true]:bg-pop-yellow data-[active=true]:text-black data-[active=true]:border-2 data-[active=true]:border-black data-[active=true]:brutal-shadow-sm rounded-lg px-3 py-2 h-auto"
+                                >
+                                    <Link href="/admin/note-membership" className="flex items-center gap-3 font-bold">
+                                        <div className="flex w-6 items-center justify-center">
+                                            <Link2 className="h-4 w-4" />
+                                        </div>
+                                        <span>note連携</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

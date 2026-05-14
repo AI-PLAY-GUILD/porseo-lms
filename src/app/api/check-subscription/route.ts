@@ -53,9 +53,12 @@ export async function POST(_req: Request) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
+        const rawSubscriptionStatus = user.rawSubscriptionStatus ?? user.subscriptionStatus;
+        const hasActiveNoteMembership = user.hasActiveNoteMembership === true;
+
         // If already active AND linked to Stripe, return early (Stripe manages lifecycle via webhooks)
         // If active but NO Stripe (Discord-role-only user), always re-verify the role below
-        if (user.subscriptionStatus === "active" && user.stripeCustomerId) {
+        if (rawSubscriptionStatus === "active" && user.stripeCustomerId) {
             console.log("[check-subscription] 成功: Stripe管理ユーザー、サブスクリプションは既にアクティブ", {
                 userId,
             });
@@ -75,7 +78,8 @@ export async function POST(_req: Request) {
 
         // Issue #62: Check cache first before calling Discord API
         // For role-revocation check, bypass cache when user is already active (ensure fresh data)
-        const isRoleRecheckForActiveUser = user.subscriptionStatus === "active" && !user.stripeCustomerId;
+        const isRoleRecheckForActiveUser =
+            rawSubscriptionStatus === "active" && !user.stripeCustomerId && !hasActiveNoteMembership;
         let roles: string[];
         const cachedRoles = isRoleRecheckForActiveUser ? null : getCachedRoles(user.discordId);
 
@@ -107,6 +111,13 @@ export async function POST(_req: Request) {
                 const errorText = await discordRes.text();
                 console.error("Discord API Error:", errorText);
                 if (discordRes.status === 404) {
+                    if (hasActiveNoteMembership) {
+                        return NextResponse.json({
+                            status: "active",
+                            noteMembership: true,
+                            discordSync: "not_in_server",
+                        });
+                    }
                     // User left the server — revoke access if they were a discord-role-only active user
                     if (isRoleRecheckForActiveUser) {
                         await convex.mutation(api.users.updateSubscriptionStatus, {
@@ -131,6 +142,10 @@ export async function POST(_req: Request) {
         }
 
         if (roles.includes(roleId)) {
+            if (hasActiveNoteMembership && rawSubscriptionStatus !== "active") {
+                return NextResponse.json({ status: "active", noteMembership: true });
+            }
+
             // 3. Update Subscription Status to active
             await convex.mutation(api.users.updateSubscriptionStatus, {
                 discordId: user.discordId,
@@ -143,6 +158,18 @@ export async function POST(_req: Request) {
             });
             return NextResponse.json({ status: "active", updated: true });
         } else {
+            if (hasActiveNoteMembership) {
+                try {
+                    await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${user.discordId}/roles/${roleId}`, {
+                        method: "PUT",
+                        headers: { Authorization: `Bot ${discordToken}` },
+                    });
+                } catch (roleError) {
+                    console.error("[check-subscription] note会員Discordロール付与失敗:", roleError);
+                }
+                return NextResponse.json({ status: "active", noteMembership: true, roleSynced: true });
+            }
+
             // Role was removed — revoke access for discord-role-only active users
             if (isRoleRecheckForActiveUser) {
                 await convex.mutation(api.users.updateSubscriptionStatus, {

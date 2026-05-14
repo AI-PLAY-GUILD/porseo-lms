@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Bot, LayoutDashboard, MessageCircle, Settings, User, Users, Video } from "lucide-react";
+import { BookOpen, Bot, LayoutDashboard, Link2, MessageCircle, Settings, User, Users, Video } from "lucide-react";
 import type * as React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -89,6 +89,11 @@ const data = {
                     title: "プロフィール",
                     url: "/profile",
                     icon: User,
+                },
+                {
+                    title: "noteメンバー連携",
+                    url: "/note-membership",
+                    icon: Link2,
                 },
             ],
         },

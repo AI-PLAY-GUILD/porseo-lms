@@ -181,4 +181,37 @@ export default defineSchema({
         .index("by_ip_hash", ["ipHash"])
         .index("by_status", ["status"])
         .index("by_trial_expires_at", ["trialExpiresAt"]),
+
+    // noteMembershipClaims - noteメンバー本人申請とCSV/管理者監査の状態
+    noteMembershipClaims: defineTable({
+        userId: v.id("users"),
+        noteId: v.string(),
+        memberNumber: v.optional(v.string()),
+        planName: v.optional(v.string()),
+        externalAccount: v.optional(v.string()),
+        status: v.string(), // "active" | "confirmed" | "review" | "rejected"
+        claimedAt: v.number(),
+        updatedAt: v.number(),
+        lastVerifiedAt: v.optional(v.number()),
+        verifiedBy: v.optional(v.id("users")),
+        rejectedAt: v.optional(v.number()),
+        rejectedBy: v.optional(v.id("users")),
+        reviewNote: v.optional(v.string()),
+        lastCsvImportId: v.optional(v.id("noteMembershipImports")),
+    })
+        .index("by_user_id", ["userId"])
+        .index("by_note_id", ["noteId"])
+        .index("by_member_number", ["memberNumber"])
+        .index("by_status", ["status"]),
+
+    noteMembershipImports: defineTable({
+        importedBy: v.id("users"),
+        rowCount: v.number(),
+        matchedCount: v.number(),
+        unmatchedCount: v.number(),
+        rejectedCount: v.number(),
+        createdAt: v.number(),
+    })
+        .index("by_imported_by", ["importedBy"])
+        .index("by_created_at", ["createdAt"]),
 });

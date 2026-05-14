@@ -81,6 +81,7 @@ export default function ProfilePage() {
 
     const isPremium = userData.subscriptionStatus === "active";
     const isNoteTrial = userData.subscriptionStatus === "note_trial";
+    const isNoteMember = userData.hasActiveNoteMembership === true;
 
     return (
         <SidebarProvider>
@@ -145,7 +146,13 @@ export default function ProfilePage() {
                                               : ""
                                     }
                                 >
-                                    {isPremium ? "プレミアム会員" : isNoteTrial ? "無料トライアル" : "無料会員"}
+                                    {isNoteMember
+                                        ? "noteメンバー"
+                                        : isPremium
+                                          ? "プレミアム会員"
+                                          : isNoteTrial
+                                            ? "無料トライアル"
+                                            : "無料会員"}
                                 </Badge>
                             </div>
                             {userData.isAdmin && (
@@ -181,10 +188,12 @@ export default function ProfilePage() {
                                 <div>
                                     <p className="font-medium">現在のプラン</p>
                                     <p className="text-sm text-muted-foreground">
-                                        {isPremium
-                                            ? userData.subscriptionName || "プレミアムプラン"
-                                            : isNoteTrial
-                                              ? `noteマガジン無料トライアル${trialStatus ? ` (残り${trialStatus.daysRemaining}日)` : ""}`
+                                        {isNoteMember
+                                            ? userData.noteMembershipPlanName || "noteメンバーシップ"
+                                            : isPremium
+                                              ? userData.subscriptionName || "プレミアムプラン"
+                                              : isNoteTrial
+                                                ? `noteマガジン無料トライアル${trialStatus ? ` (残り${trialStatus.daysRemaining}日)` : ""}`
                                               : "フリープラン"}
                                     </p>
                                 </div>
@@ -195,7 +204,6 @@ export default function ProfilePage() {
                                     {isPremium ? "有効" : isNoteTrial ? "トライアル中" : "未契約"}
                                 </Badge>
                             </div>
-
                             {isNoteTrial ? (
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-2 text-sm text-sky-700 bg-sky-50 border border-sky-200 rounded-lg p-3">
@@ -251,23 +259,39 @@ export default function ProfilePage() {
                                 ) : (
                                     <div className="space-y-4">
                                         <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-md text-sm text-yellow-800">
-                                            <p className="font-bold mb-2">旧システムでご契約のお客様へ</p>
-                                            <p className="mb-2">お手数ですが、以下の手順で解約をお願いいたします。</p>
-                                            <ol className="list-decimal list-inside space-y-1 ml-2">
-                                                <li>
-                                                    <a
-                                                        href="https://www.ai-porseo.com/"
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="underline text-blue-600 hover:text-blue-800"
-                                                    >
-                                                        https://www.ai-porseo.com/
-                                                    </a>
-                                                    にアクセスしてログイン
-                                                </li>
-                                                <li>マイページ ＞ コミュニティ契約一覧 を選択</li>
-                                                <li>該当の契約をクリックし「キャンセルする」ボタンを押す</li>
-                                            </ol>
+                                            {isNoteMember ? (
+                                                <>
+                                                    <p className="font-bold mb-2">noteメンバー権限で有効です</p>
+                                                    <p className="mb-3">
+                                                        note側の契約管理はnoteで行ってください。LMS連携情報の確認や更新は連携ページからできます。
+                                                    </p>
+                                                    <Button asChild>
+                                                        <Link href="/note-membership">note連携を確認する</Link>
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="font-bold mb-2">旧システムでご契約のお客様へ</p>
+                                                    <p className="mb-2">
+                                                        お手数ですが、以下の手順で解約をお願いいたします。
+                                                    </p>
+                                                    <ol className="list-decimal list-inside space-y-1 ml-2">
+                                                        <li>
+                                                            <a
+                                                                href="https://www.ai-porseo.com/"
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="underline text-blue-600 hover:text-blue-800"
+                                                            >
+                                                                https://www.ai-porseo.com/
+                                                            </a>
+                                                            にアクセスしてログイン
+                                                        </li>
+                                                        <li>マイページ ＞ コミュニティ契約一覧 を選択</li>
+                                                        <li>該当の契約をクリックし「キャンセルする」ボタンを押す</li>
+                                                    </ol>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 )
@@ -277,7 +301,7 @@ export default function ProfilePage() {
                                         プレミアムプランに参加して、全てのコンテンツにアクセスしましょう。
                                     </p>
                                     <Button asChild className="bg-gradient-to-r from-blue-600 to-violet-600">
-                                        <a href="/">プランに加入する</a>
+                                        <Link href="/">プランに加入する</Link>
                                     </Button>
                                 </div>
                             )}

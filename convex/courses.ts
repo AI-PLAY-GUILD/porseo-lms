@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getEffectiveDiscordRoles, hasRequiredRoleAccess } from "./lib/membership";
 
 const MAX_TITLE_LENGTH = 200;
 const MAX_DESCRIPTION_LENGTH = 5000;
@@ -50,6 +51,7 @@ export const getPublishedCourses = query({
                 .first();
         }
         const isAdmin = user?.isAdmin ?? false;
+        const effectiveRoles = user ? await getEffectiveDiscordRoles(ctx, user) : [];
 
         return await Promise.all(
             courses.map(async (course) => {
@@ -57,10 +59,7 @@ export const getPublishedCourses = query({
                 const publishedVideos = videos.filter((v): v is NonNullable<typeof v> => v !== null && v.isPublished);
 
                 // ロール制限チェック
-                const hasRequiredRole =
-                    !course.requiredRoles ||
-                    course.requiredRoles.length === 0 ||
-                    (user?.discordRoles ?? []).some((role) => course.requiredRoles.includes(role));
+                const hasRequiredRole = hasRequiredRoleAccess(course.requiredRoles, effectiveRoles);
                 const hasAccess = isAdmin || hasRequiredRole;
 
                 return {
@@ -95,7 +94,7 @@ export const getCourseById = query({
             if (user?.isAdmin) isAdmin = true;
             if (user) {
                 userId = user._id;
-                userRoles = user.discordRoles ?? [];
+                userRoles = await getEffectiveDiscordRoles(ctx, user);
             }
         }
 
@@ -104,7 +103,7 @@ export const getCourseById = query({
 
         // ロール制限チェック
         if (!isAdmin && course.requiredRoles && course.requiredRoles.length > 0) {
-            const hasRequiredRole = userRoles.some((role) => course.requiredRoles.includes(role));
+            const hasRequiredRole = hasRequiredRoleAccess(course.requiredRoles, userRoles);
             if (!hasRequiredRole) return null;
         }
 

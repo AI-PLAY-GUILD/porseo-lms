@@ -1,5 +1,6 @@
 import type { v } from "convex/values";
 import { query } from "./_generated/server";
+import { getMembershipSummary } from "./lib/membership";
 import { getUserByClerkId } from "./users";
 
 export const getStats = query({
@@ -151,6 +152,8 @@ export const getStats = query({
             .filter((v): v is NonNullable<typeof v> => v !== null)
             .sort((a, b) => b.lastWatchedAt - a.lastWatchedAt);
 
+        const membership = await getMembershipSummary(ctx, user);
+
         return {
             totalHours,
             totalMinutes,
@@ -163,7 +166,7 @@ export const getStats = query({
             userName: user.name,
             userAvatar: user.imageUrl,
             inProgressVideos: validInProgressVideos,
-            subscriptionStatus: user.subscriptionStatus,
+            ...membership,
         };
     },
 });
