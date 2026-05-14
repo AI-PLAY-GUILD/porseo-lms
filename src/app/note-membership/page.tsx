@@ -32,7 +32,6 @@ const statusLabel: Record<string, string> = {
 
 export default function NoteMembershipPage() {
     const { user, isLoaded } = useUser();
-    const stats = useQuery(api.dashboard.getStats);
     const claim = useQuery(api.noteMembership.getMyClaim);
     const [noteId, setNoteId] = useState("");
     const [memberNumber, setMemberNumber] = useState("");
@@ -42,10 +41,17 @@ export default function NoteMembershipPage() {
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const discordAccount = user?.externalAccounts.find(
+    const discordAccount = (user?.externalAccounts ?? []).find(
         (acc) => (acc.provider as string) === "oauth_discord" || (acc.provider as string) === "discord",
     );
     const hasDiscord = !!discordAccount;
+    const sidebarUser = user
+        ? {
+              name: user.fullName ?? user.username ?? user.primaryEmailAddress?.emailAddress ?? "User",
+              email: user.primaryEmailAddress?.emailAddress,
+              avatar: user.imageUrl,
+          }
+        : undefined;
 
     const handleConnectDiscord = async () => {
         if (!user) return;
@@ -87,7 +93,7 @@ export default function NoteMembershipPage() {
         }
     };
 
-    if (!isLoaded || stats === undefined || claim === undefined) {
+    if (!isLoaded || claim === undefined) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-cream">
                 <BrutalistLoader />
@@ -97,17 +103,7 @@ export default function NoteMembershipPage() {
 
     return (
         <SidebarProvider>
-            <AppSidebar
-                user={
-                    stats
-                        ? {
-                              name: stats.userName,
-                              email: user?.emailAddresses?.[0]?.emailAddress,
-                              avatar: stats.userAvatar,
-                          }
-                        : undefined
-                }
-            />
+            <AppSidebar user={sidebarUser} />
             <SidebarInset className="bg-cream">
                 <header className="flex h-16 shrink-0 items-center gap-2 w-full bg-cream px-4">
                     <div className="flex items-center gap-2">
